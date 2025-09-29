@@ -374,6 +374,15 @@ export const usersAPI = {
       return Promise.reject(handleError(error));
     }
   },
+  
+  changeUserPassword: async (id: number, newPassword: string) => {
+    try {
+      const response = await api.put(`/users/${id}/password`, { newPassword });
+      return response.data;
+    } catch (error) {
+      return Promise.reject(handleError(error));
+    }
+  },
 };
 
 // Dashboard API

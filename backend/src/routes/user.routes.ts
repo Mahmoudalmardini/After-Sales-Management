@@ -262,6 +262,88 @@ router.put(
 );
 
 /**
+ * @route   PUT /api/users/:id/password
+ * @desc    Change user password (admin only)
+ * @access  Private (company and deputy managers only)
+ */
+router.put(
+  '/:id/password',
+  requireRoles([UserRole.COMPANY_MANAGER, UserRole.DEPUTY_MANAGER]),
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const { id } = req.params;
+      const { newPassword } = req.body;
+      const currentUser = req.user!;
+
+      const userId = Number(id);
+      if (isNaN(userId)) {
+        return res.status(400).json({
+          success: false,
+          message: 'معرف المستخدم غير صحيح',
+        });
+      }
+
+      if (!newPassword || newPassword.length < 6) {
+        return res.status(400).json({
+          success: false,
+          message: 'كلمة المرور الجديدة يجب أن تكون 6 أحرف على الأقل',
+        });
+      }
+
+      // Get existing user
+      const existingUser = await prisma.user.findUnique({
+        where: { id: userId },
+        include: { department: true },
+      });
+
+      if (!existingUser) {
+        return res.status(404).json({
+          success: false,
+          message: 'المستخدم غير موجود',
+        });
+      }
+
+      // Role-based restrictions
+      if (currentUser.role === UserRole.DEPUTY_MANAGER) {
+        // Deputy managers can only change passwords for users in their department
+        if (existingUser.departmentId !== currentUser.departmentId) {
+          return res.status(403).json({
+            success: false,
+            message: 'لا يمكنك تغيير كلمة مرور مستخدمين من أقسام أخرى',
+          });
+        }
+      }
+
+      // Hash new password
+      const passwordHash = await bcrypt.hash(newPassword, 12);
+
+      // Update password
+      await prisma.user.update({
+        where: { id: userId },
+        data: {
+          passwordHash,
+          updatedAt: new Date(),
+        },
+      });
+
+      const response: ApiResponse = {
+        success: true,
+        message: 'تم تغيير كلمة المرور بنجاح',
+      };
+
+      return res.status(200).json(response);
+    } catch (error: any) {
+      console.error('Error changing user password:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'حدث خطأ في تغيير كلمة المرور',
+        data: { error: error.message },
+      });
+    }
+  }
+);
+
+/**
  * @route   DELETE /api/users/:id
  * @desc    Delete user (soft delete - set isActive to false)
  * @access  Private (company and deputy managers only)

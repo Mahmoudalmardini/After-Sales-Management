@@ -18,6 +18,11 @@ const AccountsPage: React.FC = () => {
     departmentId: '',
     isActive: 'true',
   });
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordLoading, setPasswordLoading] = useState(false);
 
   // Only allow creating supervisors, technicians, and warehouse keeper
   const allowedRoles: UserRole[] = [UserRole.SECTION_SUPERVISOR, UserRole.TECHNICIAN, UserRole.WAREHOUSE_KEEPER];
@@ -72,6 +77,49 @@ const AccountsPage: React.FC = () => {
       setError(e.message || 'فشل في تحديث حالة المستخدم');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleChangePassword = (user: User) => {
+    setSelectedUser(user);
+    setNewPassword('');
+    setConfirmPassword('');
+    setShowPasswordModal(true);
+  };
+
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (newPassword !== confirmPassword) {
+      setError('كلمات المرور غير متطابقة');
+      return;
+    }
+    
+    if (newPassword.length < 6) {
+      setError('كلمة المرور يجب أن تكون 6 أحرف على الأقل');
+      return;
+    }
+
+    if (!selectedUser) return;
+
+    try {
+      setPasswordLoading(true);
+      setError(null);
+      
+      const response = await usersAPI.changeUserPassword(selectedUser.id, newPassword);
+      
+      if (response.success) {
+        setShowPasswordModal(false);
+        setSelectedUser(null);
+        setNewPassword('');
+        setConfirmPassword('');
+        // Show success message or notification
+        alert('تم تغيير كلمة المرور بنجاح');
+      }
+    } catch (e: any) {
+      setError(e.message || 'فشل في تغيير كلمة المرور');
+    } finally {
+      setPasswordLoading(false);
     }
   };
 
@@ -209,6 +257,12 @@ const AccountsPage: React.FC = () => {
                             {t('common.edit')}
                           </button>
                           <button
+                            className="text-green-600 hover:text-green-900 text-sm"
+                            onClick={() => handleChangePassword(user)}
+                          >
+                            تغيير كلمة المرور
+                          </button>
+                          <button
                             className={`text-sm ${
                               user.isActive 
                                 ? 'text-red-600 hover:text-red-900' 
@@ -246,6 +300,77 @@ const AccountsPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Change Password Modal */}
+      {showPasswordModal && selectedUser && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-96 max-w-md mx-4">
+            <h3 className="text-lg font-semibold mb-4">
+              تغيير كلمة المرور - {selectedUser.firstName} {selectedUser.lastName}
+            </h3>
+            
+            <form onSubmit={handlePasswordSubmit}>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  كلمة المرور الجديدة
+                </label>
+                <input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                  minLength={6}
+                />
+              </div>
+              
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  تأكيد كلمة المرور
+                </label>
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                  minLength={6}
+                />
+              </div>
+              
+              {error && (
+                <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+                  {error}
+                </div>
+              )}
+              
+              <div className="flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowPasswordModal(false);
+                    setSelectedUser(null);
+                    setNewPassword('');
+                    setConfirmPassword('');
+                    setError(null);
+                  }}
+                  className="px-4 py-2 text-gray-600 bg-gray-200 rounded-md hover:bg-gray-300"
+                  disabled={passwordLoading}
+                >
+                  إلغاء
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                  disabled={passwordLoading}
+                >
+                  {passwordLoading ? 'جاري التحديث...' : 'تغيير كلمة المرور'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

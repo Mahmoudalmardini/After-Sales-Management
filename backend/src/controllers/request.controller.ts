@@ -442,21 +442,21 @@ export const updateRequestStatus = asyncHandler(async (req: AuthenticatedRequest
     req.user.role === UserRole.DEPUTY_MANAGER ||
     (req.user.role === UserRole.DEPARTMENT_MANAGER && req.user.departmentId === request.departmentId) ||
     (req.user.role === UserRole.SECTION_SUPERVISOR && req.user.departmentId === request.departmentId) ||
-    (req.user.role === UserRole.TECHNICIAN && request.assignedTechnicianId === req.user.id);
+    (req.user.role === UserRole.TECHNICIAN && (request.assignedTechnicianId === req.user.id || request.receivedById === req.user.id));
 
   if (!canUpdate) {
     throw new ForbiddenError('Cannot update this request');
   }
 
   // Check if user can change status
-  // Technicians can only confirm/receive requests (NEW -> ASSIGNED) if they are assigned to it
+  // Technicians can only confirm/receive requests (NEW -> ASSIGNED) if they are assigned to it or received it
   const canChangeStatus = 
     req.user.role === UserRole.COMPANY_MANAGER ||
     req.user.role === UserRole.DEPUTY_MANAGER ||
     req.user.role === UserRole.DEPARTMENT_MANAGER ||
     req.user.role === UserRole.SECTION_SUPERVISOR ||
     (req.user.role === UserRole.TECHNICIAN && 
-     request.assignedTechnicianId === req.user.id && 
+     (request.assignedTechnicianId === req.user.id || request.receivedById === req.user.id) && 
      status === RequestStatus.ASSIGNED && 
      request.status === RequestStatus.NEW);
 
