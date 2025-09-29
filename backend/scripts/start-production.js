@@ -40,6 +40,21 @@ try {
   execSync('npx prisma generate', { stdio: 'inherit' });
   console.log('✅ Prisma client generated');
 
+  // Seed database if empty (best-effort)
+  try {
+    console.log('🌱 Checking if seeding is needed...');
+    // Use a small Node snippet to check if any users exist; if none, run seed
+    execSync("node -e \"(async()=>{const{PrismaClient}=require('@prisma/client');const p=new PrismaClient();const c=await p.user.count();console.log('Users count:',c);await p.$disconnect();if(c===0){process.exit(2)}else{process.exit(0)}})().catch(()=>process.exit(0))\"", { stdio: 'inherit' });
+  } catch (checkErr) {
+    console.log('No users found, running seed...');
+    try {
+      execSync('npx prisma db seed', { stdio: 'inherit' });
+      console.log('✅ Database seeded');
+    } catch (seedErr) {
+      console.warn('⚠️  Seeding failed or skipped:', seedErr?.message || seedErr);
+    }
+  }
+
   // Start the application
   console.log('🎯 Starting application...');
   execSync('node dist/index.js', { stdio: 'inherit' });

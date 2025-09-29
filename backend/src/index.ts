@@ -42,12 +42,26 @@ const corsWhitelist = [
   config.corsOrigin,
   'http://127.0.0.1:3000',
   'http://localhost:3000',
-];
+].filter(Boolean);
+
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin) return callback(null, true);
-    if (corsWhitelist.includes(origin)) return callback(null, true);
-    return callback(new Error('Not allowed by CORS'));
+    try {
+      // Allow server-to-server or same-origin requests (no Origin header)
+      if (!origin) return callback(null, true);
+
+      // Explicit whitelist match
+      if (corsWhitelist.includes(origin)) return callback(null, true);
+
+      // Allow Railway app subdomains automatically in production
+      const hostname = new URL(origin).hostname;
+      if (hostname.endsWith('.up.railway.app')) return callback(null, true);
+
+      return callback(new Error('Not allowed by CORS'));
+    } catch {
+      // If parsing origin fails, deny
+      return callback(new Error('Not allowed by CORS'));
+    }
   },
   credentials: true,
 }));
