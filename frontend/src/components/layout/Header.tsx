@@ -12,7 +12,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { clsx } from 'clsx';
 import CurrencySelector from '../common/CurrencySelector';
-import api, { authAPI } from '../../services/api';
+import { authAPI } from '../../services/api';
 
 export default function Header(props: any) {
   const { lang, setLang } = useI18n();

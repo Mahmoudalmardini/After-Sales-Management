@@ -2,12 +2,9 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { statusAPI } from '../services/api';
 import { CustomRequestStatus } from '../types';
 import { useI18n } from '../contexts/I18nContext';
-import { useAuth } from '../contexts/AuthContext';
-import { getStatusIndicatorStyle } from '../utils/statusUtils';
 
 const StatusManagementPage: React.FC = () => {
   const { t } = useI18n();
-  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [statuses, setStatuses] = useState<CustomRequestStatus[]>([]);

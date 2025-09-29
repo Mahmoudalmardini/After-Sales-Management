@@ -12,7 +12,7 @@ import {
 import { Notification } from '../types';
 
 const NotificationsPage: React.FC = () => {
-  const { t } = useI18n();
+  useI18n();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
