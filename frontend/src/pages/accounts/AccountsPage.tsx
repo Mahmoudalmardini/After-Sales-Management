@@ -9,6 +9,17 @@ const AccountsPage: React.FC = () => {
   const { t } = useI18n();
   const { user } = useAuth();
   const navigate = useNavigate();
+
+  // Check if user is admin (Company Manager or Deputy Manager)
+  const isAdmin = user?.role === UserRole.COMPANY_MANAGER || user?.role === UserRole.DEPUTY_MANAGER;
+
+  // Redirect non-admin users
+  useEffect(() => {
+    if (user && !isAdmin) {
+      navigate('/dashboard');
+    }
+  }, [user, isAdmin, navigate]);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [users, setUsers] = useState<User[]>([]);
@@ -68,6 +79,11 @@ const AccountsPage: React.FC = () => {
     loadDepartments();
   }, [loadUsers]);
 
+  // Don't render anything if not admin
+  if (!user || !isAdmin) {
+    return null;
+  }
+
   const handleToggleActive = async (userId: number, isActive: boolean) => {
     try {
       setLoading(true);
@@ -124,10 +140,8 @@ const AccountsPage: React.FC = () => {
   };
 
 
-  // Filter users based on current user's department if they're a department manager
-  const filteredUsers = user?.role === UserRole.DEPARTMENT_MANAGER 
-    ? users.filter(u => u.department?.id === user.department?.id)
-    : users;
+  // Only admins can access this page now
+  const filteredUsers = users;
 
   return (
     <div className="space-y-6">
@@ -195,53 +209,52 @@ const AccountsPage: React.FC = () => {
             <table className="w-full divide-y divide-gray-200 text-xs">
               <thead className="bg-gray-50 text-gray-600">
                 <tr>
-                  <th className="px-3 py-2 text-right font-medium w-32">{t('users.table.name')}</th>
-                  <th className="px-3 py-2 text-right font-medium w-24">{t('users.table.username')}</th>
-                  <th className="px-3 py-2 text-right font-medium w-40">{t('users.table.email')}</th>
-                  <th className="px-3 py-2 text-right font-medium w-28">{t('users.table.role')}</th>
-                  <th className="px-3 py-2 text-right font-medium w-32">{t('users.table.department')}</th>
-                  <th className="px-3 py-2 text-right font-medium w-20">{t('users.table.status')}</th>
-                  <th className="px-3 py-2 text-center font-medium w-40">{t('users.table.actions')}</th>
+                  <th className="px-2 py-1 text-right font-medium w-24">{t('users.table.name')}</th>
+                  <th className="px-2 py-1 text-right font-medium w-20">{t('users.table.username')}</th>
+                  <th className="px-2 py-1 text-right font-medium w-28">{t('users.table.email')}</th>
+                  <th className="px-2 py-1 text-right font-medium w-20">{t('users.table.role')}</th>
+                  <th className="px-2 py-1 text-right font-medium w-24">{t('users.table.department')}</th>
+                  <th className="px-2 py-1 text-right font-medium w-16">{t('users.table.status')}</th>
+                  <th className="px-2 py-1 text-center font-medium w-24">{t('users.table.actions')}</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-100">
                 {filteredUsers.length > 0 ? (
                   filteredUsers.map((user) => (
                     <tr key={user.id} className="hover:bg-slate-50 transition-colors">
-                      <td className="px-3 py-2">
+                      <td className="px-2 py-1">
                         <div className="flex items-center">
-                          <div className="h-8 w-8 flex-shrink-0 rounded-full bg-blue-600/10 text-blue-700 font-semibold flex items-center justify-center text-xs">
+                          <div className="h-6 w-6 flex-shrink-0 rounded-full bg-blue-600/10 text-blue-700 font-semibold flex items-center justify-center text-xs">
                             {user.firstName.charAt(0)}{user.lastName.charAt(0)}
                           </div>
-                          <div className="mr-2 min-w-0 flex-1">
+                          <div className="mr-1 min-w-0 flex-1">
                             <div className="text-xs font-medium text-gray-900 truncate">
                               {user.firstName} {user.lastName}
                             </div>
-                            <div className="text-xs text-gray-500 truncate">{user.phone || '-'}</div>
                           </div>
                         </div>
                       </td>
-                      <td className="px-3 py-2 text-gray-700 font-medium truncate">{user.username}</td>
-                      <td className="px-3 py-2 text-gray-600 truncate">{user.email}</td>
-                      <td className="px-3 py-2">
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
-                          {roleLabels[user.role]}
+                      <td className="px-2 py-1 text-gray-700 font-medium truncate">{user.username}</td>
+                      <td className="px-2 py-1 text-gray-600 truncate">{user.email}</td>
+                      <td className="px-2 py-1">
+                        <span className="inline-flex items-center px-1 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-700">
+                          {roleLabels[user.role].substring(0, 3)}
                         </span>
                       </td>
-                      <td className="px-3 py-2 text-gray-700 truncate">{user.department?.name || '-'}</td>
-                      <td className="px-3 py-2">
-                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                      <td className="px-2 py-1 text-gray-700 truncate">{user.department?.name || '-'}</td>
+                      <td className="px-2 py-1">
+                        <span className={`inline-flex items-center px-1 py-0.5 rounded text-xs font-medium ${
                           user.isActive
                             ? 'bg-emerald-100 text-emerald-700'
                             : 'bg-rose-100 text-rose-700'
                         }`}>
-                          {user.isActive ? t('users.active') : t('users.inactive')}
+                          {user.isActive ? 'نشط' : 'غير نشط'}
                         </span>
                       </td>
-                      <td className="px-3 py-2">
-                        <div className="flex items-center justify-center space-x-1 rtl:space-x-reverse">
+                      <td className="px-2 py-1">
+                        <div className="flex items-center justify-center space-x-0.5 rtl:space-x-reverse">
                           <button
-                            className="inline-flex items-center px-2 py-1 border border-blue-300 rounded text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors"
+                            className="inline-flex items-center p-1 border border-blue-300 rounded text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors"
                             onClick={() => navigate(`/accounts/${user.id}/edit`)}
                             title="تعديل المستخدم"
                           >
@@ -250,7 +263,7 @@ const AccountsPage: React.FC = () => {
                             </svg>
                           </button>
                           <button
-                            className="inline-flex items-center px-2 py-1 border border-green-300 rounded text-xs font-medium text-green-700 bg-green-50 hover:bg-green-100 transition-colors"
+                            className="inline-flex items-center p-1 border border-green-300 rounded text-xs font-medium text-green-700 bg-green-50 hover:bg-green-100 transition-colors"
                             onClick={() => handleChangePassword(user)}
                             title="تغيير كلمة المرور"
                           >
@@ -259,7 +272,7 @@ const AccountsPage: React.FC = () => {
                             </svg>
                           </button>
                           <button
-                            className={`inline-flex items-center px-2 py-1 border rounded text-xs font-medium transition-colors ${
+                            className={`inline-flex items-center p-1 border rounded text-xs font-medium transition-colors ${
                               user.isActive 
                                 ? 'border-red-300 text-red-700 bg-red-50 hover:bg-red-100' 
                                 : 'border-green-300 text-green-700 bg-green-50 hover:bg-green-100'
@@ -286,7 +299,7 @@ const AccountsPage: React.FC = () => {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={7} className="px-3 py-12 text-center text-gray-500">
+                    <td colSpan={7} className="px-2 py-12 text-center text-gray-500">
                       {loading ? (
                         <div className="flex flex-col items-center gap-3">
                           <div className="loading-spinner" />
@@ -308,57 +321,53 @@ const AccountsPage: React.FC = () => {
       </div>
 
       {/* Mobile Card View */}
-      <div className="lg:hidden space-y-4">
-        {error && <div className="text-red-600 mb-3 p-4 bg-red-50 rounded-lg">{error}</div>}
+      <div className="lg:hidden space-y-3">
+        {error && <div className="text-red-600 mb-3 p-3 bg-red-50 rounded-lg text-sm">{error}</div>}
         
         {filteredUsers.length > 0 ? (
           filteredUsers.map((user) => (
-            <div key={user.id} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-              <div className="flex items-start justify-between mb-3">
+            <div key={user.id} className="bg-white border border-gray-200 rounded-lg p-3 shadow-sm">
+              <div className="flex items-start justify-between mb-2">
                 <div className="flex items-center">
-                  <div className="h-10 w-10 flex-shrink-0 rounded-full bg-blue-600/10 text-blue-700 font-semibold flex items-center justify-center text-sm">
+                  <div className="h-8 w-8 flex-shrink-0 rounded-full bg-blue-600/10 text-blue-700 font-semibold flex items-center justify-center text-xs">
                     {user.firstName.charAt(0)}{user.lastName.charAt(0)}
                   </div>
-                  <div className="mr-3">
+                  <div className="mr-2">
                     <div className="text-sm font-semibold text-gray-900">
                       {user.firstName} {user.lastName}
                     </div>
-                    <div className="text-xs text-gray-500">{user.phone || '-'}</div>
+                    <div className="text-xs text-gray-500">{user.username}</div>
                   </div>
                 </div>
-                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium ${
                   user.isActive
                     ? 'bg-emerald-100 text-emerald-700'
                     : 'bg-rose-100 text-rose-700'
                 }`}>
-                  {user.isActive ? t('users.active') : t('users.inactive')}
+                  {user.isActive ? 'نشط' : 'غير نشط'}
                 </span>
               </div>
               
-              <div className="space-y-2 mb-4">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">{t('users.table.username')}:</span>
-                  <span className="text-gray-900 font-medium">{user.username}</span>
+              <div className="space-y-1 mb-3 text-xs">
+                <div className="flex justify-between">
+                  <span className="text-gray-500">البريد:</span>
+                  <span className="text-gray-900 truncate max-w-40">{user.email}</span>
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">{t('users.table.email')}:</span>
-                  <span className="text-gray-900 truncate max-w-32">{user.email}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">{t('users.table.role')}:</span>
-                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
-                    {roleLabels[user.role]}
+                <div className="flex justify-between">
+                  <span className="text-gray-500">المنصب:</span>
+                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-700">
+                    {roleLabels[user.role].substring(0, 8)}
                   </span>
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">{t('users.table.department')}:</span>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">القسم:</span>
                   <span className="text-gray-900">{user.department?.name || '-'}</span>
                 </div>
               </div>
               
-              <div className="flex items-center justify-center space-x-2 rtl:space-x-reverse">
+              <div className="flex items-center justify-center space-x-1 rtl:space-x-reverse">
                 <button
-                  className="inline-flex items-center px-3 py-1.5 border border-blue-300 rounded text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors"
+                  className="inline-flex items-center px-2 py-1 border border-blue-300 rounded text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors"
                   onClick={() => navigate(`/accounts/${user.id}/edit`)}
                   title="تعديل المستخدم"
                 >
@@ -368,7 +377,7 @@ const AccountsPage: React.FC = () => {
                   تعديل
                 </button>
                 <button
-                  className="inline-flex items-center px-3 py-1.5 border border-green-300 rounded text-xs font-medium text-green-700 bg-green-50 hover:bg-green-100 transition-colors"
+                  className="inline-flex items-center px-2 py-1 border border-green-300 rounded text-xs font-medium text-green-700 bg-green-50 hover:bg-green-100 transition-colors"
                   onClick={() => handleChangePassword(user)}
                   title="تغيير كلمة المرور"
                 >
@@ -378,7 +387,7 @@ const AccountsPage: React.FC = () => {
                   كلمة المرور
                 </button>
                 <button
-                  className={`inline-flex items-center px-3 py-1.5 border rounded text-xs font-medium transition-colors ${
+                  className={`inline-flex items-center px-2 py-1 border rounded text-xs font-medium transition-colors ${
                     user.isActive 
                       ? 'border-red-300 text-red-700 bg-red-50 hover:bg-red-100' 
                       : 'border-green-300 text-green-700 bg-green-50 hover:bg-green-100'

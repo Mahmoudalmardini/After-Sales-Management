@@ -3,11 +3,24 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { usersAPI, departmentsAPI } from '../../services/api';
 import { Department, UserRole, User } from '../../types';
 import { useI18n } from '../../contexts/I18nContext';
+import { useAuth } from '../../contexts/AuthContext';
 
 const EditAccountPage: React.FC = () => {
   const { t } = useI18n();
+  const { user: currentUser } = useAuth();
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
+
+  // Check if user is admin (Company Manager or Deputy Manager)
+  const isAdmin = currentUser?.role === UserRole.COMPANY_MANAGER || currentUser?.role === UserRole.DEPUTY_MANAGER;
+
+  // Redirect non-admin users
+  useEffect(() => {
+    if (currentUser && !isAdmin) {
+      navigate('/dashboard');
+    }
+  }, [currentUser, isAdmin, navigate]);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [departments, setDepartments] = useState<Department[]>([]);
@@ -78,6 +91,11 @@ const EditAccountPage: React.FC = () => {
     loadUser();
     loadDepartments();
   }, [loadUser, loadDepartments]);
+
+  // Don't render anything if not admin
+  if (!currentUser || !isAdmin) {
+    return null;
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

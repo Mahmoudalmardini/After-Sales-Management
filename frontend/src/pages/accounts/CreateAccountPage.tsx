@@ -9,6 +9,17 @@ const CreateAccountPage: React.FC = () => {
   const { t } = useI18n();
   const { user } = useAuth();
   const navigate = useNavigate();
+
+  // Check if user is admin (Company Manager or Deputy Manager)
+  const isAdmin = user?.role === UserRole.COMPANY_MANAGER || user?.role === UserRole.DEPUTY_MANAGER;
+
+  // Redirect non-admin users
+  useEffect(() => {
+    if (user && !isAdmin) {
+      navigate('/dashboard');
+    }
+  }, [user, isAdmin, navigate]);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [departments, setDepartments] = useState<Department[]>([]);
@@ -42,10 +53,7 @@ const CreateAccountPage: React.FC = () => {
       const response = await departmentsAPI.getDepartments();
       setDepartments(response.data?.departments || []);
       
-      // If user is department manager, pre-select their department
-      if (user?.role === UserRole.DEPARTMENT_MANAGER && user.department?.id) {
-        setFormData(prev => ({ ...prev, departmentId: user.department!.id.toString() }));
-      }
+      // Only admins can create accounts now
     } catch (e: any) {
       console.error('Error loading departments:', e);
     }
@@ -54,6 +62,11 @@ const CreateAccountPage: React.FC = () => {
   useEffect(() => {
     loadDepartments();
   }, [loadDepartments]);
+
+  // Don't render anything if not admin
+  if (!user || !isAdmin) {
+    return null;
+  }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;

@@ -63,7 +63,7 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen }) => {
       name: t('nav.accounts') || 'Accounts',
       href: '/accounts',
       icon: UsersIcon,
-      roles: [UserRole.COMPANY_MANAGER, UserRole.DEPUTY_MANAGER, UserRole.DEPARTMENT_MANAGER],
+      roles: [UserRole.COMPANY_MANAGER, UserRole.DEPUTY_MANAGER],
     },
     {
       name: t('nav.reports') || 'Reports',

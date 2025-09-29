@@ -13,7 +13,7 @@ const router = Router();
  */
 router.get(
   '/',
-  requireRoles([UserRole.COMPANY_MANAGER, UserRole.DEPUTY_MANAGER, UserRole.DEPARTMENT_MANAGER, UserRole.SECTION_SUPERVISOR, UserRole.TECHNICIAN]),
+  requireRoles([UserRole.COMPANY_MANAGER, UserRole.DEPUTY_MANAGER]),
   async (req: AuthenticatedRequest, res) => {
     const { role, departmentId, isActive = true, page = 1, limit = 50 } = req.query as any;
     const user = req.user!;
@@ -23,19 +23,7 @@ router.get(
     if (departmentId) where.departmentId = Number(departmentId);
     if (isActive !== undefined) where.isActive = String(isActive) !== 'false';
 
-    // If user is a technician, restrict to their department only
-    if (user.role === UserRole.TECHNICIAN) {
-      where.departmentId = user.departmentId;
-      // Technicians can only see other technicians
-      where.role = UserRole.TECHNICIAN;
-    }
-    
-    // If user is department manager or section supervisor, restrict to their department
-    if (user.role === UserRole.DEPARTMENT_MANAGER || user.role === UserRole.SECTION_SUPERVISOR) {
-      if (!departmentId) {
-        where.departmentId = user.departmentId;
-      }
-    }
+    // Only company and deputy managers can access this endpoint now
 
     const skip = (Number(page) - 1) * Number(limit);
 
@@ -77,7 +65,7 @@ router.get(
  */
 router.post(
   '/',
-  requireRoles([UserRole.COMPANY_MANAGER, UserRole.DEPUTY_MANAGER, UserRole.DEPARTMENT_MANAGER]),
+  requireRoles([UserRole.COMPANY_MANAGER, UserRole.DEPUTY_MANAGER]),
   async (req: AuthenticatedRequest, res) => {
     try {
       const { username, email, password, firstName, lastName, phone, role, departmentId } = req.body;
@@ -108,23 +96,7 @@ router.post(
         });
       }
 
-      // Role-based restrictions
-      if (currentUser.role === UserRole.DEPARTMENT_MANAGER) {
-        // Department managers can only create technicians and supervisors in their department
-        if (![UserRole.TECHNICIAN, UserRole.SECTION_SUPERVISOR].includes(role)) {
-          return res.status(403).json({
-            success: false,
-            message: 'لا يمكنك إنشاء هذا النوع من المستخدمين',
-          });
-        }
-        // Must be in the same department
-        if (departmentId !== currentUser.departmentId) {
-          return res.status(403).json({
-            success: false,
-            message: 'يمكنك فقط إنشاء مستخدمين في قسمك',
-          });
-        }
-      }
+      // Only company and deputy managers can create users
 
       // Hash password
       const passwordHash = await bcrypt.hash(password, 12);
@@ -180,7 +152,7 @@ router.post(
  */
 router.put(
   '/:id',
-  requireRoles([UserRole.COMPANY_MANAGER, UserRole.DEPUTY_MANAGER, UserRole.DEPARTMENT_MANAGER]),
+  requireRoles([UserRole.COMPANY_MANAGER, UserRole.DEPUTY_MANAGER]),
   async (req: AuthenticatedRequest, res) => {
     try {
       const { id } = req.params;
@@ -208,16 +180,7 @@ router.put(
         });
       }
 
-      // Role-based restrictions
-      if (currentUser.role === UserRole.DEPARTMENT_MANAGER) {
-        // Department managers can only update users in their department
-        if (existingUser.departmentId !== currentUser.departmentId) {
-          return res.status(403).json({
-            success: false,
-            message: 'لا يمكنك تعديل مستخدمين من أقسام أخرى',
-          });
-        }
-      }
+      // Only company and deputy managers can update users
 
       // Update user
       const updatedUser = await prisma.user.update({
