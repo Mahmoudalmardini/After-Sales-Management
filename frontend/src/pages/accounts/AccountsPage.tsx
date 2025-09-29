@@ -187,50 +187,50 @@ const AccountsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Users Table */}
-      <div className="card">
-        <div className="card-content">
-          {error && <div className="text-red-600 mb-3">{error}</div>}
-          <div className="overflow-hidden border border-gray-200 rounded-xl shadow-sm">
-            <table className="min-w-full divide-y divide-gray-200 text-sm">
-              <thead className="bg-gray-100 text-gray-600 uppercase tracking-wide">
+      {/* Users Table - Desktop View */}
+      <div className="card hidden lg:block">
+        <div className="card-content p-0">
+          {error && <div className="text-red-600 mb-3 p-4">{error}</div>}
+          <div className="overflow-x-auto">
+            <table className="w-full divide-y divide-gray-200 text-xs">
+              <thead className="bg-gray-50 text-gray-600">
                 <tr>
-                  <th className="px-5 py-3 font-semibold">{t('users.table.name')}</th>
-                  <th className="px-5 py-3 font-semibold">{t('users.table.username')}</th>
-                  <th className="px-5 py-3 font-semibold">{t('users.table.email')}</th>
-                  <th className="px-5 py-3 font-semibold">{t('users.table.role')}</th>
-                  <th className="px-5 py-3 font-semibold">{t('users.table.department')}</th>
-                  <th className="px-5 py-3 font-semibold">{t('users.table.status')}</th>
-                  <th className="px-5 py-3 font-semibold text-center">{t('users.table.actions')}</th>
+                  <th className="px-3 py-2 text-right font-medium w-32">{t('users.table.name')}</th>
+                  <th className="px-3 py-2 text-right font-medium w-24">{t('users.table.username')}</th>
+                  <th className="px-3 py-2 text-right font-medium w-40">{t('users.table.email')}</th>
+                  <th className="px-3 py-2 text-right font-medium w-28">{t('users.table.role')}</th>
+                  <th className="px-3 py-2 text-right font-medium w-32">{t('users.table.department')}</th>
+                  <th className="px-3 py-2 text-right font-medium w-20">{t('users.table.status')}</th>
+                  <th className="px-3 py-2 text-center font-medium w-40">{t('users.table.actions')}</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-100">
                 {filteredUsers.length > 0 ? (
                   filteredUsers.map((user) => (
                     <tr key={user.id} className="hover:bg-slate-50 transition-colors">
-                      <td className="px-5 py-4 whitespace-nowrap">
+                      <td className="px-3 py-2">
                         <div className="flex items-center">
-                          <div className="h-10 w-10 flex-shrink-0 rounded-full bg-blue-600/10 text-blue-700 font-semibold flex items-center justify-center">
+                          <div className="h-8 w-8 flex-shrink-0 rounded-full bg-blue-600/10 text-blue-700 font-semibold flex items-center justify-center text-xs">
                             {user.firstName.charAt(0)}{user.lastName.charAt(0)}
                           </div>
-                          <div className="mr-3">
-                            <div className="text-sm font-semibold text-gray-900">
+                          <div className="mr-2 min-w-0 flex-1">
+                            <div className="text-xs font-medium text-gray-900 truncate">
                               {user.firstName} {user.lastName}
                             </div>
-                            <div className="text-xs text-gray-500">{user.phone || '-'}</div>
+                            <div className="text-xs text-gray-500 truncate">{user.phone || '-'}</div>
                           </div>
                         </div>
                       </td>
-                      <td className="px-5 py-4 whitespace-nowrap text-gray-700 font-medium">{user.username}</td>
-                      <td className="px-5 py-4 whitespace-nowrap text-gray-600">{user.email}</td>
-                      <td className="px-5 py-4 whitespace-nowrap">
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">
+                      <td className="px-3 py-2 text-gray-700 font-medium truncate">{user.username}</td>
+                      <td className="px-3 py-2 text-gray-600 truncate">{user.email}</td>
+                      <td className="px-3 py-2">
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
                           {roleLabels[user.role]}
                         </span>
                       </td>
-                      <td className="px-5 py-4 whitespace-nowrap text-gray-700">{user.department?.name || '-'}</td>
-                      <td className="px-5 py-4 whitespace-nowrap">
-                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${
+                      <td className="px-3 py-2 text-gray-700 truncate">{user.department?.name || '-'}</td>
+                      <td className="px-3 py-2">
+                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                           user.isActive
                             ? 'bg-emerald-100 text-emerald-700'
                             : 'bg-rose-100 text-rose-700'
@@ -238,30 +238,28 @@ const AccountsPage: React.FC = () => {
                           {user.isActive ? t('users.active') : t('users.inactive')}
                         </span>
                       </td>
-                      <td className="px-5 py-4">
-                        <div className="flex items-center justify-center space-x-2 rtl:space-x-reverse">
+                      <td className="px-3 py-2">
+                        <div className="flex items-center justify-center space-x-1 rtl:space-x-reverse">
                           <button
-                            className="inline-flex items-center px-3 py-1.5 border border-blue-300 rounded-md text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors"
+                            className="inline-flex items-center px-2 py-1 border border-blue-300 rounded text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors"
                             onClick={() => navigate(`/accounts/${user.id}/edit`)}
                             title="تعديل المستخدم"
                           >
-                            <svg className="w-3 h-3 ml-1" fill="currentColor" viewBox="0 0 20 20">
+                            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                               <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"/>
                             </svg>
-                            تعديل
                           </button>
                           <button
-                            className="inline-flex items-center px-3 py-1.5 border border-green-300 rounded-md text-xs font-medium text-green-700 bg-green-50 hover:bg-green-100 transition-colors"
+                            className="inline-flex items-center px-2 py-1 border border-green-300 rounded text-xs font-medium text-green-700 bg-green-50 hover:bg-green-100 transition-colors"
                             onClick={() => handleChangePassword(user)}
                             title="تغيير كلمة المرور"
                           >
-                            <svg className="w-3 h-3 ml-1" fill="currentColor" viewBox="0 0 20 20">
+                            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                               <path fillRule="evenodd" d="M18 8a6 6 0 01-7.743 5.743L10 14l-1 1-1 1H6v2H2v-4l4.257-4.257A6 6 0 1118 8zm-6-4a1 1 0 100 2 2 2 0 012 2 1 1 0 102 0 4 4 0 00-4-4z" clipRule="evenodd"/>
                             </svg>
-                            كلمة المرور
                           </button>
                           <button
-                            className={`inline-flex items-center px-3 py-1.5 border rounded-md text-xs font-medium transition-colors ${
+                            className={`inline-flex items-center px-2 py-1 border rounded text-xs font-medium transition-colors ${
                               user.isActive 
                                 ? 'border-red-300 text-red-700 bg-red-50 hover:bg-red-100' 
                                 : 'border-green-300 text-green-700 bg-green-50 hover:bg-green-100'
@@ -271,9 +269,9 @@ const AccountsPage: React.FC = () => {
                             title={user.isActive ? 'تعطيل المستخدم' : 'تفعيل المستخدم'}
                           >
                             {loading ? (
-                              <div className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin ml-1"></div>
+                              <div className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin"></div>
                             ) : (
-                              <svg className="w-3 h-3 ml-1" fill="currentColor" viewBox="0 0 20 20">
+                              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                                 {user.isActive ? (
                                   <path fillRule="evenodd" d="M13.477 14.89A6 6 0 015.11 6.524l8.367 8.368zm1.414-1.414L6.524 5.11a6 6 0 018.367 8.367zM18 10a8 8 0 11-16 0 8 8 0 0116 0z" clipRule="evenodd"/>
                                 ) : (
@@ -281,7 +279,6 @@ const AccountsPage: React.FC = () => {
                                 )}
                               </svg>
                             )}
-                            {user.isActive ? 'تعطيل' : 'تفعيل'}
                           </button>
                         </div>
                       </td>
@@ -289,7 +286,7 @@ const AccountsPage: React.FC = () => {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={7} className="px-5 py-12 text-center text-gray-500">
+                    <td colSpan={7} className="px-3 py-12 text-center text-gray-500">
                       {loading ? (
                         <div className="flex flex-col items-center gap-3">
                           <div className="loading-spinner" />
@@ -308,6 +305,119 @@ const AccountsPage: React.FC = () => {
             </table>
           </div>
         </div>
+      </div>
+
+      {/* Mobile Card View */}
+      <div className="lg:hidden space-y-4">
+        {error && <div className="text-red-600 mb-3 p-4 bg-red-50 rounded-lg">{error}</div>}
+        
+        {filteredUsers.length > 0 ? (
+          filteredUsers.map((user) => (
+            <div key={user.id} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center">
+                  <div className="h-10 w-10 flex-shrink-0 rounded-full bg-blue-600/10 text-blue-700 font-semibold flex items-center justify-center text-sm">
+                    {user.firstName.charAt(0)}{user.lastName.charAt(0)}
+                  </div>
+                  <div className="mr-3">
+                    <div className="text-sm font-semibold text-gray-900">
+                      {user.firstName} {user.lastName}
+                    </div>
+                    <div className="text-xs text-gray-500">{user.phone || '-'}</div>
+                  </div>
+                </div>
+                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                  user.isActive
+                    ? 'bg-emerald-100 text-emerald-700'
+                    : 'bg-rose-100 text-rose-700'
+                }`}>
+                  {user.isActive ? t('users.active') : t('users.inactive')}
+                </span>
+              </div>
+              
+              <div className="space-y-2 mb-4">
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-500">{t('users.table.username')}:</span>
+                  <span className="text-gray-900 font-medium">{user.username}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-500">{t('users.table.email')}:</span>
+                  <span className="text-gray-900 truncate max-w-32">{user.email}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-500">{t('users.table.role')}:</span>
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
+                    {roleLabels[user.role]}
+                  </span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-500">{t('users.table.department')}:</span>
+                  <span className="text-gray-900">{user.department?.name || '-'}</span>
+                </div>
+              </div>
+              
+              <div className="flex items-center justify-center space-x-2 rtl:space-x-reverse">
+                <button
+                  className="inline-flex items-center px-3 py-1.5 border border-blue-300 rounded text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors"
+                  onClick={() => navigate(`/accounts/${user.id}/edit`)}
+                  title="تعديل المستخدم"
+                >
+                  <svg className="w-3 h-3 ml-1" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"/>
+                  </svg>
+                  تعديل
+                </button>
+                <button
+                  className="inline-flex items-center px-3 py-1.5 border border-green-300 rounded text-xs font-medium text-green-700 bg-green-50 hover:bg-green-100 transition-colors"
+                  onClick={() => handleChangePassword(user)}
+                  title="تغيير كلمة المرور"
+                >
+                  <svg className="w-3 h-3 ml-1" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 8a6 6 0 01-7.743 5.743L10 14l-1 1-1 1H6v2H2v-4l4.257-4.257A6 6 0 1118 8zm-6-4a1 1 0 100 2 2 2 0 012 2 1 1 0 102 0 4 4 0 00-4-4z" clipRule="evenodd"/>
+                  </svg>
+                  كلمة المرور
+                </button>
+                <button
+                  className={`inline-flex items-center px-3 py-1.5 border rounded text-xs font-medium transition-colors ${
+                    user.isActive 
+                      ? 'border-red-300 text-red-700 bg-red-50 hover:bg-red-100' 
+                      : 'border-green-300 text-green-700 bg-green-50 hover:bg-green-100'
+                  }`}
+                  onClick={() => handleToggleActive(user.id, user.isActive)}
+                  disabled={loading}
+                  title={user.isActive ? 'تعطيل المستخدم' : 'تفعيل المستخدم'}
+                >
+                  {loading ? (
+                    <div className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin ml-1"></div>
+                  ) : (
+                    <svg className="w-3 h-3 ml-1" fill="currentColor" viewBox="0 0 20 20">
+                      {user.isActive ? (
+                        <path fillRule="evenodd" d="M13.477 14.89A6 6 0 015.11 6.524l8.367 8.368zm1.414-1.414L6.524 5.11a6 6 0 018.367 8.367zM18 10a8 8 0 11-16 0 8 8 0 0116 0z" clipRule="evenodd"/>
+                      ) : (
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/>
+                      )}
+                    </svg>
+                  )}
+                  {user.isActive ? 'تعطيل' : 'تفعيل'}
+                </button>
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className="text-center py-12 text-gray-500">
+            {loading ? (
+              <div className="flex flex-col items-center gap-3">
+                <div className="loading-spinner" />
+                <span>{t('users.loading')}</span>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <p className="text-base font-medium">{t('users.noUsersFound')}</p>
+                <p className="text-sm text-gray-400">{t('users.noUsersFoundDescription')}</p>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Change Password Modal */}
