@@ -130,6 +130,7 @@ export interface Request {
   updatedAt: string;
   activities?: RequestActivity[];
   costs?: RequestCost[];
+  requestParts?: RequestPart[];
 }
 
 // Activity types

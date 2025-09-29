@@ -400,6 +400,19 @@ export const getRequestById = asyncHandler(async (req: AuthenticatedRequest, res
         },
         orderBy: { createdAt: 'desc' },
       },
+      requestParts: {
+        include: {
+          sparePart: true,
+          addedBy: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+      },
     },
   });
 
