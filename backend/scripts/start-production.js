@@ -24,10 +24,16 @@ if (!process.env.DATABASE_URL.startsWith('postgresql://')) {
 console.log('✅ PostgreSQL DATABASE_URL detected:', process.env.DATABASE_URL.replace(/\/\/.*@/, '//***:***@'));
 
 try {
-  // Run Prisma migrations
-  console.log('📦 Running Prisma migrations...');
-  execSync('npx prisma migrate deploy', { stdio: 'inherit' });
-  console.log('✅ Database migrations completed');
+  // Run Prisma migrations, with fallback to db push if no migrations are present
+  try {
+    console.log('📦 Running Prisma migrations...');
+    execSync('npx prisma migrate deploy', { stdio: 'inherit' });
+    console.log('✅ Database migrations completed');
+  } catch (migrateError) {
+    console.warn('⚠️  migrate deploy failed or no migrations found, attempting prisma db push...');
+    execSync('npx prisma db push', { stdio: 'inherit' });
+    console.log('✅ prisma db push completed');
+  }
 
   // Generate Prisma client
   console.log('🔧 Generating Prisma client...');
