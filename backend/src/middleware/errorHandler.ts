@@ -30,6 +30,11 @@ export const errorHandler = (
     message = error.message;
   } else if (error instanceof Prisma.PrismaClientKnownRequestError) {
     // Handle Prisma errors
+    // Log prisma code and meta for diagnostics
+    logger.error('PrismaClientKnownRequestError', {
+      code: (error as any).code,
+      meta: (error as any).meta,
+    });
     switch (error.code) {
       case 'P2002':
         statusCode = 409;
@@ -100,7 +105,10 @@ export const errorHandler = (
     response.data = { stack: error.stack };
   }
 
-  // Send error response
+  // Send error response with optional diagnostics header (non-sensitive)
+  if ((error as any).code && typeof (error as any).code === 'string') {
+    res.setHeader('X-Error-Code', (error as any).code);
+  }
   res.status(statusCode).json(response);
 };
 
