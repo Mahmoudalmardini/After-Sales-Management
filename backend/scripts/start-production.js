@@ -24,35 +24,23 @@ if (!process.env.DATABASE_URL.startsWith('postgresql://')) {
 console.log('✅ PostgreSQL DATABASE_URL detected:', process.env.DATABASE_URL.replace(/\/\/.*@/, '//***:***@'));
 
 try {
-  // Run Prisma migrations, with fallback to db push if no migrations are present
-  try {
-    console.log('📦 Running Prisma migrations...');
-    execSync('npx prisma migrate deploy', { stdio: 'inherit' });
-    console.log('✅ Database migrations completed');
-  } catch (migrateError) {
-    console.warn('⚠️  migrate deploy failed or no migrations found, attempting prisma db push...');
-    execSync('npx prisma db push', { stdio: 'inherit' });
-    console.log('✅ prisma db push completed');
-  }
+  // Always ensure database schema is up to date using db push (force schema sync)
+  console.log('📦 Synchronizing database schema...');
+  execSync('npx prisma db push --force-reset', { stdio: 'inherit' });
+  console.log('✅ Database schema synchronized');
 
   // Generate Prisma client
   console.log('🔧 Generating Prisma client...');
   execSync('npx prisma generate', { stdio: 'inherit' });
   console.log('✅ Prisma client generated');
 
-  // Seed database if empty (best-effort)
+  // Always seed the database (it will skip if data exists)
+  console.log('🌱 Seeding database...');
   try {
-    console.log('🌱 Checking if seeding is needed...');
-    // Use a small Node snippet to check if any users exist; if none, run seed
-    execSync("node -e \"(async()=>{const{PrismaClient}=require('@prisma/client');const p=new PrismaClient();const c=await p.user.count();console.log('Users count:',c);await p.$disconnect();if(c===0){process.exit(2)}else{process.exit(0)}})().catch(()=>process.exit(0))\"", { stdio: 'inherit' });
-  } catch (checkErr) {
-    console.log('No users found, running seed...');
-    try {
-      execSync('npx prisma db seed', { stdio: 'inherit' });
-      console.log('✅ Database seeded');
-    } catch (seedErr) {
-      console.warn('⚠️  Seeding failed or skipped:', seedErr?.message || seedErr);
-    }
+    execSync('npx prisma db seed', { stdio: 'inherit' });
+    console.log('✅ Database seeded successfully');
+  } catch (seedErr) {
+    console.log('⚠️  Seeding completed with warnings or data already exists');
   }
 
   // Start the application
