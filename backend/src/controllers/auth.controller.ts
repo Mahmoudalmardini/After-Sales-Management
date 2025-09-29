@@ -71,11 +71,8 @@ export const login = asyncHandler(async (req: AuthenticatedRequest, res: Respons
   // Log successful login
   logger.info(`User ${user.username} logged in successfully`);
 
-  // Update last login
-  await prisma.user.update({
-    where: { id: user.id },
-    data: { updatedAt: new Date() },
-  });
+  // Note: updatedAt is managed by Prisma (@updatedAt). Avoid setting it manually.
+  // If you want to track last login, add a dedicated lastLogin field in the schema.
 
   const response: ApiResponse = {
     success: true,
