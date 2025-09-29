@@ -322,17 +322,39 @@ const RequestDetailsPage: React.FC = () => {
                 {(!['COMPLETED', 'CLOSED'].includes(request?.status || '') || hasRole([UserRole.COMPANY_MANAGER, UserRole.DEPUTY_MANAGER, UserRole.DEPARTMENT_MANAGER])) && (
                   <form className="space-y-4" onSubmit={handleAddCost}>
                   <div className="form-group">
-                    <label className="form-label required">وصف التكلفة</label>
-                    <input className="input-field" placeholder="مثال: قطع غيار، عمالة..." value={costForm.description} onChange={(e)=>setCostForm(f=>({...f, description: e.target.value}))} required />
+                    <label className="form-label required" htmlFor="costDescription">وصف التكلفة</label>
+                    <input 
+                      id="costDescription"
+                      className="input-field" 
+                      placeholder="مثال: قطع غيار، عمالة..." 
+                      value={costForm.description} 
+                      onChange={(e)=>setCostForm(f=>({...f, description: e.target.value}))} 
+                      required 
+                    />
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="form-group">
-                      <label className="form-label required">المبلغ ({getCurrencySymbolHook()})</label>
-                      <input className="input-field" type="number" step="0.01" placeholder="0.00" value={costForm.amount} onChange={(e)=>setCostForm(f=>({...f, amount: Number(e.target.value)}))} required />
+                      <label className="form-label required" htmlFor="costAmount">المبلغ ({getCurrencySymbolHook()})</label>
+                      <input 
+                        id="costAmount"
+                        className="input-field no-spinner" 
+                        type="number" 
+                        step="0.01" 
+                        placeholder="0.00" 
+                        value={costForm.amount || ''} 
+                        onChange={(e)=>setCostForm(f=>({...f, amount: Number(e.target.value) || 0}))} 
+                        required 
+                      />
                     </div>
                     <div className="form-group">
                       <label className="form-label" id="costType-label" htmlFor="costType">نوع التكلفة</label>
-                      <select id="costType" className="select-field" value={costForm.costType} onChange={(e)=>setCostForm(f=>({...f, costType: e.target.value as CostType}))} aria-labelledby="costType-label">
+                      <select 
+                        id="costType" 
+                        className="select-field" 
+                        value={costForm.costType} 
+                        onChange={(e)=>setCostForm(f=>({...f, costType: e.target.value as CostType}))} 
+                        aria-labelledby="costType-label"
+                      >
                         <option value="PARTS">قطع غيار</option>
                         <option value="LABOR">عمالة</option>
                         <option value="TRANSPORTATION">مواصلات</option>
@@ -353,10 +375,13 @@ const RequestDetailsPage: React.FC = () => {
                       <option value="">بدون قطع غيار</option>
                       {spareParts.map(part => (
                         <option key={part.id} value={part.id}>
-                          {part.name} (المتوفر: {part.quantity})
+                          {part.name} (المتوفر: {part.quantity} - {formatCurrency(part.unitPrice, part.currency as any)}/وحدة)
                         </option>
                       ))}
                     </select>
+                    {loadingSpareParts && (
+                      <p className="text-xs text-gray-500 mt-1">جاري تحميل قطع الغيار...</p>
+                    )}
                   </div>
 
                   {costForm.sparePartId && (
@@ -365,19 +390,31 @@ const RequestDetailsPage: React.FC = () => {
                         <label className="form-label required" htmlFor="spareQuantity">الكمية المطلوبة</label>
                         <input
                           id="spareQuantity"
-                          className="input-field"
+                          className="input-field no-spinner"
                           type="number"
                           min={1}
+                          max={(() => {
+                            const part = spareParts.find(p => String(p.id) === String(costForm.sparePartId));
+                            return part ? part.quantity : undefined;
+                          })()}
                           value={costForm.sparePartQuantity || ''}
-                          onChange={(e) => setCostForm(f => ({ ...f, sparePartQuantity: Number(e.target.value) }))}
+                          onChange={(e) => setCostForm(f => ({ ...f, sparePartQuantity: Number(e.target.value) || 0 }))}
                           required
                         />
+                        {(() => {
+                          const part = spareParts.find(p => String(p.id) === String(costForm.sparePartId));
+                          return part && (
+                            <p className="text-xs text-gray-500 mt-1">
+                              الحد الأقصى المتاح: {part.quantity} قطعة
+                            </p>
+                          );
+                        })()}
                       </div>
                       <div className="form-group">
                         <label className="form-label" htmlFor="amountSuggestion">القيمة المقترحة</label>
                         <input
                           id="amountSuggestion"
-                          className="input-field bg-gray-50"
+                          className="input-field bg-gray-50 no-spinner"
                           type="number"
                           value={(() => {
                             const part = spareParts.find(p => String(p.id) === String(costForm.sparePartId));
@@ -390,14 +427,24 @@ const RequestDetailsPage: React.FC = () => {
                       </div>
                     </div>
                   )}
-                  <div className="flex gap-3">
-                    <button className="btn-primary flex-1" type="submit" disabled={loading}>
-                      {loading ? <div className="loading-spinner ml-2"></div> : null}
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <button 
+                      className="btn-primary flex-1 flex items-center justify-center" 
+                      type="submit" 
+                      disabled={loading || !costForm.description || costForm.amount <= 0}
+                    >
+                      {loading ? (
+                        <div className="loading-spinner ml-2"></div>
+                      ) : (
+                        <svg className="w-4 h-4 ml-2" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd"/>
+                        </svg>
+                      )}
                       {t('details.costs.add') || 'إضافة تكلفة'}
                     </button>
                     <button 
                       type="button"
-                      className="px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 transition-colors flex items-center"
+                      className="px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 transition-colors flex items-center justify-center"
                       onClick={() => setShowSparePartsModal(true)}
                     >
                       <svg className="w-4 h-4 ml-1" fill="currentColor" viewBox="0 0 20 20">

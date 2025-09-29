@@ -87,6 +87,17 @@
     @apply text-gray-400;
   }
   
+  /* Remove number input arrows */
+  .no-spinner::-webkit-outer-spin-button,
+  .no-spinner::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  
+  .no-spinner[type=number] {
+    -moz-appearance: textfield;
+  }
+  
   .select-field {
     @apply block w-full rounded-lg border-gray-300 py-3 px-4 text-base focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm transition-all duration-200 bg-white cursor-pointer;
   }
