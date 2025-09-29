@@ -60,7 +60,8 @@ export enum NotificationType {
   COMPLETION = 'COMPLETION',
   READ_RECEIPT = 'READ_RECEIPT',
   WAREHOUSE_UPDATE = 'WAREHOUSE_UPDATE',
-  PRODUCT_ADDED = 'PRODUCT_ADDED'
+  PRODUCT_ADDED = 'PRODUCT_ADDED',
+  COST_ADDED = 'COST_ADDED'
 }
 
 // Extend Express Request type to include user

@@ -221,7 +221,7 @@ export const requestsAPI = {
       const response = await api.post(`/requests/${id}/costs`, data);
       return handleResponse(response);
     } catch (error) {
-      handleError(error);
+      return Promise.reject(handleError(error));
     }
   },
 

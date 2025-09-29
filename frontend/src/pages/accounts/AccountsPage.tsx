@@ -191,89 +191,79 @@ const AccountsPage: React.FC = () => {
       <div className="card">
         <div className="card-content">
           {error && <div className="text-red-600 mb-3">{error}</div>}
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+          <div className="overflow-hidden border border-gray-200 rounded-xl shadow-sm">
+            <table className="min-w-full divide-y divide-gray-200 text-sm">
+              <thead className="bg-gray-100 text-gray-600 uppercase tracking-wide">
                 <tr>
-                  <th className="th">{t('users.table.name')}</th>
-                  <th className="th">{t('users.table.username')}</th>
-                  <th className="th">{t('users.table.email')}</th>
-                  <th className="th">{t('users.table.role')}</th>
-                  <th className="th">{t('users.table.department')}</th>
-                  <th className="th">{t('users.table.status')}</th>
-                  <th className="th">{t('users.table.actions')}</th>
+                  <th className="px-5 py-3 font-semibold">{t('users.table.name')}</th>
+                  <th className="px-5 py-3 font-semibold">{t('users.table.username')}</th>
+                  <th className="px-5 py-3 font-semibold">{t('users.table.email')}</th>
+                  <th className="px-5 py-3 font-semibold">{t('users.table.role')}</th>
+                  <th className="px-5 py-3 font-semibold">{t('users.table.department')}</th>
+                  <th className="px-5 py-3 font-semibold">{t('users.table.status')}</th>
+                  <th className="px-5 py-3 font-semibold text-center">{t('users.table.actions')}</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white divide-y divide-gray-100">
                 {filteredUsers.length > 0 ? (
                   filteredUsers.map((user) => (
-                    <tr key={user.id} className="hover:bg-gray-50">
-                      <td className="td">
+                    <tr key={user.id} className="hover:bg-slate-50 transition-colors">
+                      <td className="px-5 py-4 whitespace-nowrap">
                         <div className="flex items-center">
-                          <div className="h-10 w-10 flex-shrink-0">
-                            <div className="h-10 w-10 rounded-full bg-primary-600 flex items-center justify-center">
-                              <span className="text-sm font-medium text-white">
-                                {user.firstName.charAt(0)}{user.lastName.charAt(0)}
-                              </span>
-                            </div>
+                          <div className="h-10 w-10 flex-shrink-0 rounded-full bg-blue-600/10 text-blue-700 font-semibold flex items-center justify-center">
+                            {user.firstName.charAt(0)}{user.lastName.charAt(0)}
                           </div>
-                          <div className="mr-4">
-                            <div className="text-sm font-medium text-gray-900">
+                          <div className="mr-3">
+                            <div className="text-sm font-semibold text-gray-900">
                               {user.firstName} {user.lastName}
                             </div>
-                            <div className="text-sm text-gray-500">{user.phone}</div>
+                            <div className="text-xs text-gray-500">{user.phone || '-'}</div>
                           </div>
                         </div>
                       </td>
-                      <td className="td">
-                        <div className="text-sm text-gray-900">{user.username}</div>
-                      </td>
-                      <td className="td">
-                        <div className="text-sm text-gray-900">{user.email}</div>
-                      </td>
-                      <td className="td">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      <td className="px-5 py-4 whitespace-nowrap text-gray-700 font-medium">{user.username}</td>
+                      <td className="px-5 py-4 whitespace-nowrap text-gray-600">{user.email}</td>
+                      <td className="px-5 py-4 whitespace-nowrap">
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">
                           {roleLabels[user.role]}
                         </span>
                       </td>
-                      <td className="td">
-                        <div className="text-sm text-gray-900">{user.department?.name || '-'}</div>
-                      </td>
-                      <td className="td">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          user.isActive 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-red-100 text-red-800'
+                      <td className="px-5 py-4 whitespace-nowrap text-gray-700">{user.department?.name || '-'}</td>
+                      <td className="px-5 py-4 whitespace-nowrap">
+                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${
+                          user.isActive
+                            ? 'bg-emerald-100 text-emerald-700'
+                            : 'bg-rose-100 text-rose-700'
                         }`}>
                           {user.isActive ? t('users.active') : t('users.inactive')}
                         </span>
                       </td>
-                      <td className="td">
-                        <div className="flex space-x-2">
+                      <td className="px-5 py-4">
+                        <div className="flex flex-wrap justify-center gap-3 text-xs font-medium text-gray-600">
                           <button
-                            className="text-blue-600 hover:text-blue-900 text-sm"
+                            className="text-blue-600 hover:text-blue-800 transition-colors"
                             onClick={() => navigate(`/accounts/${user.id}/edit`)}
                           >
                             {t('common.edit')}
                           </button>
+                          <span className="text-gray-300">|</span>
                           <button
-                            className="text-green-600 hover:text-green-900 text-sm"
+                            className="text-emerald-600 hover:text-emerald-800 transition-colors"
                             onClick={() => handleChangePassword(user)}
                           >
                             تغيير كلمة المرور
                           </button>
+                          <span className="text-gray-300">|</span>
                           <button
-                            className={`text-sm ${
-                              user.isActive 
-                                ? 'text-red-600 hover:text-red-900' 
-                                : 'text-green-600 hover:text-green-900'
-                            }`}
+                            className={`${
+                              user.isActive
+                                ? 'text-rose-600 hover:text-rose-800'
+                                : 'text-emerald-600 hover:text-emerald-800'
+                            } transition-colors`}
                             onClick={() => handleToggleActive(user.id, user.isActive)}
                             disabled={loading}
                           >
-                            {loading ? <div className="loading-spinner"></div> : (
-                              user.isActive ? t('users.deactivate') : t('users.activate')
-                            )}
+                            {loading ? t('common.loading') : user.isActive ? t('users.deactivate') : t('users.activate')}
                           </button>
                         </div>
                       </td>
@@ -281,17 +271,18 @@ const AccountsPage: React.FC = () => {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={7} className="td text-center">
-                      <div className="text-gray-500 py-8">
-                        {loading ? (
-                          <div className="loading-spinner mx-auto mb-4"></div>
-                        ) : (
-                          <div>
-                            <p className="text-lg font-medium">{t('users.noUsersFound')}</p>
-                            <p className="text-sm mt-2">{t('users.noUsersFoundDescription')}</p>
-                          </div>
-                        )}
-                      </div>
+                    <td colSpan={7} className="px-5 py-12 text-center text-gray-500">
+                      {loading ? (
+                        <div className="flex flex-col items-center gap-3">
+                          <div className="loading-spinner" />
+                          <span>{t('users.loading')}</span>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          <p className="text-base font-medium">{t('users.noUsersFound')}</p>
+                          <p className="text-sm text-gray-400">{t('users.noUsersFoundDescription')}</p>
+                        </div>
+                      )}
                     </td>
                   </tr>
                 )}
@@ -311,13 +302,14 @@ const AccountsPage: React.FC = () => {
             
             <form onSubmit={handlePasswordSubmit}>
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="modal-new-password" className="block text-sm font-medium text-gray-700 mb-2">
                   كلمة المرور الجديدة
                 </label>
                 <input
                   type="password"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
+                  id="modal-new-password"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                   minLength={6}
@@ -325,13 +317,14 @@ const AccountsPage: React.FC = () => {
               </div>
               
               <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="modal-confirm-password" className="block text-sm font-medium text-gray-700 mb-2">
                   تأكيد كلمة المرور
                 </label>
                 <input
                   type="password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
+                  id="modal-confirm-password"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                   minLength={6}

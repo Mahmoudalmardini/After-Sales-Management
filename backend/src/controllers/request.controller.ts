@@ -400,6 +400,15 @@ export const getRequestById = asyncHandler(async (req: AuthenticatedRequest, res
         },
         orderBy: { createdAt: 'desc' },
       },
+      requestParts: {
+        include: {
+          sparePart: true,
+          addedBy: {
+            select: { id: true, firstName: true, lastName: true },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+      },
     },
   });
 
@@ -430,6 +439,18 @@ export const updateRequestStatus = asyncHandler(async (req: AuthenticatedRequest
 
   const request = await prisma.request.findUnique({
     where: { id: requestId },
+    select: {
+      id: true,
+      requestNumber: true,
+      warrantyStatus: true,
+      departmentId: true,
+      receivedById: true,
+      assignedTechnicianId: true,
+      status: true,
+      startedAt: true,
+      completedAt: true,
+      closedAt: true,
+    },
   });
 
   if (!request) {
@@ -462,7 +483,15 @@ export const updateRequestStatus = asyncHandler(async (req: AuthenticatedRequest
         RequestStatus.IN_REPAIR,
       ].includes(status as RequestStatus)) ||
       // Completing work: IN_REPAIR -> COMPLETED
-      (request.status === RequestStatus.IN_REPAIR && status === RequestStatus.COMPLETED)
+      (request.status === RequestStatus.IN_REPAIR && status === RequestStatus.COMPLETED) ||
+      // Moving to waiting parts when inventory missing
+      (request.status === RequestStatus.IN_REPAIR && status === RequestStatus.WAITING_PARTS) ||
+      // Returning from waiting parts
+      (request.status === RequestStatus.WAITING_PARTS && [
+        RequestStatus.UNDER_INSPECTION,
+        RequestStatus.IN_REPAIR,
+        RequestStatus.COMPLETED,
+      ].includes(status as RequestStatus))
     );
 
   // Check if user can change status
@@ -501,6 +530,12 @@ export const updateRequestStatus = asyncHandler(async (req: AuthenticatedRequest
           id: true,
           firstName: true,
           lastName: true,
+        },
+      },
+      requestParts: {
+        include: {
+          sparePart: true,
+          addedBy: { select: { id: true, firstName: true, lastName: true } },
         },
       },
     },
@@ -778,6 +813,14 @@ export const addCost = asyncHandler(async (req: AuthenticatedRequest, res: Respo
 
   const request = await prisma.request.findUnique({
     where: { id: requestId },
+    select: {
+      id: true,
+      requestNumber: true,
+      warrantyStatus: true,
+      departmentId: true,
+      receivedById: true,
+      assignedTechnicianId: true,
+    },
   });
 
   if (!request) {
@@ -810,11 +853,13 @@ export const addCost = asyncHandler(async (req: AuthenticatedRequest, res: Respo
   });
 
   // Log activity
+  const activityDetails = `Cost added: ${description} - ${amount} ${currency}`;
+
   await logActivity(
     requestId,
     req.user.id,
     ActivityType.COST_ADDED,
-    `Cost added: ${description} - $${amount}`,
+    activityDetails,
     null,
     `${description}: $${amount}`
   );
@@ -857,7 +902,47 @@ export const addCost = asyncHandler(async (req: AuthenticatedRequest, res: Respo
     }
   }
 
-  logger.info(`Cost added to request ${request.requestNumber} by user ${req.user.username}: ${description} - $${amount}`);
+  // Notify managers/supervisors about cost addition
+  if (request.departmentId) {
+    const managers = await prisma.user.findMany({
+      where: {
+        departmentId: request.departmentId,
+        role: { in: [UserRole.DEPARTMENT_MANAGER, UserRole.SECTION_SUPERVISOR] },
+        isActive: true,
+      },
+      select: { id: true },
+    });
+
+    for (const manager of managers) {
+      await createNotification({
+        userId: manager.id,
+        requestId,
+        title: 'تمت إضافة تكلفة جديدة للطلب',
+        message: `قام ${req.user.firstName || 'المستخدم'} بإضافة تكلفة بقيمة ${amount} ${currency} للطلب ${request.requestNumber}.`,
+        type: NotificationType.COST_ADDED,
+        createdById: req.user.id,
+      });
+    }
+  }
+
+  // Notify request owner/technician if different from current user
+  const notifyUsers = new Set<number>();
+  if (request.receivedById) notifyUsers.add(request.receivedById);
+  if (request.assignedTechnicianId) notifyUsers.add(request.assignedTechnicianId);
+  notifyUsers.delete(req.user.id);
+
+  for (const userId of notifyUsers) {
+    await createNotification({
+      userId,
+      requestId,
+      title: 'تم تحديث تكاليف الطلب',
+      message: `تم إضافة تكلفة جديدة بقيمة ${amount} ${currency} في طلبك.`,
+      type: NotificationType.COST_ADDED,
+      createdById: req.user.id,
+    });
+  }
+
+  logger.info(`Cost added to request ${request.requestNumber} by user ${req.user.username}: ${description} - ${amount} ${currency}`);
 
   const response: ApiResponse = {
     success: true,

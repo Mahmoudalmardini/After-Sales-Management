@@ -1,11 +1,13 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { requestsAPI, usersAPI, statusAPI } from '../../services/api';
-import { AddCostForm, CloseRequestForm, CostType, Request, RequestStatus, REQUEST_STATUS_LABELS, CustomRequestStatus, UserRole } from '../../types';
+import { requestsAPI, usersAPI, statusAPI, requestPartsAPI } from '../../services/api';
+import { AddCostForm, CloseRequestForm, CostType, Request, RequestStatus, REQUEST_STATUS_LABELS, CustomRequestStatus, UserRole, RequestPart } from '../../types';
 import { useI18n } from '../../contexts/I18nContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { formatCurrency, getCurrentCurrency } from '../../utils/currency';
 import { useCurrency } from '../../hooks/useCurrency';
+
+interface CostFormState extends AddCostForm {}
 
 const RequestDetailsPage: React.FC = () => {
   const { t } = useI18n();
@@ -23,7 +25,24 @@ const RequestDetailsPage: React.FC = () => {
   const [assignId, setAssignId] = useState<string>('');
   const [statusTo, setStatusTo] = useState<RequestStatus>('UNDER_INSPECTION');
   const [statusComment, setStatusComment] = useState('');
-  const [costForm, setCostForm] = useState<AddCostForm>({ description: '', amount: 0, costType: 'PARTS', currency: getCurrentCurrency() });
+const [costForm, setCostForm] = useState<CostFormState>({ description: '', amount: 0, costType: 'PARTS', currency: getCurrentCurrency() });
+  const [spareParts, setSpareParts] = useState<any[]>([]);
+  const [loadingSpareParts, setLoadingSpareParts] = useState(false);
+  useEffect(() => {
+    const loadSpareParts = async () => {
+      try {
+        setLoadingSpareParts(true);
+        const response = await storageAPI.getSpareParts({ limit: 100 });
+        setSpareParts(response.data?.spareParts || []);
+      } catch (e) {
+        console.error('Error loading spare parts:', e);
+      } finally {
+        setLoadingSpareParts(false);
+      }
+    };
+
+    loadSpareParts();
+  }, []);
   const [closeForm, setCloseForm] = useState<CloseRequestForm>({ finalNotes: '', customerSatisfaction: undefined });
 
 
@@ -145,19 +164,41 @@ const RequestDetailsPage: React.FC = () => {
     }
   };
 
-  const handleAddCost = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      setLoading(true);
-      await requestsAPI.addCost(requestId, costForm);
+const handleAddCost = async (e: React.FormEvent) => {
+  e.preventDefault();
+  try {
+    setLoading(true);
+
+    // If spare part selected, use dedicated request parts API first
+    if (costForm.sparePartId) {
+      await requestPartsAPI.addPartToRequest({
+        requestId,
+        sparePartId: Number(costForm.sparePartId),
+        quantityUsed: Number(costForm.quantity) || 1,
+        addedById: user?.id,
+      });
+
       setCostForm({ description: '', amount: 0, costType: 'PARTS', currency: getCurrentCurrency() });
       await reload();
-    } catch (e: any) {
-      setError(e.message || t('error.failedToSave'));
-    } finally {
-      setLoading(false);
+      return;
     }
-  };
+
+    const payload = {
+      description: costForm.description,
+      amount: costForm.amount,
+      costType: costForm.costType,
+      currency: costForm.currency,
+    };
+
+    await requestsAPI.addCost(requestId, payload);
+    setCostForm({ description: '', amount: 0, costType: 'PARTS', currency: getCurrentCurrency() });
+    await reload();
+  } catch (e: any) {
+    setError(e.message || t('error.failedToSave'));
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleClose = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -289,7 +330,7 @@ const RequestDetailsPage: React.FC = () => {
                     <label className="form-label required">وصف التكلفة</label>
                     <input className="input-field" placeholder="مثال: قطع غيار، عمالة..." value={costForm.description} onChange={(e)=>setCostForm(f=>({...f, description: e.target.value}))} required />
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="form-group">
                       <label className="form-label required">المبلغ ({getCurrencySymbolHook()})</label>
                       <input className="input-field" type="number" step="0.01" placeholder="0.00" value={costForm.amount} onChange={(e)=>setCostForm(f=>({...f, amount: Number(e.target.value)}))} required />
@@ -304,6 +345,75 @@ const RequestDetailsPage: React.FC = () => {
                       </select>
                     </div>
                   </div>
+
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="sparePart">اختيار قطعة الغيار (اختياري)</label>
+                    <select
+                      id="sparePart"
+                      className="select-field"
+                      value={costForm.sparePartId?.toString() || ''}
+                      onChange={(e) => {
+                        const part = spareParts.find(p => String(p.id) === e.target.value);
+                        setCostForm(f => ({
+                          ...f,
+                          sparePartId: part ? part.id : undefined,
+                          quantity: part ? Math.min(part.quantity, 1) : undefined,
+                          amount: part ? part.unitPrice : f.amount,
+                        }));
+                      }}
+                      disabled={loadingSpareParts}
+                    >
+                      <option value="">بدون قطع غيار</option>
+                      {spareParts.map(part => (
+                        <option key={part.id} value={part.id}>
+                          {part.name} (المتوفر: {part.quantity})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {costForm.sparePartId && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="form-group">
+                        <label className="form-label required" htmlFor="spareQuantity">الكمية المطلوبة</label>
+                        <input
+                          id="spareQuantity"
+                          className="input-field"
+                          type="number"
+                          min={1}
+                          max={(() => {
+                            const part = spareParts.find(p => p.id === costForm.sparePartId);
+                            return part ? part.quantity : undefined;
+                          })()}
+                          value={costForm.quantity ?? ''}
+                          onChange={(e) => setCostForm(f => ({ ...f, quantity: Number(e.target.value) }))}
+                          required
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label" htmlFor="amountSuggestion">القيمة المقترحة</label>
+                        <input
+                          id="amountSuggestion"
+                          className="input-field bg-gray-50"
+                          type="number"
+                          value={(() => {
+                            const part = spareParts.find(p => p.id === costForm.sparePartId);
+                            if (!part || !costForm.quantity) return '';
+                            const suggested = part.unitPrice ? Number(part.unitPrice * costForm.quantity).toFixed(2) : '';
+                            return suggested;
+                          })()}
+                          onFocus={() => {
+                            const part = spareParts.find(p => p.id === costForm.sparePartId);
+                            if (part && costForm.quantity) {
+                              setCostForm(f => ({ ...f, amount: part.unitPrice * costForm.quantity! }));
+                            }
+                          }}
+                          readOnly
+                        />
+                        <p className="text-xs text-gray-500 mt-1">يمكنك تعديل المبلغ النهائي يدوياً إذا لزم الأمر.</p>
+                      </div>
+                    </div>
+                  )}
                   <button className="btn-primary w-full" type="submit" disabled={loading}>
                     {loading ? <div className="loading-spinner ml-2"></div> : null}
                     {t('details.costs.add') || 'إضافة تكلفة'}
@@ -317,13 +427,24 @@ const RequestDetailsPage: React.FC = () => {
                     {request.costs && request.costs.length > 0 ? request.costs.map(c => (
                       <div key={c.id} className="bg-gray-50 rounded-lg p-4">
                         <div className="flex justify-between items-start">
-                          <div>
+                          <div className="space-y-2">
                             <p className="text-sm font-medium text-gray-900">{c.description}</p>
-                            <p className="text-xs text-gray-500 mt-1">
+                            <div className="flex items-center gap-2 text-xs text-gray-500">
                               <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                                 {c.costType === 'PARTS' ? 'قطع غيار' : c.costType === 'LABOR' ? 'عمالة' : c.costType === 'TRANSPORTATION' ? 'مواصلات' : 'أخرى'}
                               </span>
-                            </p>
+                              {c.requestPart && (
+                                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-amber-100 text-amber-700">
+                                  <span className="material-icons text-xs">build</span>
+                                  {c.requestPart.sparePart?.name} • كمية {c.requestPart.quantityUsed}
+                                </span>
+                              )}
+                            </div>
+                            {c.requestPart && (
+                              <p className="text-xs text-gray-400">
+                                السعر للوحدة: {formatCurrency(c.requestPart.unitPrice, c.currency as any)}
+                              </p>
+                            )}
                           </div>
                           <div className="text-left">
                             <p className="text-lg font-semibold text-gray-900">{formatCurrency(c.amount, c.currency as any)}</p>

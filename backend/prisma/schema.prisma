@@ -166,10 +166,12 @@ model RequestCost {
   currency    String   @default("SYP")
   addedById   Int
   createdAt   DateTime @default(now())
+  requestPartId Int?
 
   // Relations
   request Request @relation(fields: [requestId], references: [id], onDelete: Cascade)
   addedBy User    @relation(fields: [addedById], references: [id])
+  requestPart RequestPart? @relation(fields: [requestPartId], references: [id])
 
   @@map("request_costs")
 }
@@ -234,6 +236,7 @@ model RequestPart {
   request   Request   @relation(fields: [requestId], references: [id], onDelete: Cascade)
   sparePart SparePart @relation(fields: [sparePartId], references: [id])
   addedBy   User      @relation(fields: [addedById], references: [id])
+  cost      RequestCost?
 
   @@map("request_parts")
 }
