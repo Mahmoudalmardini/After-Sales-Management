@@ -448,17 +448,30 @@ export const updateRequestStatus = asyncHandler(async (req: AuthenticatedRequest
     throw new ForbiddenError('Cannot update this request');
   }
 
+  // Determine if technician is allowed to change this status
+  const technicianCanChangeStatus =
+    req.user.role === UserRole.TECHNICIAN &&
+    (request.assignedTechnicianId === req.user.id || request.receivedById === req.user.id) &&
+    (
+      // Confirming receipt: NEW -> ASSIGNED
+      (request.status === RequestStatus.NEW && status === RequestStatus.ASSIGNED) ||
+      // Starting work / updating progress once assigned
+      (request.status === RequestStatus.ASSIGNED && [
+        RequestStatus.UNDER_INSPECTION,
+        RequestStatus.WAITING_PARTS,
+        RequestStatus.IN_REPAIR,
+      ].includes(status as RequestStatus)) ||
+      // Completing work: IN_REPAIR -> COMPLETED
+      (request.status === RequestStatus.IN_REPAIR && status === RequestStatus.COMPLETED)
+    );
+
   // Check if user can change status
-  // Technicians can only confirm/receive requests (NEW -> ASSIGNED) if they are assigned to it or received it
   const canChangeStatus = 
     req.user.role === UserRole.COMPANY_MANAGER ||
     req.user.role === UserRole.DEPUTY_MANAGER ||
     req.user.role === UserRole.DEPARTMENT_MANAGER ||
     req.user.role === UserRole.SECTION_SUPERVISOR ||
-    (req.user.role === UserRole.TECHNICIAN && 
-     (request.assignedTechnicianId === req.user.id || request.receivedById === req.user.id) && 
-     status === RequestStatus.ASSIGNED && 
-     request.status === RequestStatus.NEW);
+    technicianCanChangeStatus;
 
   if (!canChangeStatus) {
     throw new ForbiddenError('No permissions. Please consult your administrator.');
@@ -525,17 +538,23 @@ export const updateRequestStatus = asyncHandler(async (req: AuthenticatedRequest
     });
   }
 
-  // If technician confirmed/received the request, notify managers and supervisors
-  if (req.user.role === UserRole.TECHNICIAN && oldStatus === RequestStatus.NEW && status === RequestStatus.ASSIGNED) {
+  // If technician changed the status (allowed transitions), notify managers and supervisors
+  if (req.user.role === UserRole.TECHNICIAN && technicianCanChangeStatus) {
     const technicianName = `${req.user.firstName || 'Unknown'} ${req.user.lastName || 'Technician'}`;
-    
-    // Get all managers and supervisors (including company and deputy managers)
+    const statusLabels: Record<string, string> = {
+      NEW: 'جديد',
+      ASSIGNED: 'مُعين',
+      UNDER_INSPECTION: 'تحت الفحص',
+      WAITING_PARTS: 'في انتظار القطع',
+      IN_REPAIR: 'قيد الإصلاح',
+      COMPLETED: 'مكتمل',
+      CLOSED: 'مغلق',
+    };
+
     const managersAndSupervisors = await prisma.user.findMany({
       where: {
         OR: [
-          // Company and deputy managers (can see all departments)
           { role: { in: [UserRole.COMPANY_MANAGER, UserRole.DEPUTY_MANAGER] } },
-          // Department managers and supervisors for this specific department
           {
             departmentId: request.departmentId,
             role: { in: [UserRole.DEPARTMENT_MANAGER, UserRole.SECTION_SUPERVISOR] },
@@ -543,16 +562,27 @@ export const updateRequestStatus = asyncHandler(async (req: AuthenticatedRequest
         ],
         isActive: true,
       },
-      select: { id: true, firstName: true, lastName: true, role: true },
+      select: { id: true },
     });
 
-    // Send notification to each manager/supervisor
+    let title = 'تحديث حالة الطلب من قبل الفني';
+    let message = `الفني ${technicianName} قام بتحديث حالة الطلب ${updatedRequest.requestNumber}`;
+
+    if (oldStatus === RequestStatus.NEW && status === RequestStatus.ASSIGNED) {
+      title = 'تم تأكيد استلام الطلب';
+      message = `الفني ${technicianName} أكد استلامه للطلب ${updatedRequest.requestNumber}`;
+    } else if (statusLabels[oldStatus] || statusLabels[status as keyof typeof statusLabels]) {
+      const fromLabel = statusLabels[oldStatus] || oldStatus;
+      const toLabel = statusLabels[status as keyof typeof statusLabels] || status;
+      message = `الفني ${technicianName} غيّر حالة الطلب ${updatedRequest.requestNumber} من "${fromLabel}" إلى "${toLabel}"`;
+    }
+
     for (const manager of managersAndSupervisors) {
       await createNotification({
         userId: manager.id,
         requestId: requestId,
-        title: 'تم تأكيد استلام الطلب',
-        message: `الفني ${technicianName} أكد استلامه للطلب ${updatedRequest.requestNumber}`,
+        title,
+        message,
         type: NotificationType.STATUS_CHANGE,
         createdById: req.user.id,
       });
