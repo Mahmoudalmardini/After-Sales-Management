@@ -2,15 +2,14 @@
 cmds = [
   "cd frontend && npm install && npm run build",
   "cd backend && npm install",
-  "cd backend && DATABASE_URL='file:./prisma/dev.db' npx prisma generate",
+  "cd backend && npx prisma generate",
   "cd backend && npm run build",
   "mkdir -p backend/dist/public",
   "cp -r frontend/build/* backend/dist/public/ || xcopy frontend\\build\\* backend\\dist\\public\\ /E /I /H /Y"
 ]
 
 [start]
-cmd = "cd backend && DATABASE_URL='file:./prisma/dev.db' node deploy.js"
+cmd = "cd backend && NODE_ENV=production npm run start:prod"
 
 [variables]
 NODE_ENV = "production"
-DATABASE_URL = "file:./prisma/dev.db"
