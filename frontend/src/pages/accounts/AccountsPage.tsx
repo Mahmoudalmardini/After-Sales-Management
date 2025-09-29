@@ -239,31 +239,49 @@ const AccountsPage: React.FC = () => {
                         </span>
                       </td>
                       <td className="px-5 py-4">
-                        <div className="flex flex-wrap justify-center gap-3 text-xs font-medium text-gray-600">
+                        <div className="flex items-center justify-center space-x-2 rtl:space-x-reverse">
                           <button
-                            className="text-blue-600 hover:text-blue-800 transition-colors"
+                            className="inline-flex items-center px-3 py-1.5 border border-blue-300 rounded-md text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors"
                             onClick={() => navigate(`/accounts/${user.id}/edit`)}
+                            title="تعديل المستخدم"
                           >
-                            {t('common.edit')}
+                            <svg className="w-3 h-3 ml-1" fill="currentColor" viewBox="0 0 20 20">
+                              <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"/>
+                            </svg>
+                            تعديل
                           </button>
-                          <span className="text-gray-300">|</span>
                           <button
-                            className="text-emerald-600 hover:text-emerald-800 transition-colors"
+                            className="inline-flex items-center px-3 py-1.5 border border-green-300 rounded-md text-xs font-medium text-green-700 bg-green-50 hover:bg-green-100 transition-colors"
                             onClick={() => handleChangePassword(user)}
+                            title="تغيير كلمة المرور"
                           >
-                            تغيير كلمة المرور
+                            <svg className="w-3 h-3 ml-1" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M18 8a6 6 0 01-7.743 5.743L10 14l-1 1-1 1H6v2H2v-4l4.257-4.257A6 6 0 1118 8zm-6-4a1 1 0 100 2 2 2 0 012 2 1 1 0 102 0 4 4 0 00-4-4z" clipRule="evenodd"/>
+                            </svg>
+                            كلمة المرور
                           </button>
-                          <span className="text-gray-300">|</span>
                           <button
-                            className={`${
-                              user.isActive
-                                ? 'text-rose-600 hover:text-rose-800'
-                                : 'text-emerald-600 hover:text-emerald-800'
-                            } transition-colors`}
+                            className={`inline-flex items-center px-3 py-1.5 border rounded-md text-xs font-medium transition-colors ${
+                              user.isActive 
+                                ? 'border-red-300 text-red-700 bg-red-50 hover:bg-red-100' 
+                                : 'border-green-300 text-green-700 bg-green-50 hover:bg-green-100'
+                            }`}
                             onClick={() => handleToggleActive(user.id, user.isActive)}
                             disabled={loading}
+                            title={user.isActive ? 'تعطيل المستخدم' : 'تفعيل المستخدم'}
                           >
-                            {loading ? t('common.loading') : user.isActive ? t('users.deactivate') : t('users.activate')}
+                            {loading ? (
+                              <div className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin ml-1"></div>
+                            ) : (
+                              <svg className="w-3 h-3 ml-1" fill="currentColor" viewBox="0 0 20 20">
+                                {user.isActive ? (
+                                  <path fillRule="evenodd" d="M13.477 14.89A6 6 0 015.11 6.524l8.367 8.368zm1.414-1.414L6.524 5.11a6 6 0 018.367 8.367zM18 10a8 8 0 11-16 0 8 8 0 0116 0z" clipRule="evenodd"/>
+                                ) : (
+                                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/>
+                                )}
+                              </svg>
+                            )}
+                            {user.isActive ? 'تعطيل' : 'تفعيل'}
                           </button>
                         </div>
                       </td>

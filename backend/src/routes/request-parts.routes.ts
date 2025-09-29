@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { prisma } from '../index';
-import { ApiResponse, ValidationError } from '../types';
+import { ApiResponse, ValidationError, UserRole, NotificationType } from '../types';
+import { createNotification } from '../services/notification.service';
 
 const router = Router();
 
@@ -89,24 +90,81 @@ router.post('/', async (req, res) => {
       include: {
         sparePart: true,
         addedBy: { select: { firstName: true, lastName: true } },
+        request: {
+          include: {
+            receivedBy: { select: { id: true, firstName: true, lastName: true } },
+            assignedTechnician: { select: { id: true, firstName: true, lastName: true } },
+            department: { select: { id: true, name: true } }
+          }
+        }
       },
     });
 
     // Update spare part quantity
-    await tx.sparePart.update({
+    const updatedSparePart = await tx.sparePart.update({
       where: { id: Number(sparePartId) },
       data: {
         quantity: sparePart.quantity - Number(quantityUsed),
       },
     });
 
-    return requestPart;
+    return { requestPart, updatedSparePart };
   });
+
+  // Send notifications after inventory update
+  const { requestPart, updatedSparePart } = result;
+  const addedByName = `${requestPart.addedBy.firstName} ${requestPart.addedBy.lastName}`;
+  
+  // Notify warehouse keeper about inventory decrease
+  const warehouseKeepers = await prisma.user.findMany({
+    where: {
+      role: UserRole.WAREHOUSE_KEEPER,
+      isActive: true,
+    },
+    select: { id: true }
+  });
+
+  for (const warehouseKeeper of warehouseKeepers) {
+    await createNotification({
+      userId: warehouseKeeper.id,
+      requestId: Number(requestId),
+      title: 'تم استخدام قطعة غيار',
+      message: `${addedByName} استخدم ${quantityUsed} من ${requestPart.sparePart.name} للطلب ${requestPart.request.requestNumber}. الكمية المتبقية: ${updatedSparePart.quantity}`,
+      type: NotificationType.WAREHOUSE_UPDATE,
+      createdById: Number(addedById),
+    });
+  }
+
+  // Notify admins and supervisors about inventory usage
+  const managersAndSupervisors = await prisma.user.findMany({
+    where: {
+      OR: [
+        { role: { in: [UserRole.COMPANY_MANAGER, UserRole.DEPUTY_MANAGER] } },
+        {
+          departmentId: requestPart.request.department.id,
+          role: { in: [UserRole.DEPARTMENT_MANAGER, UserRole.SECTION_SUPERVISOR] },
+        }
+      ],
+      isActive: true,
+    },
+    select: { id: true }
+  });
+
+  for (const manager of managersAndSupervisors) {
+    await createNotification({
+      userId: manager.id,
+      requestId: Number(requestId),
+      title: 'استخدام قطع الغيار',
+      message: `تم استخدام ${quantityUsed} من ${requestPart.sparePart.name} في الطلب ${requestPart.request.requestNumber}`,
+      type: NotificationType.WAREHOUSE_UPDATE,
+      createdById: Number(addedById),
+    });
+  }
 
   const response: ApiResponse = {
     success: true,
     message: 'Spare part added to request successfully',
-    data: { requestPart: result },
+    data: { requestPart: result.requestPart },
   };
 
   res.status(201).json(response);

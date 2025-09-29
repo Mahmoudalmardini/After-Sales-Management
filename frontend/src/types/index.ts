@@ -130,7 +130,6 @@ export interface Request {
   updatedAt: string;
   activities?: RequestActivity[];
   costs?: RequestCost[];
-  requestParts?: RequestPart[];
 }
 
 // Activity types
@@ -303,8 +302,6 @@ export interface AddCostForm {
   amount: number;
   costType: CostType;
   currency?: string;
-  sparePartId?: number;
-  quantity?: number;
 }
 
 export interface CloseRequestForm {

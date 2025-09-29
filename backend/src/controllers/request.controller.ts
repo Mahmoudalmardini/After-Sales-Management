@@ -400,15 +400,6 @@ export const getRequestById = asyncHandler(async (req: AuthenticatedRequest, res
         },
         orderBy: { createdAt: 'desc' },
       },
-      requestParts: {
-        include: {
-          sparePart: true,
-          addedBy: {
-            select: { id: true, firstName: true, lastName: true },
-          },
-        },
-        orderBy: { createdAt: 'desc' },
-      },
     },
   });
 
@@ -442,11 +433,11 @@ export const updateRequestStatus = asyncHandler(async (req: AuthenticatedRequest
     select: {
       id: true,
       requestNumber: true,
+      status: true,
       warrantyStatus: true,
       departmentId: true,
       receivedById: true,
       assignedTechnicianId: true,
-      status: true,
       startedAt: true,
       completedAt: true,
       closedAt: true,
@@ -483,15 +474,7 @@ export const updateRequestStatus = asyncHandler(async (req: AuthenticatedRequest
         RequestStatus.IN_REPAIR,
       ].includes(status as RequestStatus)) ||
       // Completing work: IN_REPAIR -> COMPLETED
-      (request.status === RequestStatus.IN_REPAIR && status === RequestStatus.COMPLETED) ||
-      // Moving to waiting parts when inventory missing
-      (request.status === RequestStatus.IN_REPAIR && status === RequestStatus.WAITING_PARTS) ||
-      // Returning from waiting parts
-      (request.status === RequestStatus.WAITING_PARTS && [
-        RequestStatus.UNDER_INSPECTION,
-        RequestStatus.IN_REPAIR,
-        RequestStatus.COMPLETED,
-      ].includes(status as RequestStatus))
+      (request.status === RequestStatus.IN_REPAIR && status === RequestStatus.COMPLETED)
     );
 
   // Check if user can change status
@@ -530,12 +513,6 @@ export const updateRequestStatus = asyncHandler(async (req: AuthenticatedRequest
           id: true,
           firstName: true,
           lastName: true,
-        },
-      },
-      requestParts: {
-        include: {
-          sparePart: true,
-          addedBy: { select: { id: true, firstName: true, lastName: true } },
         },
       },
     },
@@ -797,10 +774,16 @@ export const assignTechnician = asyncHandler(async (req: AuthenticatedRequest, r
 // Add cost to request
 export const addCost = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const requestId = parseInt(req.params.id);
-  const { description, amount, costType, currency = 'SYP' } = req.body;
+  const { description, amount, costType, currency = 'SYP', sparePartId, quantity } = req.body;
 
   if (!requestId || !description || !amount || !costType) {
     throw new ValidationError('All cost fields are required');
+  }
+
+  if (sparePartId) {
+    if (!quantity || Number(quantity) <= 0) {
+      throw new ValidationError('Quantity must be provided and greater than zero when using a spare part');
+    }
   }
 
   if (!req.user) {
@@ -832,6 +815,49 @@ export const addCost = asyncHandler(async (req: AuthenticatedRequest, res: Respo
     throw new ForbiddenError('Cannot add costs to under-warranty requests');
   }
 
+  let sparePartUsage: { requestPart: any; remaining: number } | null = null;
+
+  if (sparePartId) {
+    const sparePart = await prisma.sparePart.findUnique({
+      where: { id: parseInt(sparePartId) },
+      select: { id: true, name: true, quantity: true, unitPrice: true },
+    });
+
+    if (!sparePart) {
+      throw new ValidationError('Selected spare part not found');
+    }
+
+    if (sparePart.quantity < Number(quantity)) {
+      throw new ValidationError('Insufficient spare part quantity in stock');
+    }
+
+    const unitPrice = sparePart.unitPrice || parseFloat(amount) / Number(quantity);
+
+    // Reserve the parts for this request
+    const requestPart = await prisma.requestPart.create({
+      data: {
+        requestId,
+        sparePartId: sparePart.id,
+        quantityUsed: Number(quantity),
+        unitPrice,
+        totalCost: unitPrice * Number(quantity),
+        addedById: req.user.id,
+      },
+      include: {
+        sparePart: true,
+      },
+    });
+
+    // Decrease stock after creating request part
+    const updatedPart = await prisma.sparePart.update({
+      where: { id: sparePart.id },
+      data: { quantity: sparePart.quantity - Number(quantity) },
+      select: { quantity: true },
+    });
+
+    sparePartUsage = { requestPart, remaining: updatedPart.quantity };
+  }
+
   const cost = await prisma.requestCost.create({
     data: {
       requestId,
@@ -853,7 +879,9 @@ export const addCost = asyncHandler(async (req: AuthenticatedRequest, res: Respo
   });
 
   // Log activity
-  const activityDetails = `Cost added: ${description} - ${amount} ${currency}`;
+  const activityDetails = sparePartUsage
+    ? `Spare part used: ${sparePartUsage.requestPart.sparePart.name} x${sparePartUsage.requestPart.quantityUsed}`
+    : `Cost added: ${description} - $${amount}`;
 
   await logActivity(
     requestId,
@@ -902,7 +930,7 @@ export const addCost = asyncHandler(async (req: AuthenticatedRequest, res: Respo
     }
   }
 
-  // Notify managers/supervisors about cost addition
+  // Notify managers/supervisors about cost/spare part usage
   if (request.departmentId) {
     const managers = await prisma.user.findMany({
       where: {
@@ -917,9 +945,39 @@ export const addCost = asyncHandler(async (req: AuthenticatedRequest, res: Respo
       await createNotification({
         userId: manager.id,
         requestId,
-        title: 'تمت إضافة تكلفة جديدة للطلب',
-        message: `قام ${req.user.firstName || 'المستخدم'} بإضافة تكلفة بقيمة ${amount} ${currency} للطلب ${request.requestNumber}.`,
+        title: sparePartUsage ? 'تم استخدام قطعة غيار في الطلب' : 'تمت إضافة تكلفة جديدة للطلب',
+        message: sparePartUsage
+          ? `تم استخدام ${sparePartUsage.requestPart.quantityUsed} من قطعة الغيار "${sparePartUsage.requestPart.sparePart.name}" في الطلب ${request.requestNumber}.`
+          : `قام ${req.user.firstName || 'المستخدم'} بإضافة تكلفة بقيمة ${amount} ${currency} للطلب ${request.requestNumber}.`,
         type: NotificationType.COST_ADDED,
+        createdById: req.user.id,
+      });
+    }
+  }
+
+  // Notify warehouse keeper if spare part used
+  if (sparePartUsage) {
+    // TODO: Link cost to spare part when schema is properly migrated
+    // await prisma.requestCost.update({
+    //   where: { id: cost.id },
+    //   data: { requestPartId: sparePartUsage.requestPart.id },
+    // });
+
+    const warehouseKeepers = await prisma.user.findMany({
+      where: {
+        role: UserRole.WAREHOUSE_KEEPER,
+        isActive: true,
+      },
+      select: { id: true },
+    });
+
+    for (const keeper of warehouseKeepers) {
+      await createNotification({
+        userId: keeper.id,
+        requestId,
+        title: 'تحديث مخزون قطع الغيار',
+        message: `تم استخدام ${sparePartUsage.requestPart.quantityUsed} من "${sparePartUsage.requestPart.sparePart.name}". الكمية المتبقية: ${sparePartUsage.remaining}.`,
+        type: NotificationType.WAREHOUSE_UPDATE,
         createdById: req.user.id,
       });
     }
@@ -936,18 +994,20 @@ export const addCost = asyncHandler(async (req: AuthenticatedRequest, res: Respo
       userId,
       requestId,
       title: 'تم تحديث تكاليف الطلب',
-      message: `تم إضافة تكلفة جديدة بقيمة ${amount} ${currency} في طلبك.`,
+      message: sparePartUsage
+        ? `تم استخدام قطعة الغيار "${sparePartUsage.requestPart.sparePart.name}" (عدد ${sparePartUsage.requestPart.quantityUsed}) في طلبك.`
+        : `تم إضافة تكلفة جديدة بقيمة ${amount} ${currency} في طلبك.`,
       type: NotificationType.COST_ADDED,
       createdById: req.user.id,
     });
   }
 
-  logger.info(`Cost added to request ${request.requestNumber} by user ${req.user.username}: ${description} - ${amount} ${currency}`);
+  logger.info(`Cost added to request ${request.requestNumber} by user ${req.user.username}: ${description} - $${amount}`);
 
   const response: ApiResponse = {
     success: true,
     message: 'Cost added successfully',
-    data: { cost },
+    data: { cost, sparePart: sparePartUsage?.requestPart },
   };
 
   res.status(201).json(response);
