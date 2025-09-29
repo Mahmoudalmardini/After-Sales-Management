@@ -57,7 +57,7 @@ const CreateAccountPage: React.FC = () => {
     } catch (e: any) {
       console.error('Error loading departments:', e);
     }
-  }, [user]);
+  }, []);
 
   useEffect(() => {
     loadDepartments();
