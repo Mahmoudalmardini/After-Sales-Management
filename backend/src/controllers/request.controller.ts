@@ -448,15 +448,20 @@ export const updateRequestStatus = asyncHandler(async (req: AuthenticatedRequest
     throw new ForbiddenError('Cannot update this request');
   }
 
-  // Check if user can change status (only admin and supervisor roles)
+  // Check if user can change status
+  // Technicians can only confirm/receive requests (NEW -> ASSIGNED) if they are assigned to it
   const canChangeStatus = 
     req.user.role === UserRole.COMPANY_MANAGER ||
     req.user.role === UserRole.DEPUTY_MANAGER ||
     req.user.role === UserRole.DEPARTMENT_MANAGER ||
-    req.user.role === UserRole.SECTION_SUPERVISOR;
+    req.user.role === UserRole.SECTION_SUPERVISOR ||
+    (req.user.role === UserRole.TECHNICIAN && 
+     request.assignedTechnicianId === req.user.id && 
+     status === RequestStatus.ASSIGNED && 
+     request.status === RequestStatus.NEW);
 
   if (!canChangeStatus) {
-    throw new ForbiddenError('Only administrators and supervisors can change request status');
+    throw new ForbiddenError('No permissions. Please consult your administrator.');
   }
 
   const oldStatus = request.status;
@@ -520,21 +525,9 @@ export const updateRequestStatus = asyncHandler(async (req: AuthenticatedRequest
     });
   }
 
-  // If technician modified the status, notify managers and supervisors
-  if (req.user.role === UserRole.TECHNICIAN) {
+  // If technician confirmed/received the request, notify managers and supervisors
+  if (req.user.role === UserRole.TECHNICIAN && oldStatus === RequestStatus.NEW && status === RequestStatus.ASSIGNED) {
     const technicianName = `${req.user.firstName || 'Unknown'} ${req.user.lastName || 'Technician'}`;
-    const statusLabels = {
-      'NEW': 'جديد',
-      'ASSIGNED': 'مُعين',
-      'UNDER_INSPECTION': 'تحت الفحص',
-      'WAITING_PARTS': 'في انتظار القطع',
-      'IN_REPAIR': 'قيد الإصلاح',
-      'COMPLETED': 'مكتمل',
-      'CLOSED': 'مغلق'
-    };
-    
-    const oldStatusLabel = statusLabels[oldStatus as keyof typeof statusLabels] || oldStatus;
-    const newStatusLabel = statusLabels[status as keyof typeof statusLabels] || status;
     
     // Get all managers and supervisors (including company and deputy managers)
     const managersAndSupervisors = await prisma.user.findMany({
@@ -558,8 +551,8 @@ export const updateRequestStatus = asyncHandler(async (req: AuthenticatedRequest
       await createNotification({
         userId: manager.id,
         requestId: requestId,
-        title: 'تحديث حالة الطلب من قبل الفني',
-        message: `الفني ${technicianName} قام بتعديل حالة الطلب من "${oldStatusLabel}" إلى "${newStatusLabel}"`,
+        title: 'تم تأكيد استلام الطلب',
+        message: `الفني ${technicianName} أكد استلامه للطلب ${updatedRequest.requestNumber}`,
         type: NotificationType.STATUS_CHANGE,
         createdById: req.user.id,
       });
