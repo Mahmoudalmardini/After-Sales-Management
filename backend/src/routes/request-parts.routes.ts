@@ -21,19 +21,26 @@ const logSparePartHistory = async (
   quantityChange?: number,
   requestId?: number
 ) => {
-  await prisma.sparePartHistory.create({
-    data: {
-      sparePartId,
-      changedById,
-      changeType,
-      fieldChanged,
-      oldValue,
-      newValue,
-      quantityChange,
-      description,
-      requestId,
-    },
-  });
+  try {
+    const history = await prisma.sparePartHistory.create({
+      data: {
+        sparePartId,
+        changedById,
+        changeType,
+        fieldChanged,
+        oldValue,
+        newValue,
+        quantityChange,
+        description,
+        requestId,
+      },
+    });
+    console.log('✅ Spare part history created in request-parts:', history);
+    return history;
+  } catch (error) {
+    console.error('❌ Error creating spare part history in request-parts:', error);
+    throw error;
+  }
 };
 
 /**

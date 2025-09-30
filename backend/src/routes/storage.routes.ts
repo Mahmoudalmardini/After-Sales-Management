@@ -44,19 +44,26 @@ const logSparePartHistory = async (
   quantityChange?: number,
   requestId?: number
 ) => {
-  await prisma.sparePartHistory.create({
-    data: {
-      sparePartId,
-      changedById,
-      changeType,
-      fieldChanged,
-      oldValue,
-      newValue,
-      quantityChange,
-      description,
-      requestId,
-    },
-  });
+  try {
+    const history = await prisma.sparePartHistory.create({
+      data: {
+        sparePartId,
+        changedById,
+        changeType,
+        fieldChanged,
+        oldValue,
+        newValue,
+        quantityChange,
+        description,
+        requestId,
+      },
+    });
+    console.log('✅ Spare part history created:', history);
+    return history;
+  } catch (error) {
+    console.error('❌ Error creating spare part history:', error);
+    throw error;
+  }
 };
 
 // Apply authentication and manager-only access to all storage routes
@@ -184,34 +191,47 @@ router.get('/:id', async (req, res) => {
 router.get('/:id/history', async (req, res) => {
   const { id } = req.params;
   
-  const history = await prisma.sparePartHistory.findMany({
-    where: { sparePartId: Number(id) },
-    include: {
-      changedBy: {
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true,
-          role: true,
+  console.log('📋 Fetching history for spare part ID:', id);
+  
+  try {
+    const history = await prisma.sparePartHistory.findMany({
+      where: { sparePartId: Number(id) },
+      include: {
+        changedBy: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            role: true,
+          },
+        },
+        sparePart: {
+          select: {
+            id: true,
+            name: true,
+            partNumber: true,
+          },
         },
       },
-      sparePart: {
-        select: {
-          id: true,
-          name: true,
-          partNumber: true,
-        },
-      },
-    },
-    orderBy: { createdAt: 'desc' },
-  });
+      orderBy: { createdAt: 'desc' },
+    });
 
-  const response: ApiResponse = {
-    success: true,
-    data: { history },
-  };
+    console.log(`📊 Found ${history.length} history records for spare part ${id}`);
+    
+    const response: ApiResponse = {
+      success: true,
+      data: { history },
+    };
 
-  res.status(200).json(response);
+    res.status(200).json(response);
+  } catch (error) {
+    console.error('❌ Error fetching spare part history:', error);
+    const response: ApiResponse = {
+      success: false,
+      message: 'Failed to fetch history',
+    };
+    res.status(500).json(response);
+  }
 });
 
 /**
