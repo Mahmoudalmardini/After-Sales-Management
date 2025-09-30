@@ -42,12 +42,11 @@ const CustomersPage: React.FC = () => {
     
     // Validate phone number based on type
     if (form.phoneType === 'mobile') {
-      // Mobile phone must start with +963 9 and have 8 more digits (total format: +963 9XXXXXXXX)
-      // Allow with or without space after +963
-      const mobileRegex = /^\+963\s?9\d{7}$/;
+      // Mobile phone must start with +9639 and have 8 more digits (total format: +9639XXXXXXXX)
+      const mobileRegex = /^\+9639\d{8}$/;
       const cleanPhone = form.phone.trim();
       if (!mobileRegex.test(cleanPhone)) {
-        setError(`رقم الهاتف المحمول يجب أن يبدأ بـ +963 9 ويتكون من 8 أرقام بعد ذلك. الرقم المدخل: "${cleanPhone}"`);
+        setError(`رقم الهاتف المحمول يجب أن يبدأ بـ +9639 ويتكون من 8 أرقام بعد ذلك (إجمالي 13 رقماً). مثال: +963912345678. الرقم المدخل: "${cleanPhone}"`);
         return;
       }
     }
@@ -107,7 +106,7 @@ const CustomersPage: React.FC = () => {
               </select>
               <input 
                 className="input" 
-                placeholder={form.phoneType === 'mobile' ? '+963 9XX XXX XX' : 'رقم الهاتف'} 
+                placeholder={form.phoneType === 'mobile' ? '+963912345678' : 'رقم الهاتف'} 
                 value={form.phone} 
                 onChange={e=>{setForm(f=>({...f, phone: e.target.value})); setError(null);}} 
                 required 

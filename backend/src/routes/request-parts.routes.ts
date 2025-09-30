@@ -142,22 +142,26 @@ router.post('/', async (req, res) => {
     return { requestPart, updatedSparePart };
   });
 
-  // Send notifications after inventory update
+  // Send notifications and log history after inventory update
   const { requestPart, updatedSparePart } = result;
   const addedByName = `${requestPart.addedBy.firstName} ${requestPart.addedBy.lastName}`;
   
-  // Log history
-  await logSparePartHistory(
-    Number(sparePartId),
-    Number(addedById),
-    'USED_IN_REQUEST',
-    `استخدام ${quantityUsed} قطعة في الطلب ${requestPart.request.requestNumber}`,
-    'presentPieces',
-    String(sparePart.presentPieces),
-    String(updatedSparePart.presentPieces),
-    -Number(quantityUsed),
-    Number(requestId)
-  );
+  // Log history with proper error handling
+  try {
+    await logSparePartHistory(
+      Number(sparePartId),
+      Number(addedById),
+      'USED_IN_REQUEST',
+      `استخدام ${quantityUsed} قطعة في الطلب ${requestPart.request.requestNumber} - تم تقليل الكمية من ${sparePart.presentPieces} إلى ${updatedSparePart.presentPieces}`,
+      'presentPieces',
+      String(sparePart.presentPieces),
+      String(updatedSparePart.presentPieces),
+      -Number(quantityUsed),
+      Number(requestId)
+    );
+  } catch (error) {
+    console.error('Error logging spare part history:', error);
+  }
   
   // Notify warehouse keeper about inventory decrease
   const warehouseKeepers = await prisma.user.findMany({

@@ -764,12 +764,17 @@ export const assignTechnician = asyncHandler(async (req: AuthenticatedRequest, r
     },
   });
 
-  // Log activity
+  // Log activity with appropriate message based on request status
+  const wasClosedOrCompleted = request.status === RequestStatus.CLOSED || request.status === RequestStatus.COMPLETED;
+  const activityMessage = wasClosedOrCompleted 
+    ? `تم تعيين/إعادة تعيين فني: ${technician.firstName} ${technician.lastName} (الطلب ${request.status === RequestStatus.CLOSED ? 'مغلق' : 'مكتمل'} - لم يتم تغيير الحالة)`
+    : `تم تعيين فني: ${technician.firstName} ${technician.lastName}`;
+  
   await logActivity(
     requestId, 
     req.user.id, 
     ActivityType.ASSIGNMENT, 
-    `Assigned to technician: ${technician.firstName} ${technician.lastName}`,
+    activityMessage,
     request.assignedTechnicianId?.toString(),
     technicianId.toString()
   );
