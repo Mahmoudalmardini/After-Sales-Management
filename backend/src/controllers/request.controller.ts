@@ -473,6 +473,20 @@ export const updateRequestStatus = asyncHandler(async (req: AuthenticatedRequest
     throw new ForbiddenError('Cannot update this request');
   }
 
+  // Check if trying to reopen a closed request
+  const isReopeningClosedRequest = request.status === RequestStatus.CLOSED && status !== RequestStatus.CLOSED;
+  
+  // Only admins can reopen closed requests
+  if (isReopeningClosedRequest) {
+    const canReopenClosed = 
+      req.user.role === UserRole.COMPANY_MANAGER ||
+      req.user.role === UserRole.DEPUTY_MANAGER;
+    
+    if (!canReopenClosed) {
+      throw new ForbiddenError('Only administrators can reopen closed requests');
+    }
+  }
+
   // Determine if technician is allowed to change this status
   const technicianCanChangeStatus =
     req.user.role === UserRole.TECHNICIAN &&
@@ -532,9 +546,16 @@ export const updateRequestStatus = asyncHandler(async (req: AuthenticatedRequest
   });
 
   // Log activity
-  const activityDescription = comment 
-    ? `Status changed from ${oldStatus} to ${status}. Comment: ${comment}`
-    : `Status changed from ${oldStatus} to ${status}`;
+  let activityDescription = '';
+  if (isReopeningClosedRequest) {
+    activityDescription = comment 
+      ? `Request reopened from CLOSED to ${status}. Comment: ${comment}`
+      : `Request reopened from CLOSED to ${status}`;
+  } else {
+    activityDescription = comment 
+      ? `Status changed from ${oldStatus} to ${status}. Comment: ${comment}`
+      : `Status changed from ${oldStatus} to ${status}`;
+  }
   
   await logActivity(requestId, req.user.id, ActivityType.STATUS_CHANGE, activityDescription, oldStatus, status);
 
@@ -718,13 +739,20 @@ export const assignTechnician = asyncHandler(async (req: AuthenticatedRequest, r
     throw new ForbiddenError('Cannot assign technician from different department');
   }
 
+  // Prepare update data - only change status if request is not CLOSED
+  const updateData: any = {
+    assignedTechnicianId: parseInt(technicianId),
+    assignedAt: new Date(),
+  };
+  
+  // Only change status to ASSIGNED if request is not CLOSED or COMPLETED
+  if (request.status !== RequestStatus.CLOSED && request.status !== RequestStatus.COMPLETED) {
+    updateData.status = RequestStatus.ASSIGNED;
+  }
+
   const updatedRequest = await prisma.request.update({
     where: { id: requestId },
-    data: {
-      assignedTechnicianId: parseInt(technicianId),
-      assignedAt: new Date(),
-      status: RequestStatus.ASSIGNED,
-    },
+    data: updateData,
     include: {
       assignedTechnician: {
         select: {
@@ -833,14 +861,14 @@ export const addCost = asyncHandler(async (req: AuthenticatedRequest, res: Respo
   if (sparePartId) {
     const sparePart = await prisma.sparePart.findUnique({
       where: { id: parseInt(sparePartId) },
-      select: { id: true, name: true, quantity: true, unitPrice: true },
-    });
+      select: { id: true, name: true, presentPieces: true, unitPrice: true } as any,
+    }) as any;
 
     if (!sparePart) {
       throw new ValidationError('Selected spare part not found');
     }
 
-    if (sparePart.quantity < Number(quantity)) {
+    if (sparePart.presentPieces < Number(quantity)) {
       throw new ValidationError('Insufficient spare part quantity in stock');
     }
 
@@ -864,11 +892,11 @@ export const addCost = asyncHandler(async (req: AuthenticatedRequest, res: Respo
     // Decrease stock after creating request part
     const updatedPart = await prisma.sparePart.update({
       where: { id: sparePart.id },
-      data: { quantity: sparePart.quantity - Number(quantity) },
-      select: { quantity: true },
-    });
+      data: { presentPieces: sparePart.presentPieces - Number(quantity) } as any,
+      select: { presentPieces: true } as any,
+    }) as any;
 
-    sparePartUsage = { requestPart, remaining: updatedPart.quantity };
+    sparePartUsage = { requestPart, remaining: updatedPart.presentPieces };
   }
 
   const cost = await prisma.requestCost.create({

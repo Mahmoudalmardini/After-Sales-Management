@@ -16,7 +16,8 @@ const StoragePage: React.FC = () => {
   const [editingPart, setEditingPart] = useState<SparePart | null>(null);
   const [form, setForm] = useState<CreateSparePartForm>({
     name: '',
-    partNumber: '',
+    partNumber: '', // Alphanumeric identifier
+    presentPieces: 0, // Number of present pieces
     unitPrice: 0,
     quantity: 0,
     currency: 'SYP',
@@ -31,6 +32,11 @@ const StoragePage: React.FC = () => {
     page: 1,
     limit: 20,
   });
+  
+  const [selectedPartForDescription, setSelectedPartForDescription] = useState<SparePart | null>(null);
+  const [selectedPartForHistory, setSelectedPartForHistory] = useState<SparePart | null>(null);
+  const [historyData, setHistoryData] = useState<any[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
 
   const loadSpareParts = useCallback(async () => {
     try {
@@ -72,8 +78,8 @@ const StoragePage: React.FC = () => {
       };
       
       // Validate required fields
-      if (!payload.name || !payload.partNumber) {
-        setError('Name and part number are required');
+      if (!payload.name || payload.presentPieces === undefined) {
+        setError('Name and number of present pieces are required');
         setLoading(false);
         return;
       }
@@ -88,6 +94,7 @@ const StoragePage: React.FC = () => {
       setForm({
         name: '',
         partNumber: '',
+        presentPieces: 0,
         unitPrice: 0,
         quantity: 0,
         currency: 'SYP',
@@ -107,6 +114,7 @@ const StoragePage: React.FC = () => {
     setForm({
       name: part.name,
       partNumber: part.partNumber,
+      presentPieces: part.presentPieces,
       unitPrice: part.unitPrice,
       quantity: part.quantity,
       currency: part.currency || 'SYP',
@@ -126,6 +134,20 @@ const StoragePage: React.FC = () => {
       setError(e.message || 'Failed to delete spare part');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleViewHistory = async (part: SparePart) => {
+    setSelectedPartForHistory(part);
+    setLoadingHistory(true);
+    try {
+      const response = await storageAPI.getSparePartHistory(part.id) as any;
+      setHistoryData(response.data?.history || []);
+    } catch (e: any) {
+      setError(e.message || 'Failed to load history');
+      setHistoryData([]);
+    } finally {
+      setLoadingHistory(false);
     }
   };
 
@@ -165,7 +187,7 @@ const StoragePage: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <input
               className="input"
-              placeholder={t('common.search') + ' by name or part number...'}
+              placeholder={t('common.search') + ' by name or number of present pieces...'}
               value={filters.search || ''}
               onChange={(e) => setFilters({ ...filters, search: e.target.value, page: 1 })}
             />
@@ -215,16 +237,26 @@ const StoragePage: React.FC = () => {
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
                 required
               />
+              {editingPart && (
+                <input
+                  className="input bg-gray-100"
+                  type="text"
+                  placeholder={t('storage.partNumber')}
+                  value={form.partNumber}
+                  disabled
+                  title="رقم القطعة يتم توليده تلقائياً"
+                />
+              )}
               <input
                 className="input"
                 type="text"
                 inputMode="numeric"
                 pattern="[0-9]+"
-                placeholder={t('storage.partNumber')}
-                value={form.partNumber}
+                placeholder={t('storage.presentPieces')}
+                value={form.presentPieces}
                 onChange={(e) => {
-                  const value = e.target.value.replace(/[^0-9]/g, '');
-                  setForm({ ...form, partNumber: value });
+                  const value = Number(e.target.value.replace(/[^0-9]/g, '')) || 0;
+                  setForm({ ...form, presentPieces: value });
                 }}
                 required
               />
@@ -319,6 +351,7 @@ const StoragePage: React.FC = () => {
                     setForm({
                       name: '',
                       partNumber: '',
+                      presentPieces: 0,
                       unitPrice: 0,
                       quantity: 0,
                       currency: 'SYP',
@@ -364,26 +397,45 @@ const StoragePage: React.FC = () => {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="th">{t('storage.name')}</th>
-                  <th className="th">{t('storage.partNumber')}</th>
-                  <th className="th">{t('storage.unitPrice')}</th>
-                  <th className="th">{t('storage.currency')}</th>
-                  <th className="th">{t('storage.quantity')}</th>
-                  <th className="th">{t('storage.description')}</th>
-                  <th className="th">{t('products.department')}</th>
-                  <th className="th">{t('storage.actions')}</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    {t('storage.name')}
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    {t('storage.partNumber')}
+                  </th>
+                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    {t('storage.presentPieces')}
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    {t('storage.unitPrice')}
+                  </th>
+                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    {t('storage.currency')}
+                  </th>
+                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    {t('storage.quantity')}
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    {t('storage.description')}
+                  </th>
+                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    {t('products.department')}
+                  </th>
+                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    {t('storage.actions')}
+                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {loading ? (
                   <tr>
-                    <td colSpan={8} className="py-8 text-center text-gray-500">
+                    <td colSpan={9} className="py-8 text-center text-gray-500">
                       {t('storage.loading')}
                     </td>
                   </tr>
                 ) : spareParts.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="py-8 text-center text-gray-500">
+                    <td colSpan={9} className="py-8 text-center text-gray-500">
                       {filters.search ? 
                         `No spare parts found matching "${filters.search}"` : 
                         t('storage.empty')
@@ -393,16 +445,25 @@ const StoragePage: React.FC = () => {
                 ) : (
                   spareParts.map((part) => {
                     return (
-                      <tr key={part.id} className="hover:bg-gray-50">
-                        <td className="td font-medium">{part.name}</td>
-                        <td className="td font-mono text-sm">{part.partNumber}</td>
-                        <td className="td text-right font-medium">{part.unitPrice.toLocaleString()}</td>
-                        <td className="td text-center">
+                      <tr key={part.id} className="hover:bg-gray-50 cursor-pointer" onClick={() => setSelectedPartForDescription(part)}>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-gray-900">{part.name}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-mono text-gray-900">{part.partNumber}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                          <div className="text-sm font-medium text-gray-900">{part.presentPieces}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right">
+                          <div className="text-sm font-medium text-gray-900">{part.unitPrice.toLocaleString()}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-center">
                           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                             {part.currency || 'SYP'}
                           </span>
                         </td>
-                        <td className="td text-center">
+                        <td className="px-6 py-4 whitespace-nowrap text-center">
                           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                             part.quantity <= 5 ? 'bg-red-100 text-red-800' : 
                             part.quantity <= 10 ? 'bg-yellow-100 text-yellow-800' : 
@@ -411,22 +472,36 @@ const StoragePage: React.FC = () => {
                             {part.quantity}
                           </span>
                         </td>
-                        <td className="td text-sm text-gray-600">{part.description || '-'}</td>
-                        <td className="td text-sm">{part.department?.name || '-'}</td>
-                        <td className="td">
-                          <div className="flex gap-2">
+                        <td className="px-6 py-4 max-w-xs">
+                          <div className="text-sm text-gray-600 truncate" title={part.description || '-'}>
+                            {part.description || '-'}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                          <div className="text-sm text-gray-900">{part.department?.name || '-'}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-center" onClick={(e) => e.stopPropagation()}>
+                          <div className="flex gap-2 justify-center">
                             {canEdit && (
                               <button
-                                className="text-blue-600 hover:text-blue-800"
-                                onClick={() => handleEdit(part)}
+                                className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                                onClick={(e) => { e.stopPropagation(); handleEdit(part); }}
                               >
                                 {t('storage.edit')}
                               </button>
                             )}
+                            {(canEdit || hasRole([UserRole.COMPANY_MANAGER, UserRole.DEPUTY_MANAGER])) && (
+                              <button
+                                className="text-green-600 hover:text-green-800 text-sm font-medium"
+                                onClick={(e) => { e.stopPropagation(); handleViewHistory(part); }}
+                              >
+                                السجل
+                              </button>
+                            )}
                             {canEdit && (
                               <button
-                                className="text-red-600 hover:text-red-800"
-                                onClick={() => handleDelete(part.id)}
+                                className="text-red-600 hover:text-red-800 text-sm font-medium"
+                                onClick={(e) => { e.stopPropagation(); handleDelete(part.id); }}
                               >
                                 {t('storage.delete')}
                               </button>
@@ -442,6 +517,138 @@ const StoragePage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Description Modal */}
+      {selectedPartForDescription && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setSelectedPartForDescription(null)}>
+          <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-start mb-4">
+              <h3 className="text-xl font-bold text-gray-900">{selectedPartForDescription.name}</h3>
+              <button
+                onClick={() => setSelectedPartForDescription(null)}
+                className="text-gray-400 hover:text-gray-600"
+                aria-label="إغلاق النافذة"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <span className="text-sm font-medium text-gray-500">رقم القطعة:</span>
+                  <p className="text-sm font-mono text-gray-900">{selectedPartForDescription.partNumber}</p>
+                </div>
+                <div>
+                  <span className="text-sm font-medium text-gray-500">عدد القطع الموجودة:</span>
+                  <p className="text-sm text-gray-900">{selectedPartForDescription.presentPieces}</p>
+                </div>
+                <div>
+                  <span className="text-sm font-medium text-gray-500">الكمية:</span>
+                  <p className="text-sm text-gray-900">{selectedPartForDescription.quantity}</p>
+                </div>
+                <div>
+                  <span className="text-sm font-medium text-gray-500">السعر:</span>
+                  <p className="text-sm text-gray-900">{selectedPartForDescription.unitPrice.toLocaleString()} {selectedPartForDescription.currency}</p>
+                </div>
+                {selectedPartForDescription.department && (
+                  <div>
+                    <span className="text-sm font-medium text-gray-500">القسم:</span>
+                    <p className="text-sm text-gray-900">{selectedPartForDescription.department.name}</p>
+                  </div>
+                )}
+              </div>
+              <div>
+                <span className="text-sm font-medium text-gray-500">الوصف:</span>
+                <p className="text-sm text-gray-700 mt-1 whitespace-pre-wrap">
+                  {selectedPartForDescription.description || 'لا يوجد وصف'}
+                </p>
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end">
+              <button
+                onClick={() => setSelectedPartForDescription(null)}
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              >
+                إغلاق
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* History Modal */}
+      {selectedPartForHistory && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setSelectedPartForHistory(null)}>
+          <div className="bg-white rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-start mb-4">
+              <div>
+                <h3 className="text-xl font-bold text-gray-900">سجل التغييرات</h3>
+                <p className="text-sm text-gray-600">{selectedPartForHistory.name} ({selectedPartForHistory.partNumber})</p>
+              </div>
+              <button
+                onClick={() => setSelectedPartForHistory(null)}
+                className="text-gray-400 hover:text-gray-600"
+                aria-label="إغلاق نافذة السجل"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            {loadingHistory ? (
+              <div className="text-center py-8 text-gray-500">جاري التحميل...</div>
+            ) : historyData.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">لا توجد تغييرات مسجلة</div>
+            ) : (
+              <div className="space-y-3">
+                {historyData.map((item: any) => (
+                  <div key={item.id} className="border rounded-lg p-4 bg-gray-50">
+                    <div className="flex justify-between items-start mb-2">
+                      <div className="flex-1">
+                        <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${
+                          item.changeType === 'CREATED' ? 'bg-green-100 text-green-800' :
+                          item.changeType === 'UPDATED' ? 'bg-blue-100 text-blue-800' :
+                          item.changeType === 'QUANTITY_CHANGED' ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-red-100 text-red-800'
+                        }`}>
+                          {item.changeType === 'CREATED' ? 'إنشاء' :
+                           item.changeType === 'UPDATED' ? 'تعديل' :
+                           item.changeType === 'QUANTITY_CHANGED' ? 'تغيير الكمية' :
+                           'استخدام في طلب'}
+                        </span>
+                      </div>
+                      <span className="text-xs text-gray-500">
+                        {new Date(item.createdAt).toLocaleString('ar-SY')}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-800 mb-2">{item.description}</p>
+                    <div className="flex items-center gap-2 text-xs text-gray-600">
+                      <span>بواسطة: {item.changedBy.firstName} {item.changedBy.lastName}</span>
+                      {item.quantityChange && (
+                        <span className={`font-medium ${item.quantityChange > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          ({item.quantityChange > 0 ? '+' : ''}{item.quantityChange})
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            <div className="mt-6 flex justify-end">
+              <button
+                onClick={() => setSelectedPartForHistory(null)}
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              >
+                إغلاق
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

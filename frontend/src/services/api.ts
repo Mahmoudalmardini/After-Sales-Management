@@ -290,7 +290,7 @@ export const customersAPI = {
       const response = await api.get('/customers', { params });
       return response.data;
     } catch (error) {
-      handleError(error);
+      throw handleError(error);
     }
   },
 
@@ -299,7 +299,7 @@ export const customersAPI = {
       const response = await api.post('/customers', data);
       return handleResponse(response);
     } catch (error) {
-      handleError(error);
+      throw handleError(error);
     }
   },
 };
@@ -531,6 +531,15 @@ export const storageAPI = {
   deleteSparePart: async (id: number) => {
     try {
       const response = await api.delete(`/storage/${id}`);
+      return handleResponse(response);
+    } catch (error) {
+      return Promise.reject(handleError(error));
+    }
+  },
+
+  getSparePartHistory: async (id: number) => {
+    try {
+      const response = await api.get(`/storage/${id}/history`);
       return handleResponse(response);
     } catch (error) {
       return Promise.reject(handleError(error));

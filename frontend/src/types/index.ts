@@ -373,7 +373,8 @@ export type Currency = 'SYP' | 'USD' | 'EUR';
 export interface SparePart {
   id: number;
   name: string;
-  partNumber: string;
+  partNumber: string; // Alphanumeric identifier (e.g., "EAU20204EX88")
+  presentPieces: number; // Number of present pieces (numeric)
   unitPrice: number;
   quantity: number;
   currency: string;
@@ -405,7 +406,8 @@ export interface RequestPart {
 // Storage form types
 export interface CreateSparePartForm {
   name: string;
-  partNumber: string;
+  partNumber: string; // Alphanumeric identifier
+  presentPieces: number; // Number of present pieces
   unitPrice: number;
   quantity: number;
   currency: string;

@@ -86,11 +86,12 @@ router.post('/', authenticateToken, requireRoles([UserRole.COMPANY_MANAGER, User
     return;
   }
 
-  // Validate mobile phone format if phoneType is mobile
+  // Validate mobile phone format if phoneType is mobile (format: +963 9XXXXXXXX - 8 digits after +963 9)
   if (phoneType === 'mobile') {
-    const mobileRegex = /^\+963 9\d{8}$/;
-    if (!mobileRegex.test(phone)) {
-      const error = new ValidationError('Mobile phone must start with +963 9 and be 10 digits long');
+    const mobileRegex = /^\+963\s?9\d{7}$/;
+    const cleanPhone = phone.trim();
+    if (!mobileRegex.test(cleanPhone)) {
+      const error = new ValidationError(`Mobile phone must start with +963 9 and have 8 more digits. Received: "${cleanPhone}"`);
       res.status(error.statusCode).json({ success: false, message: error.message });
       return;
     }

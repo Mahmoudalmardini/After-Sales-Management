@@ -45,16 +45,19 @@ model User {
   updatedAt    DateTime @updatedAt
 
   // Relations
-  department           Department?       @relation("UserDepartment", fields: [departmentId], references: [id])
-  managedDepartment    Department?       @relation("DepartmentManager")
-  receivedRequests     Request[]         @relation("ReceivedBy")
-  assignedRequests     Request[]         @relation("AssignedTechnician")
-  activities           RequestActivity[]
-  costsAdded          RequestCost[]
-  notifications       Notification[]
-  createdNotifications Notification[]     @relation("NotificationCreator")
-  requestPartsAdded   RequestPart[]
-  createdCustomStatuses CustomRequestStatus[]
+  department               Department?           @relation("UserDepartment", fields: [departmentId], references: [id])
+  managedDepartment        Department?           @relation("DepartmentManager")
+  receivedRequests         Request[]             @relation("ReceivedBy")
+  assignedRequests         Request[]             @relation("AssignedTechnician")
+  activities               RequestActivity[]
+  costsAdded               RequestCost[]
+  notifications            Notification[]
+  createdNotifications     Notification[]        @relation("NotificationCreator")
+  requestPartsAdded        RequestPart[]
+  createdCustomStatuses    CustomRequestStatus[]
+  sparePartHistoryChanges  SparePartHistory[]
+  technicianReports        TechnicianReport[]    @relation("TechnicianReports")
+  approvedReports          TechnicianReport[]    @relation("ApprovedReports")
 
   @@map("users")
 }
@@ -127,15 +130,16 @@ model Request {
   updatedAt            DateTime          @updatedAt
 
   // Relations
-  customer             Customer          @relation(fields: [customerId], references: [id])
-  product              Product?          @relation(fields: [productId], references: [id])
-  department           Department        @relation(fields: [departmentId], references: [id])
-  assignedTechnician   User?             @relation("AssignedTechnician", fields: [assignedTechnicianId], references: [id])
-  receivedBy           User              @relation("ReceivedBy", fields: [receivedById], references: [id])
+  customer             Customer            @relation(fields: [customerId], references: [id])
+  product              Product?            @relation(fields: [productId], references: [id])
+  department           Department          @relation(fields: [departmentId], references: [id])
+  assignedTechnician   User?               @relation("AssignedTechnician", fields: [assignedTechnicianId], references: [id])
+  receivedBy           User                @relation("ReceivedBy", fields: [receivedById], references: [id])
   activities           RequestActivity[]
   costs                RequestCost[]
   notifications        Notification[]
   requestParts         RequestPart[]
+  technicianReports    TechnicianReport[]
 
   @@map("requests")
 }
@@ -198,26 +202,28 @@ model Notification {
 }
 
 model SparePart {
-  id          Int      @id @default(autoincrement())
-  name        String
-  partNumber  String   @unique
-  category    String
-  quantity    Int      @default(0)
-  minQuantity Int      @default(5)
-  unitPrice   Float    @default(0.0)
-  currency    String   @default("SYP")
-  supplier    String?
-  location    String?
-  description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id            Int      @id @default(autoincrement())
+  name          String
+  partNumber    String   @unique  // Alphanumeric identifier (e.g., "EAU20204EX88")
+  presentPieces Int      @default(0)  // Number of present pieces (numeric)
+  category      String
+  quantity      Int      @default(0)
+  minQuantity   Int      @default(5)
+  unitPrice     Float    @default(0.0)
+  currency      String   @default("SYP")
+  supplier      String?
+  location      String?
+  description   String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   // Optional owning department for the part
   departmentId Int?
 
   // Relations
   requestParts RequestPart[]
-  department   Department? @relation(fields: [departmentId], references: [id])
+  department   Department?        @relation(fields: [departmentId], references: [id])
+  history      SparePartHistory[]
 
   @@map("spare_parts")
 }
@@ -256,4 +262,47 @@ model CustomRequestStatus {
   createdBy User @relation(fields: [createdById], references: [id])
 
   @@map("custom_request_statuses")
+}
+
+model SparePartHistory {
+  id             Int      @id @default(autoincrement())
+  sparePartId    Int
+  changedById    Int
+  changeType     String   // 'CREATED', 'UPDATED', 'QUANTITY_CHANGED', 'USED_IN_REQUEST'
+  fieldChanged   String?  // Which field was changed (if applicable)
+  oldValue       String?  // Old value (as string)
+  newValue       String?  // New value (as string)
+  quantityChange Int?     // For quantity changes (+/-)
+  description    String?  // Optional description of the change
+  requestId      Int?     // If related to a request
+  createdAt      DateTime @default(now())
+
+  // Relations
+  sparePart SparePart @relation(fields: [sparePartId], references: [id])
+  changedBy User      @relation(fields: [changedById], references: [id])
+
+  @@map("spare_part_history")
+}
+
+model TechnicianReport {
+  id               Int      @id @default(autoincrement())
+  requestId        Int
+  technicianId     Int
+  reportContent    String   // Main report text
+  currentStatus    String?  // New status selected by technician
+  partsUsed        String?  // JSON string of parts used
+  sendToSupervisor Boolean  @default(false)
+  sendToAdmin      Boolean  @default(false)
+  isApproved       Boolean? // null = pending, true = approved, false = rejected
+  approvedById     Int?
+  approvalComment  String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  // Relations
+  request    Request @relation(fields: [requestId], references: [id])
+  technician User    @relation("TechnicianReports", fields: [technicianId], references: [id])
+  approvedBy User?   @relation("ApprovedReports", fields: [approvedById], references: [id])
+
+  @@map("technician_reports")
 }

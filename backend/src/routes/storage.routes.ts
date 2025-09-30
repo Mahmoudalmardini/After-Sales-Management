@@ -6,6 +6,59 @@ import * as notificationService from '../services/notification.service';
 
 const router = Router();
 
+// Generate unique part number
+const generatePartNumber = async (): Promise<string> => {
+  const today = new Date();
+  const year = today.getFullYear().toString().slice(-2);
+  const month = (today.getMonth() + 1).toString().padStart(2, '0');
+  const day = today.getDate().toString().padStart(2, '0');
+  
+  const prefix = `PART${year}${month}${day}`;
+  
+  // Get the count of parts created today
+  const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+  
+  const todayCount = await prisma.sparePart.count({
+    where: {
+      createdAt: {
+        gte: startOfDay,
+        lt: endOfDay,
+      },
+    },
+  });
+  
+  const sequence = (todayCount + 1).toString().padStart(3, '0');
+  return `${prefix}-${sequence}`;
+};
+
+// Log spare part history
+const logSparePartHistory = async (
+  sparePartId: number,
+  changedById: number,
+  changeType: string,
+  description: string,
+  fieldChanged?: string,
+  oldValue?: string,
+  newValue?: string,
+  quantityChange?: number,
+  requestId?: number
+) => {
+  await prisma.sparePartHistory.create({
+    data: {
+      sparePartId,
+      changedById,
+      changeType,
+      fieldChanged,
+      oldValue,
+      newValue,
+      quantityChange,
+      description,
+      requestId,
+    },
+  });
+};
+
 // Apply authentication and manager-only access to all storage routes
 router.use(authenticateToken);
 // Allow managers and warehouse keepers; managers view-only enforced per route
@@ -30,12 +83,12 @@ router.get('/', async (req, res) => {
     // SQLite doesn't support mode: 'insensitive', so we use contains without mode
     where.OR = [
       { name: { contains: String(search) } },
-      { partNumber: { contains: String(search) } },
+      { partNumber: { contains: String(search) } }, // Alphanumeric search
     ];
   }
   if (category) where.category = String(category);
   if (lowStock === 'true') {
-    where.quantity = { lte: prisma.sparePart.fields.minQuantity };
+    where.presentPieces = { lte: prisma.sparePart.fields.minQuantity };
   }
 
   const skip = (Number(page) - 1) * Number(limit);
@@ -46,6 +99,9 @@ router.get('/', async (req, res) => {
       skip,
       take: Number(limit),
       orderBy: { createdAt: 'desc' },
+      include: {
+        department: { select: { id: true, name: true } },
+      },
     }),
     prisma.sparePart.count({ where }),
   ]);
@@ -121,6 +177,44 @@ router.get('/:id', async (req, res) => {
 });
 
 /**
+ * @route   GET /api/storage/:id/history
+ * @desc    Get spare part history
+ * @access  Private (Admin, Warehouse Keeper)
+ */
+router.get('/:id/history', async (req, res) => {
+  const { id } = req.params;
+  
+  const history = await prisma.sparePartHistory.findMany({
+    where: { sparePartId: Number(id) },
+    include: {
+      changedBy: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          role: true,
+        },
+      },
+      sparePart: {
+        select: {
+          id: true,
+          name: true,
+          partNumber: true,
+        },
+      },
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+
+  const response: ApiResponse = {
+    success: true,
+    data: { history },
+  };
+
+  res.status(200).json(response);
+});
+
+/**
  * @route   POST /api/storage
  * @desc    Create new spare part
  * @access  Private
@@ -134,34 +228,28 @@ router.post('/', async (req: any, res) => {
   }
   const { 
     name, 
-    partNumber, 
     unitPrice = 0, 
     quantity = 0, 
     description,
     departmentId,
   } = req.body;
 
-  if (!name || !partNumber) {
-    const error = new ValidationError('name and partNumber are required');
+  if (!name) {
+    const error = new ValidationError('name is required');
     res.status(error.statusCode).json({ success: false, message: error.message });
     return;
   }
 
-  // Check if part number already exists
-  const existingPart = await prisma.sparePart.findUnique({
-    where: { partNumber: String(partNumber) },
-  });
+  // Auto-generate part number
+  const partNumber = await generatePartNumber();
 
-  if (existingPart) {
-    const error = new ValidationError('Part number already exists');
-    res.status(error.statusCode).json({ success: false, message: error.message });
-    return;
-  }
+  const { presentPieces = 0 } = req.body;
 
   const sparePart = await prisma.sparePart.create({
     data: {
       name: String(name),
-      partNumber: String(partNumber),
+      partNumber, // Auto-generated alphanumeric identifier
+      presentPieces: Number(presentPieces) || 0, // Number of present pieces
       category: 'GENERAL', // Default category
       quantity: typeof quantity === 'number' ? quantity : 0,
       minQuantity: 5, // Default min quantity
@@ -170,9 +258,17 @@ router.post('/', async (req: any, res) => {
       supplier: null,
       location: null,
       description: description ? String(description) : null,
-      // departmentId: departmentId ? Number(departmentId) : null,
+      departmentId: departmentId ? Number(departmentId) : null,
     },
   });
+
+  // Log history
+  await logSparePartHistory(
+    sparePart.id,
+    req.user!.id,
+    'CREATED',
+    `قطعة غيار جديدة: ${sparePart.name} (${sparePart.partNumber}) - عدد القطع: ${sparePart.presentPieces}`
+  );
 
   // Send notification to managers and supervisors
   const firstName = req.user!.firstName || 'Unknown';
@@ -246,25 +342,45 @@ router.put('/:id', async (req: any, res) => {
     }
   }
 
+  const { presentPieces } = req.body;
+
   const sparePart = await prisma.sparePart.update({
     where: { id: Number(id) },
     data: {
       name: String(name),
-      partNumber: String(partNumber),
+      partNumber: String(partNumber), // Alphanumeric identifier
+      presentPieces: presentPieces !== undefined ? Number(presentPieces) : undefined,
       quantity: Number(quantity),
       unitPrice: Number(unitPrice),
       description: description ? String(description) : null,
-      // departmentId: departmentId ? Number(departmentId) : null,
+      departmentId: departmentId ? Number(departmentId) : null,
     },
   });
 
-  // Send notification to managers and supervisors
+  // Log history for changed fields
+  const changes: string[] = [];
+  if (existingPart.name !== sparePart.name) {
+    await logSparePartHistory(sparePart.id, req.user!.id, 'UPDATED', `تغيير الاسم من "${existingPart.name}" إلى "${sparePart.name}"`, 'name', existingPart.name, sparePart.name);
+    changes.push('الاسم');
+  }
+  if (presentPieces !== undefined && existingPart.presentPieces !== sparePart.presentPieces) {
+    const diff = sparePart.presentPieces - existingPart.presentPieces;
+    await logSparePartHistory(sparePart.id, req.user!.id, 'QUANTITY_CHANGED', `تعديل عدد القطع من ${existingPart.presentPieces} إلى ${sparePart.presentPieces}`, 'presentPieces', String(existingPart.presentPieces), String(sparePart.presentPieces), diff);
+    changes.push('عدد القطع');
+  }
+  if (existingPart.unitPrice !== sparePart.unitPrice) {
+    await logSparePartHistory(sparePart.id, req.user!.id, 'UPDATED', `تغيير السعر من ${existingPart.unitPrice} إلى ${sparePart.unitPrice}`, 'unitPrice', String(existingPart.unitPrice), String(sparePart.unitPrice));
+    changes.push('السعر');
+  }
+
+  // Send notification to managers and supervisors with details
   const firstName = req.user!.firstName || 'Unknown';
   const lastName = req.user!.lastName || 'User';
   const warehouseKeeperName = `${firstName} ${lastName}`;
+  const changeDetails = changes.length > 0 ? ` - التغييرات: ${changes.join(', ')}` : '';
   await notificationService.createWarehouseNotification(
     'MODIFIED',
-    sparePart.name,
+    sparePart.name + changeDetails,
     warehouseKeeperName,
     req.user!.departmentId
   );

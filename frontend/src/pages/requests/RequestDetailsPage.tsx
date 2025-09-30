@@ -99,8 +99,14 @@ const RequestDetailsPage: React.FC = () => {
   const statusOptions: RequestStatus[] = useMemo(() => {
     if (!request?.status) return [];
     
-    // If request is CLOSED, no status changes allowed
+    // If request is CLOSED, only admins can reopen it
     if (request.status === 'CLOSED') {
+      // Only COMPANY_MANAGER and DEPUTY_MANAGER can reopen
+      const canReopen = hasRole([UserRole.COMPANY_MANAGER, UserRole.DEPUTY_MANAGER]);
+      if (canReopen) {
+        // Allow reopening to any valid status
+        return ['ASSIGNED', 'UNDER_INSPECTION', 'WAITING_PARTS', 'IN_REPAIR', 'COMPLETED'];
+      }
       return [];
     }
     
@@ -121,7 +127,7 @@ const RequestDetailsPage: React.FC = () => {
     
     // Return all available statuses except the current one (to avoid selecting same status)
     return allAvailableStatuses.filter(status => status !== request.status);
-  }, [request?.status]);
+  }, [request?.status, hasRole]);
 
   // Combine standard and custom statuses for display
   const allStatusOptions = useMemo(() => {
@@ -375,7 +381,7 @@ const RequestDetailsPage: React.FC = () => {
                       <option value="">بدون قطع غيار</option>
                       {spareParts.map(part => (
                         <option key={part.id} value={part.id}>
-                          {part.name} (المتوفر: {part.quantity} - {formatCurrency(part.unitPrice, part.currency as any)}/وحدة)
+                          {part.name} (المتوفر: {part.presentPieces} - {formatCurrency(part.unitPrice, part.currency as any)}/وحدة)
                         </option>
                       ))}
                     </select>
@@ -395,7 +401,7 @@ const RequestDetailsPage: React.FC = () => {
                           min={1}
                           max={(() => {
                             const part = spareParts.find(p => String(p.id) === String(costForm.sparePartId));
-                            return part ? part.quantity : undefined;
+                            return part ? part.presentPieces : undefined;
                           })()}
                           value={costForm.sparePartQuantity || ''}
                           onChange={(e) => setCostForm(f => ({ ...f, sparePartQuantity: Number(e.target.value) || 0 }))}
@@ -405,7 +411,7 @@ const RequestDetailsPage: React.FC = () => {
                           const part = spareParts.find(p => String(p.id) === String(costForm.sparePartId));
                           return part && (
                             <p className="text-xs text-gray-500 mt-1">
-                              الحد الأقصى المتاح: {part.quantity} قطعة
+                              الحد الأقصى المتاح: {part.presentPieces} قطعة
                             </p>
                           );
                         })()}
@@ -472,7 +478,7 @@ const RequestDetailsPage: React.FC = () => {
                             <div className="flex justify-between items-start">
                               <div className="flex-1">
                                 <p className="text-sm font-medium text-amber-900">{part.sparePart.name}</p>
-                                <p className="text-xs text-amber-700">رقم القطعة: {part.sparePart.partNumber}</p>
+                                <p className="text-xs text-amber-700">عدد القطع الموجودة: {part.sparePart.partNumber}</p>
                                 <div className="flex items-center mt-2 text-xs">
                                   <span className="bg-amber-100 text-amber-800 px-2 py-1 rounded">
                                     الكمية: {part.quantityUsed}
@@ -661,19 +667,80 @@ const RequestDetailsPage: React.FC = () => {
                 </div>
                 <div className="card-content space-y-4">
                   <div className="form-group">
-                    <label className="form-label" htmlFor="statusToCompleted">الحالة الجديدة</label>
-                    <select id="statusToCompleted" className="select-field" value={statusTo} onChange={(e)=>setStatusTo(e.target.value as RequestStatus)}>
-                      <option value="">اختر الحالة الجديدة...</option>
-                      <option value="CLOSED">مغلق</option>
-                    </select>
-                  </div>
-                  <div className="form-group">
                     <label className="form-label">ملاحظات (اختياري)</label>
                     <textarea className="textarea-field" rows={3} placeholder="أضف أي ملاحظات حول إغلاق الطلب..." value={statusComment} onChange={(e)=>setStatusComment(e.target.value)} />
                   </div>
-                  <button className="btn-primary w-full bg-green-600 hover:bg-green-700" onClick={handleStatus} disabled={loading || !statusTo}>
+                  <button 
+                    className="btn-primary w-full bg-green-600 hover:bg-green-700" 
+                    onClick={() => {
+                      if (window.confirm('هل أنت متأكد من إغلاق هذا الطلب نهائياً؟ لا يمكن التراجع عن هذا الإجراء.')) {
+                        setStatusTo('CLOSED');
+                        handleStatus();
+                      }
+                    }} 
+                    disabled={loading}
+                  >
                     {loading ? <div className="loading-spinner ml-2"></div> : null}
                     إغلاق الطلب نهائياً
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Reopen closed request - Only for admins */}
+            {request.status === 'CLOSED' && hasRole([UserRole.COMPANY_MANAGER, UserRole.DEPUTY_MANAGER]) && (
+              <div className="card border-yellow-200">
+                <div className="card-header bg-gradient-to-r from-yellow-50 to-amber-50">
+                  <h3 className="text-yellow-800">إعادة فتح الطلب</h3>
+                  <p className="text-yellow-600">يمكن للمدراء فقط إعادة فتح الطلبات المغلقة</p>
+                </div>
+                <div className="card-content space-y-4">
+                  <div className="form-group">
+                    <label className="form-label">الحالة الجديدة</label>
+                    <select 
+                      className="select-field" 
+                      value={statusTo} 
+                      onChange={(e) => setStatusTo(e.target.value as RequestStatus)}
+                      aria-label="اختر الحالة الجديدة للطلب"
+                    >
+                      <option value="">اختر الحالة...</option>
+                      {allStatusOptions.map(option => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">سبب إعادة الفتح</label>
+                    <textarea 
+                      className="textarea-field" 
+                      rows={3} 
+                      placeholder="اذكر سبب إعادة فتح الطلب..." 
+                      value={statusComment} 
+                      onChange={(e) => setStatusComment(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <button 
+                    className="btn-primary w-full bg-yellow-600 hover:bg-yellow-700" 
+                    onClick={() => {
+                      if (!statusTo) {
+                        alert('الرجاء اختيار الحالة الجديدة');
+                        return;
+                      }
+                      if (!statusComment.trim()) {
+                        alert('الرجاء إدخال سبب إعادة الفتح');
+                        return;
+                      }
+                      if (window.confirm('هل أنت متأكد من إعادة فتح هذا الطلب المغلق؟')) {
+                        handleStatus();
+                      }
+                    }} 
+                    disabled={loading || !statusTo}
+                  >
+                    {loading ? <div className="loading-spinner ml-2"></div> : null}
+                    إعادة فتح الطلب
                   </button>
                 </div>
               </div>

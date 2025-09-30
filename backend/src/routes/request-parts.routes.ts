@@ -2,8 +2,39 @@ import { Router } from 'express';
 import { prisma } from '../index';
 import { ApiResponse, ValidationError, UserRole, NotificationType } from '../types';
 import { createNotification } from '../services/notification.service';
+import { authenticateToken } from '../middleware/auth';
 
 const router = Router();
+
+// Apply authentication to all request-parts routes
+router.use(authenticateToken);
+
+// Log spare part history
+const logSparePartHistory = async (
+  sparePartId: number,
+  changedById: number,
+  changeType: string,
+  description: string,
+  fieldChanged?: string,
+  oldValue?: string,
+  newValue?: string,
+  quantityChange?: number,
+  requestId?: number
+) => {
+  await prisma.sparePartHistory.create({
+    data: {
+      sparePartId,
+      changedById,
+      changeType,
+      fieldChanged,
+      oldValue,
+      newValue,
+      quantityChange,
+      description,
+      requestId,
+    },
+  });
+};
 
 /**
  * @route   GET /api/request-parts/:requestId
@@ -67,7 +98,7 @@ router.post('/', async (req, res) => {
   }
 
   // Check if enough quantity is available
-  if (sparePart.quantity < Number(quantityUsed)) {
+  if (sparePart.presentPieces < Number(quantityUsed)) {
     const error = new ValidationError('Insufficient quantity in stock');
     res.status(error.statusCode).json({ success: false, message: error.message });
     return;
@@ -104,7 +135,7 @@ router.post('/', async (req, res) => {
     const updatedSparePart = await tx.sparePart.update({
       where: { id: Number(sparePartId) },
       data: {
-        quantity: sparePart.quantity - Number(quantityUsed),
+        presentPieces: sparePart.presentPieces - Number(quantityUsed),
       },
     });
 
@@ -114,6 +145,19 @@ router.post('/', async (req, res) => {
   // Send notifications after inventory update
   const { requestPart, updatedSparePart } = result;
   const addedByName = `${requestPart.addedBy.firstName} ${requestPart.addedBy.lastName}`;
+  
+  // Log history
+  await logSparePartHistory(
+    Number(sparePartId),
+    Number(addedById),
+    'USED_IN_REQUEST',
+    `استخدام ${quantityUsed} قطعة في الطلب ${requestPart.request.requestNumber}`,
+    'presentPieces',
+    String(sparePart.presentPieces),
+    String(updatedSparePart.presentPieces),
+    -Number(quantityUsed),
+    Number(requestId)
+  );
   
   // Notify warehouse keeper about inventory decrease
   const warehouseKeepers = await prisma.user.findMany({
@@ -129,7 +173,7 @@ router.post('/', async (req, res) => {
       userId: warehouseKeeper.id,
       requestId: Number(requestId),
       title: 'تم استخدام قطعة غيار',
-      message: `${addedByName} استخدم ${quantityUsed} من ${requestPart.sparePart.name} للطلب ${requestPart.request.requestNumber}. الكمية المتبقية: ${updatedSparePart.quantity}`,
+      message: `${addedByName} استخدم ${quantityUsed} من ${requestPart.sparePart.name} للطلب ${requestPart.request.requestNumber}. الكمية المتبقية: ${updatedSparePart.presentPieces}`,
       type: NotificationType.WAREHOUSE_UPDATE,
       createdById: Number(addedById),
     });
@@ -242,7 +286,7 @@ router.put('/:id', async (req, res) => {
   }
 
   const quantityDifference = Number(quantityUsed) - requestPart.quantityUsed;
-  const newSparePartQuantity = requestPart.sparePart.quantity - quantityDifference;
+  const newSparePartQuantity = requestPart.sparePart.presentPieces - quantityDifference;
 
   if (newSparePartQuantity < 0) {
     const error = new ValidationError('Insufficient quantity in stock');
@@ -271,7 +315,7 @@ router.put('/:id', async (req, res) => {
     await tx.sparePart.update({
       where: { id: requestPart.sparePartId },
       data: {
-        quantity: newSparePartQuantity,
+        presentPieces: newSparePartQuantity,
       },
     });
 
