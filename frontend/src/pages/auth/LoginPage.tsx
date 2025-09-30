@@ -42,10 +42,16 @@ const LoginPage: React.FC = () => {
       await login(formData.username, formData.password);
       navigate('/');
     } catch (error: any) {
-      const errorMessage = error.message || t('login.failed');
+      const fallbackMsg = 'اسم المستخدم أو كلمة المرور غير صحيحة';
+      const errorMessage = (error?.response?.status === 401)
+        ? (t?.('login.invalidCredentials') || fallbackMsg)
+        : (error?.message || t?.('login.failed') || fallbackMsg);
       setError(errorMessage);
-      // Show alert for incorrect password
+      // Stop loading immediately on failure to avoid spinner
+      setIsLoading(false);
+      // Show alert for incorrect credentials
       alert(errorMessage);
+      return;
     } finally {
       setIsLoading(false);
     }
