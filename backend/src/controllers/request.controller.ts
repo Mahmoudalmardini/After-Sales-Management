@@ -739,14 +739,22 @@ export const assignTechnician = asyncHandler(async (req: AuthenticatedRequest, r
     throw new ForbiddenError('Cannot assign technician from different department');
   }
 
-  // Prepare update data - only change status if request is not CLOSED
+  // Prepare update data - reopen if closed
   const updateData: any = {
     assignedTechnicianId: parseInt(technicianId),
     assignedAt: new Date(),
   };
   
-  // Only change status to ASSIGNED if request is not CLOSED or COMPLETED
-  if (request.status !== RequestStatus.CLOSED && request.status !== RequestStatus.COMPLETED) {
+  // If request is CLOSED, reopen it to NEW status
+  if (request.status === RequestStatus.CLOSED) {
+    updateData.status = RequestStatus.NEW;
+  } 
+  // If request is COMPLETED, keep it COMPLETED
+  else if (request.status === RequestStatus.COMPLETED) {
+    // Keep status as COMPLETED
+  }
+  // Otherwise change to ASSIGNED
+  else {
     updateData.status = RequestStatus.ASSIGNED;
   }
 
@@ -765,10 +773,13 @@ export const assignTechnician = asyncHandler(async (req: AuthenticatedRequest, r
   });
 
   // Log activity with appropriate message based on request status
-  const wasClosedOrCompleted = request.status === RequestStatus.CLOSED || request.status === RequestStatus.COMPLETED;
-  const activityMessage = wasClosedOrCompleted 
-    ? `تم تعيين/إعادة تعيين فني: ${technician.firstName} ${technician.lastName} (الطلب ${request.status === RequestStatus.CLOSED ? 'مغلق' : 'مكتمل'} - لم يتم تغيير الحالة)`
-    : `تم تعيين فني: ${technician.firstName} ${technician.lastName}`;
+  let activityMessage = `تم تعيين فني: ${technician.firstName} ${technician.lastName}`;
+  
+  if (request.status === RequestStatus.CLOSED) {
+    activityMessage += ` (تم إعادة فتح الطلب المغلق)`;
+  } else if (request.status === RequestStatus.COMPLETED) {
+    activityMessage += ` (الطلب مكتمل - لم يتم تغيير الحالة)`;
+  }
   
   await logActivity(
     requestId, 

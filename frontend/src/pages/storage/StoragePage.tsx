@@ -444,10 +444,23 @@ const StoragePage: React.FC = () => {
                   </tr>
                 ) : (
                   spareParts.map((part) => {
+                    // Check if part was recently updated (within last 24 hours)
+                    const isRecentlyUpdated = part.updatedAt && 
+                      new Date(part.updatedAt).getTime() > Date.now() - 24 * 60 * 60 * 1000;
+                    
                     return (
-                      <tr key={part.id} className="hover:bg-gray-50 cursor-pointer" onClick={() => setSelectedPartForDescription(part)}>
+                      <tr 
+                        key={part.id} 
+                        className={`hover:bg-gray-50 cursor-pointer ${isRecentlyUpdated ? 'bg-yellow-50' : ''}`} 
+                        onClick={() => setSelectedPartForDescription(part)}
+                      >
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900">{part.name}</div>
+                          <div className="flex items-center gap-2">
+                            <div className="text-sm font-medium text-gray-900">{part.name}</div>
+                            {isRecentlyUpdated && (
+                              <span className="text-xs bg-yellow-200 text-yellow-800 px-2 py-0.5 rounded-full">محدث</span>
+                            )}
+                          </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm font-mono text-gray-900">{part.partNumber}</div>
@@ -605,34 +618,72 @@ const StoragePage: React.FC = () => {
             ) : (
               <div className="space-y-3">
                 {historyData.map((item: any) => (
-                  <div key={item.id} className="border rounded-lg p-4 bg-gray-50">
-                    <div className="flex justify-between items-start mb-2">
-                      <div className="flex-1">
-                        <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${
+                  <div key={item.id} className="border rounded-lg p-4 bg-gray-50 hover:bg-gray-100 transition-colors">
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="flex items-center gap-3">
+                        <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
                           item.changeType === 'CREATED' ? 'bg-green-100 text-green-800' :
                           item.changeType === 'UPDATED' ? 'bg-blue-100 text-blue-800' :
                           item.changeType === 'QUANTITY_CHANGED' ? 'bg-yellow-100 text-yellow-800' :
                           'bg-red-100 text-red-800'
                         }`}>
-                          {item.changeType === 'CREATED' ? 'إنشاء' :
-                           item.changeType === 'UPDATED' ? 'تعديل' :
-                           item.changeType === 'QUANTITY_CHANGED' ? 'تغيير الكمية' :
-                           'استخدام في طلب'}
+                          {item.changeType === 'CREATED' ? '🆕 إنشاء' :
+                           item.changeType === 'UPDATED' ? '✏️ تعديل' :
+                           item.changeType === 'QUANTITY_CHANGED' ? '📦 تغيير الكمية' :
+                           '🔧 استخدام في طلب'}
                         </span>
+                        {item.fieldChanged && (
+                          <span className="text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded">
+                            {item.fieldChanged === 'name' ? 'الاسم' :
+                             item.fieldChanged === 'presentPieces' ? 'عدد القطع' :
+                             item.fieldChanged === 'unitPrice' ? 'السعر' :
+                             item.fieldChanged === 'currency' ? 'العملة' :
+                             item.fieldChanged === 'quantity' ? 'الكمية' :
+                             item.fieldChanged === 'description' ? 'الوصف' :
+                             item.fieldChanged === 'departmentId' ? 'القسم' :
+                             item.fieldChanged === 'partNumber' ? 'رقم القطعة' : item.fieldChanged}
+                          </span>
+                        )}
                       </div>
-                      <span className="text-xs text-gray-500">
-                        {new Date(item.createdAt).toLocaleString('ar-SY')}
-                      </span>
+                      <div className="text-xs text-gray-500">
+                        <div>{new Date(item.createdAt).toLocaleDateString('ar-SY')}</div>
+                        <div className="text-right">{new Date(item.createdAt).toLocaleTimeString('ar-SY')}</div>
+                      </div>
                     </div>
-                    <p className="text-sm text-gray-800 mb-2">{item.description}</p>
-                    <div className="flex items-center gap-2 text-xs text-gray-600">
-                      <span>بواسطة: {item.changedBy.firstName} {item.changedBy.lastName}</span>
+                    <p className="text-sm text-gray-800 mb-3 leading-relaxed">{item.description}</p>
+                    
+                    {/* Show old and new values if available */}
+                    {item.oldValue && item.newValue && item.changeType === 'UPDATED' && (
+                      <div className="bg-white rounded p-2 mb-3 text-xs">
+                        <div className="flex items-center gap-2">
+                          <span className="text-gray-500">من:</span>
+                          <span className="font-medium text-red-600">{item.oldValue}</span>
+                          <span className="text-gray-400">←</span>
+                          <span className="text-gray-500">إلى:</span>
+                          <span className="font-medium text-green-600">{item.newValue}</span>
+                        </div>
+                      </div>
+                    )}
+                    
+                    <div className="flex items-center justify-between text-xs text-gray-600">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">بواسطة:</span>
+                        <span className="text-gray-800">{item.changedBy.firstName} {item.changedBy.lastName}</span>
+                        <span className="text-gray-400">({item.changedBy.role === 'WAREHOUSE_KEEPER' ? 'أمين مستودع' : item.changedBy.role})</span>
+                      </div>
                       {item.quantityChange && (
-                        <span className={`font-medium ${item.quantityChange > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                          ({item.quantityChange > 0 ? '+' : ''}{item.quantityChange})
+                        <span className={`font-bold text-sm ${item.quantityChange > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          {item.quantityChange > 0 ? '+' : ''}{item.quantityChange} قطعة
                         </span>
                       )}
                     </div>
+                    
+                    {/* Show request ID if related to a request */}
+                    {item.requestId && (
+                      <div className="mt-2 pt-2 border-t border-gray-200">
+                        <span className="text-xs text-gray-500">مرتبط بالطلب رقم: #{item.requestId}</span>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

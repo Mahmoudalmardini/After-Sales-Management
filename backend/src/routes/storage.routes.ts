@@ -324,6 +324,7 @@ router.put('/:id', async (req: any, res) => {
   // Check if spare part exists
   const existingPart = await prisma.sparePart.findUnique({
     where: { id: Number(id) },
+    include: { department: true },
   });
 
   if (!existingPart) {
@@ -355,6 +356,7 @@ router.put('/:id', async (req: any, res) => {
       presentPieces: presentPieces !== undefined ? Number(presentPieces) : undefined,
       quantity: Number(quantity),
       unitPrice: Number(unitPrice),
+      currency: req.body.currency || existingPart.currency,
       description: description ? String(description) : null,
       departmentId: departmentId ? Number(departmentId) : null,
     },
@@ -404,6 +406,18 @@ router.put('/:id', async (req: any, res) => {
     );
     changes.push('السعر');
   }
+  if (existingPart.currency !== sparePart.currency) {
+    await logSparePartHistory(
+      sparePart.id, 
+      req.user!.id, 
+      'UPDATED', 
+      `${userFullName} قام بتغيير العملة من ${existingPart.currency} إلى ${sparePart.currency}`, 
+      'currency', 
+      existingPart.currency, 
+      sparePart.currency
+    );
+    changes.push('العملة');
+  }
   if (existingPart.description !== sparePart.description) {
     await logSparePartHistory(
       sparePart.id, 
@@ -427,6 +441,20 @@ router.put('/:id', async (req: any, res) => {
       String(sparePart.quantity)
     );
     changes.push('الكمية');
+  }
+  if (existingPart.departmentId !== sparePart.departmentId) {
+    const oldDeptName = existingPart.departmentId ? (await prisma.department.findUnique({ where: { id: existingPart.departmentId } }))?.name : 'لا يوجد';
+    const newDeptName = sparePart.departmentId ? (await prisma.department.findUnique({ where: { id: sparePart.departmentId } }))?.name : 'لا يوجد';
+    await logSparePartHistory(
+      sparePart.id, 
+      req.user!.id, 
+      'UPDATED', 
+      `${userFullName} قام بتغيير القسم من "${oldDeptName}" إلى "${newDeptName}"`, 
+      'departmentId', 
+      String(existingPart.departmentId || ''), 
+      String(sparePart.departmentId || '')
+    );
+    changes.push('القسم');
   }
 
   // Send notification to managers and supervisors with details
