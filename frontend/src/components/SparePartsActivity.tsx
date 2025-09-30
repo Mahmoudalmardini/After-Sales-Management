@@ -31,7 +31,7 @@ const SparePartsActivity: React.FC = () => {
   const { hasRole } = useAuth();
   const [activities, setActivities] = useState<SparePartActivity[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<'all' | 'today' | 'week'>('today');
+  const [filter, setFilter] = useState<'all' | 'today' | 'week'>('all');
 
   const canViewActivity = hasRole([
     UserRole.COMPANY_MANAGER,
@@ -53,11 +53,13 @@ const SparePartsActivity: React.FC = () => {
       }) as any;
       
       const fetchedActivities = response.data?.activities || [];
-      console.log('✅ Loaded activities:', fetchedActivities.length);
+      console.log('✅ Loaded activities:', fetchedActivities.length, 'activities');
+      console.log('Activities data:', fetchedActivities);
       
       setActivities(fetchedActivities);
     } catch (error) {
       console.error('❌ Error loading activities:', error);
+      console.error('Error details:', error);
       setActivities([]);
     } finally {
       setLoading(false);
@@ -171,8 +173,18 @@ const SparePartsActivity: React.FC = () => {
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
         </div>
       ) : activities.length === 0 ? (
-        <div className="text-center py-8 text-gray-500">
-          لا توجد أنشطة {filter === 'today' ? 'اليوم' : filter === 'week' ? 'هذا الأسبوع' : ''}
+        <div className="text-center py-8">
+          <div className="text-gray-500 mb-2">
+            {filter === 'today' ? 'لا توجد أنشطة اليوم' : 
+             filter === 'week' ? 'لا توجد أنشطة هذا الأسبوع' : 
+             'لا توجد أنشطة مسجلة'}
+          </div>
+          <div className="text-sm text-gray-400">
+            {filter === 'all' ? 
+              'ابدأ بإضافة أو تعديل قطع الغيار لرؤية النشاط هنا' :
+              'جرب تغيير الفلتر إلى "الكل" لرؤية جميع الأنشطة'
+            }
+          </div>
         </div>
       ) : (
         <div className="space-y-3 max-h-96 overflow-y-auto">
