@@ -262,12 +262,15 @@ router.post('/', async (req: any, res) => {
     },
   });
 
+  // Get user's full name for logging
+  const userFullName = `${req.user!.firstName || 'Unknown'} ${req.user!.lastName || 'User'}`;
+  
   // Log history
   await logSparePartHistory(
     sparePart.id,
     req.user!.id,
     'CREATED',
-    `قطعة غيار جديدة: ${sparePart.name} (${sparePart.partNumber}) - عدد القطع: ${sparePart.presentPieces}`
+    `${userFullName} أضاف قطعة غيار جديدة: ${sparePart.name} (${sparePart.partNumber}) - عدد القطع: ${sparePart.presentPieces} - السعر: ${sparePart.unitPrice} ${sparePart.currency}`
   );
 
   // Send notification to managers and supervisors
@@ -357,20 +360,73 @@ router.put('/:id', async (req: any, res) => {
     },
   });
 
-  // Log history for changed fields
+  // Get user's full name for logging
+  const userFullName = `${req.user!.firstName || 'Unknown'} ${req.user!.lastName || 'User'}`;
+  
+  // Log history for changed fields with detailed information
   const changes: string[] = [];
   if (existingPart.name !== sparePart.name) {
-    await logSparePartHistory(sparePart.id, req.user!.id, 'UPDATED', `تغيير الاسم من "${existingPart.name}" إلى "${sparePart.name}"`, 'name', existingPart.name, sparePart.name);
+    await logSparePartHistory(
+      sparePart.id, 
+      req.user!.id, 
+      'UPDATED', 
+      `${userFullName} قام بتغيير الاسم من "${existingPart.name}" إلى "${sparePart.name}"`, 
+      'name', 
+      existingPart.name, 
+      sparePart.name
+    );
     changes.push('الاسم');
   }
   if (presentPieces !== undefined && existingPart.presentPieces !== sparePart.presentPieces) {
     const diff = sparePart.presentPieces - existingPart.presentPieces;
-    await logSparePartHistory(sparePart.id, req.user!.id, 'QUANTITY_CHANGED', `تعديل عدد القطع من ${existingPart.presentPieces} إلى ${sparePart.presentPieces}`, 'presentPieces', String(existingPart.presentPieces), String(sparePart.presentPieces), diff);
+    const changeDirection = diff > 0 ? 'زيادة' : 'تقليل';
+    await logSparePartHistory(
+      sparePart.id, 
+      req.user!.id, 
+      'QUANTITY_CHANGED', 
+      `${userFullName} قام بـ${changeDirection} عدد القطع من ${existingPart.presentPieces} إلى ${sparePart.presentPieces} (${diff > 0 ? '+' : ''}${diff})`, 
+      'presentPieces', 
+      String(existingPart.presentPieces), 
+      String(sparePart.presentPieces), 
+      diff
+    );
     changes.push('عدد القطع');
   }
   if (existingPart.unitPrice !== sparePart.unitPrice) {
-    await logSparePartHistory(sparePart.id, req.user!.id, 'UPDATED', `تغيير السعر من ${existingPart.unitPrice} إلى ${sparePart.unitPrice}`, 'unitPrice', String(existingPart.unitPrice), String(sparePart.unitPrice));
+    await logSparePartHistory(
+      sparePart.id, 
+      req.user!.id, 
+      'UPDATED', 
+      `${userFullName} قام بتغيير السعر من ${existingPart.unitPrice} ${existingPart.currency} إلى ${sparePart.unitPrice} ${sparePart.currency}`, 
+      'unitPrice', 
+      String(existingPart.unitPrice), 
+      String(sparePart.unitPrice)
+    );
     changes.push('السعر');
+  }
+  if (existingPart.description !== sparePart.description) {
+    await logSparePartHistory(
+      sparePart.id, 
+      req.user!.id, 
+      'UPDATED', 
+      `${userFullName} قام بتغيير الوصف`, 
+      'description', 
+      existingPart.description || '', 
+      sparePart.description || ''
+    );
+    changes.push('الوصف');
+  }
+  if (existingPart.quantity !== sparePart.quantity) {
+    await logSparePartHistory(
+      sparePart.id, 
+      req.user!.id, 
+      'UPDATED', 
+      `${userFullName} قام بتغيير الكمية من ${existingPart.quantity} إلى ${sparePart.quantity}`, 
+      'quantity', 
+      String(existingPart.quantity), 
+      String(sparePart.quantity)
+    );
+    changes.push('الكمية');
   }
 
   // Send notification to managers and supervisors with details

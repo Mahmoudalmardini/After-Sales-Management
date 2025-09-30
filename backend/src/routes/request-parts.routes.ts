@@ -146,21 +146,26 @@ router.post('/', async (req, res) => {
   const { requestPart, updatedSparePart } = result;
   const addedByName = `${requestPart.addedBy.firstName} ${requestPart.addedBy.lastName}`;
   
-  // Log history with proper error handling
+  // Log history with proper error handling and detailed information
   try {
+    const historyDescription = `${addedByName} قام بإضافة ${quantityUsed} قطعة من "${sparePart.name}" للطلب ${requestPart.request.requestNumber} - الكمية المتبقية: ${updatedSparePart.presentPieces} (تم التقليل بمقدار ${quantityUsed})`;
+    
     await logSparePartHistory(
       Number(sparePartId),
       Number(addedById),
       'USED_IN_REQUEST',
-      `استخدام ${quantityUsed} قطعة في الطلب ${requestPart.request.requestNumber} - تم تقليل الكمية من ${sparePart.presentPieces} إلى ${updatedSparePart.presentPieces}`,
+      historyDescription,
       'presentPieces',
       String(sparePart.presentPieces),
       String(updatedSparePart.presentPieces),
       -Number(quantityUsed),
       Number(requestId)
     );
+    
+    console.log(`✅ Spare part history logged: ${sparePart.name} used in request ${requestPart.request.requestNumber}`);
   } catch (error) {
-    console.error('Error logging spare part history:', error);
+    console.error('❌ Error logging spare part history:', error);
+    // Don't throw error - we still want the operation to succeed even if logging fails
   }
   
   // Notify warehouse keeper about inventory decrease
@@ -226,10 +231,14 @@ router.post('/', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   const { id } = req.params;
 
-  // Get request part with spare part info
+  // Get request part with spare part info and user info
   const requestPart = await prisma.requestPart.findUnique({
     where: { id: Number(id) },
-    include: { sparePart: true },
+    include: { 
+      sparePart: true,
+      addedBy: { select: { firstName: true, lastName: true } },
+      request: { select: { requestNumber: true } }
+    },
   });
 
   if (!requestPart) {
@@ -239,20 +248,41 @@ router.delete('/:id', async (req, res) => {
   }
 
   // Remove request part and restore quantity in a transaction
-  await prisma.$transaction(async (tx) => {
+  const result = await prisma.$transaction(async (tx) => {
     // Delete request part
     await tx.requestPart.delete({
       where: { id: Number(id) },
     });
 
-    // Restore quantity to spare part
-    await tx.sparePart.update({
+    // Restore presentPieces to spare part
+    const updatedPart = await tx.sparePart.update({
       where: { id: requestPart.sparePartId },
       data: {
-        quantity: requestPart.sparePart.quantity + requestPart.quantityUsed,
+        presentPieces: requestPart.sparePart.presentPieces + requestPart.quantityUsed,
       },
     });
+    
+    return updatedPart;
   });
+
+  // Log the removal in spare part history
+  try {
+    const userFullName = `${requestPart.addedBy.firstName} ${requestPart.addedBy.lastName}`;
+    const historyDescription = `${userFullName} قام بإزالة ${requestPart.quantityUsed} قطعة من الطلب ${requestPart.request.requestNumber} - تمت إعادة القطع للمخزن (الكمية الجديدة: ${result.presentPieces})`;
+    
+    await logSparePartHistory(
+      requestPart.sparePartId,
+      requestPart.addedById,
+      'QUANTITY_CHANGED',
+      historyDescription,
+      'presentPieces',
+      String(requestPart.sparePart.presentPieces),
+      String(result.presentPieces),
+      requestPart.quantityUsed
+    );
+  } catch (error) {
+    console.error('Error logging spare part removal:', error);
+  }
 
   const response: ApiResponse = {
     success: true,
@@ -277,10 +307,14 @@ router.put('/:id', async (req, res) => {
     return;
   }
 
-  // Get request part with spare part info
+  // Get request part with spare part info and request details
   const requestPart = await prisma.requestPart.findUnique({
     where: { id: Number(id) },
-    include: { sparePart: true },
+    include: { 
+      sparePart: true,
+      addedBy: { select: { firstName: true, lastName: true } },
+      request: { select: { requestNumber: true } }
+    },
   });
 
   if (!requestPart) {
@@ -299,6 +333,7 @@ router.put('/:id', async (req, res) => {
   }
 
   const totalCost = Number(quantityUsed) * requestPart.sparePart.unitPrice;
+  const oldQuantityUsed = requestPart.quantityUsed;
 
   // Update request part and spare part quantity in a transaction
   const result = await prisma.$transaction(async (tx) => {
@@ -315,21 +350,44 @@ router.put('/:id', async (req, res) => {
       },
     });
 
-    // Update spare part quantity
-    await tx.sparePart.update({
+    // Update spare part presentPieces
+    const updatedSparePart = await tx.sparePart.update({
       where: { id: requestPart.sparePartId },
       data: {
         presentPieces: newSparePartQuantity,
       },
     });
 
-    return updatedRequestPart;
+    return { updatedRequestPart, updatedSparePart };
   });
+
+  // Log the update in spare part history
+  try {
+    const userFullName = `${requestPart.addedBy.firstName} ${requestPart.addedBy.lastName}`;
+    const changeText = quantityDifference > 0 
+      ? `زيادة الكمية المستخدمة من ${oldQuantityUsed} إلى ${quantityUsed} (${quantityDifference}+ قطعة إضافية)`
+      : `تقليل الكمية المستخدمة من ${oldQuantityUsed} إلى ${quantityUsed} (${Math.abs(quantityDifference)}- قطعة)`;
+    
+    const historyDescription = `${userFullName} قام بتعديل الكمية المستخدمة في الطلب ${requestPart.request.requestNumber} - ${changeText} - الكمية المتبقية في المخزن: ${result.updatedSparePart.presentPieces}`;
+    
+    await logSparePartHistory(
+      requestPart.sparePartId,
+      requestPart.addedById,
+      'QUANTITY_CHANGED',
+      historyDescription,
+      'presentPieces',
+      String(requestPart.sparePart.presentPieces),
+      String(result.updatedSparePart.presentPieces),
+      -quantityDifference
+    );
+  } catch (error) {
+    console.error('Error logging spare part update:', error);
+  }
 
   const response: ApiResponse = {
     success: true,
     message: 'Request part updated successfully',
-    data: { requestPart: result },
+    data: { requestPart: result.updatedRequestPart },
   };
 
   res.status(200).json(response);
