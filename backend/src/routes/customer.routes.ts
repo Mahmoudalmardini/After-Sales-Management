@@ -71,12 +71,29 @@ router.get('/', authenticateToken, async (req: AuthenticatedRequest, res) => {
  * @access  Private (Managers and Supervisors only)
  */
 router.post('/', authenticateToken, requireRoles([UserRole.COMPANY_MANAGER, UserRole.DEPUTY_MANAGER, UserRole.DEPARTMENT_MANAGER, UserRole.SECTION_SUPERVISOR]), async (req: AuthenticatedRequest, res) => {
-  const { name, phone, email, address, city } = req.body;
+  const { name, phone, phoneType, email, address, city } = req.body;
 
   if (!name || !phone || !address) {
     const error = new ValidationError('Name, phone, and address are required');
     res.status(error.statusCode).json({ success: false, message: error.message });
     return;
+  }
+
+  // Validate email format if provided
+  if (email && !email.endsWith('@gmail.com')) {
+    const error = new ValidationError('Email must end with @gmail.com');
+    res.status(error.statusCode).json({ success: false, message: error.message });
+    return;
+  }
+
+  // Validate mobile phone format if phoneType is mobile
+  if (phoneType === 'mobile') {
+    const mobileRegex = /^\+963 9\d{8}$/;
+    if (!mobileRegex.test(phone)) {
+      const error = new ValidationError('Mobile phone must start with +963 9 and be 10 digits long');
+      res.status(error.statusCode).json({ success: false, message: error.message });
+      return;
+    }
   }
 
   const customer = await prisma.customer.create({

@@ -13,7 +13,14 @@ const CustomersPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ name: '', phone: '', email: '', address: '', city: '' });
+  const [form, setForm] = useState({ 
+    name: '', 
+    phone: '', 
+    phoneType: 'mobile', // 'mobile' or 'home'
+    email: '', 
+    address: '', 
+    city: '' 
+  });
 
   const load = async () => {
     try {
@@ -32,11 +39,28 @@ const CustomersPage: React.FC = () => {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate phone number based on type
+    if (form.phoneType === 'mobile') {
+      // Mobile phone must start with +963 9 and be 10 digits total
+      const mobileRegex = /^\+963 9\d{8}$/;
+      if (!mobileRegex.test(form.phone)) {
+        setError('رقم الهاتف المحمول يجب أن يبدأ بـ +963 9 ويتكون من 10 أرقام');
+        return;
+      }
+    }
+    
+    // Validate email format if provided
+    if (form.email && !form.email.endsWith('@gmail.com')) {
+      setError('البريد الإلكتروني يجب أن ينتهي بـ @gmail.com');
+      return;
+    }
+    
     try {
       setLoading(true);
       await customersAPI.createCustomer(form);
       setShowForm(false);
-      setForm({ name: '', phone: '', email: '', address: '', city: '' });
+      setForm({ name: '', phone: '', phoneType: 'mobile', email: '', address: '', city: '' });
       await load();
     } catch (e: any) {
       setError(e.message || 'Failed to create customer');
@@ -61,20 +85,44 @@ const CustomersPage: React.FC = () => {
 
       {showForm && (
         <div className="card">
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 m-4">
+              <div className="text-red-600 text-sm">{error}</div>
+            </div>
+          )}
           <form className="card-content grid grid-cols-1 md:grid-cols-2 gap-3" onSubmit={submit}>
-            <input className="input" placeholder={t('customers.name') || 'Name'} value={form.name} onChange={e=>setForm(f=>({...f, name: e.target.value}))} required />
-            <input className="input" placeholder="09XX XXX XXX" value={form.phone} onChange={e=>setForm(f=>({...f, phone: e.target.value}))} required />
-            <input className="input" placeholder={t('customers.email') || 'Email'} value={form.email} onChange={e=>setForm(f=>({...f, email: e.target.value}))} />
-            <select className="input" value={form.city} onChange={e=>setForm(f=>({...f, city: e.target.value}))} title={t('customers.city') || 'City'}>
+            <input className="input" placeholder={t('customers.name') || 'Name'} value={form.name} onChange={e=>{setForm(f=>({...f, name: e.target.value})); setError(null);}} required />
+            
+            <div className="space-y-2">
+              <select 
+                className="input" 
+                value={form.phoneType} 
+                onChange={e=>{setForm(f=>({...f, phoneType: e.target.value})); setError(null);}}
+                title="نوع الهاتف"
+              >
+                <option value="mobile">هاتف محمول</option>
+                <option value="home">هاتف منزل/عمل</option>
+              </select>
+              <input 
+                className="input" 
+                placeholder={form.phoneType === 'mobile' ? '+963 9XX XXX XXX' : 'رقم الهاتف'} 
+                value={form.phone} 
+                onChange={e=>{setForm(f=>({...f, phone: e.target.value})); setError(null);}} 
+                required 
+              />
+            </div>
+            
+            <input className="input" placeholder={t('customers.email') || 'Email (example@gmail.com)'} value={form.email} onChange={e=>{setForm(f=>({...f, email: e.target.value})); setError(null);}} />
+            <select className="input" value={form.city} onChange={e=>{setForm(f=>({...f, city: e.target.value})); setError(null);}} title={t('customers.city') || 'City'}>
               <option value="">اختر المحافظة...</option>
               {SYRIAN_CITIES.map(city => (
                 <option key={city} value={city}>{city}</option>
               ))}
             </select>
-            <input className="input md:col-span-2" placeholder={t('customers.address') || 'Address'} value={form.address} onChange={e=>setForm(f=>({...f, address: e.target.value}))} required />
+            <input className="input md:col-span-2" placeholder={t('customers.address') || 'Address'} value={form.address} onChange={e=>{setForm(f=>({...f, address: e.target.value})); setError(null);}} required />
             <div className="md:col-span-2 flex gap-2">
               <button className="btn-primary" type="submit" disabled={loading}>{loading ? t('requests.loading') : (t('customers.save') || 'Save')}</button>
-              <button className="btn" type="button" onClick={()=>setShowForm(false)}>{t('customers.cancel') || 'Cancel'}</button>
+              <button className="btn" type="button" onClick={()=>{setShowForm(false); setError(null);}}>{t('customers.cancel') || 'Cancel'}</button>
             </div>
           </form>
         </div>

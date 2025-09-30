@@ -271,6 +271,7 @@ export interface CreateRequestForm {
 export interface CreateCustomerForm {
   name: string;
   phone: string;
+  phoneType?: 'mobile' | 'home';
   email?: string;
   address: string;
   city?: string;

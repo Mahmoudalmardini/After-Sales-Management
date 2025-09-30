@@ -42,7 +42,10 @@ const LoginPage: React.FC = () => {
       await login(formData.username, formData.password);
       navigate('/');
     } catch (error: any) {
-      setError(error.message || t('login.failed'));
+      const errorMessage = error.message || t('login.failed');
+      setError(errorMessage);
+      // Show alert for incorrect password
+      alert(errorMessage);
     } finally {
       setIsLoading(false);
     }
