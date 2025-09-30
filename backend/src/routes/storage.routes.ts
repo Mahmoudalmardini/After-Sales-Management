@@ -45,6 +45,13 @@ const logSparePartHistory = async (
   requestId?: number
 ) => {
   try {
+    console.log('📝 Creating spare part history entry...', {
+      sparePartId,
+      changedById,
+      changeType,
+      description: description.substring(0, 50) + '...'
+    });
+    
     const history = await prisma.sparePartHistory.create({
       data: {
         sparePartId,
@@ -58,11 +65,18 @@ const logSparePartHistory = async (
         requestId,
       },
     });
-    console.log('✅ Spare part history created:', history);
+    console.log('✅ Spare part history created successfully:', history.id);
     return history;
   } catch (error) {
-    console.error('❌ Error creating spare part history:', error);
-    throw error;
+    console.error('❌ CRITICAL ERROR creating spare part history:', error);
+    console.error('Error details:', error instanceof Error ? error.message : String(error));
+    console.error('Stack trace:', error instanceof Error ? error.stack : 'No stack trace');
+    console.error('Input data:', { sparePartId, changedById, changeType, fieldChanged, oldValue, newValue, quantityChange, requestId });
+    
+    // Don't throw the error - just log it and return null
+    // This prevents the entire deletion from failing due to history logging issues
+    console.warn('⚠️  Continuing without history logging due to error');
+    return null;
   }
 };
 
@@ -573,15 +587,16 @@ router.put('/:id', async (req: any, res) => {
  * @access  Private
  */
 router.delete('/:id', async (req: any, res) => {
-  console.log('🗑️  DELETE request for spare part ID:', req.params.id);
-  
-  // Only warehouse keeper can delete
-  if (req.user?.role !== UserRole.WAREHOUSE_KEEPER) {
-    const error = new ValidationError('Only warehouse keeper can delete spare parts');
-    res.status(403).json({ success: false, message: error.message });
-    return;
-  }
-  const { id } = req.params;
+  try {
+    console.log('🗑️  DELETE request for spare part ID:', req.params.id);
+    
+    // Only warehouse keeper can delete
+    if (req.user?.role !== UserRole.WAREHOUSE_KEEPER) {
+      const error = new ValidationError('Only warehouse keeper can delete spare parts');
+      res.status(403).json({ success: false, message: error.message });
+      return;
+    }
+    const { id } = req.params;
 
   // Check if spare part exists
   console.log('🔍 Looking for spare part with ID:', Number(id));
@@ -653,7 +668,21 @@ router.delete('/:id', async (req: any, res) => {
     message: 'Spare part deleted successfully',
   };
 
+  console.log('✅ Deletion completed successfully');
   res.status(200).json(response);
+  
+  } catch (error) {
+    console.error('💥 CRITICAL ERROR in spare part deletion:', error);
+    console.error('Error details:', error instanceof Error ? error.message : String(error));
+    console.error('Stack trace:', error instanceof Error ? error.stack : 'No stack trace');
+    
+    // Send error response to prevent client timeout
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error during deletion',
+      error: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : String(error)) : 'Something went wrong'
+    });
+  }
 });
 
 
