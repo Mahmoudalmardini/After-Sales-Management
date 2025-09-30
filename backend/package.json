@@ -19,6 +19,7 @@
     "db:reset": "prisma migrate reset --force",
     "db:setup": "node scripts/setup-production-db.js",
     "db:migrate-from-sqlite": "node scripts/migrate-to-postgresql.js",
+    "db:fix-schema": "node scripts/fix-database-schema.js",
     "db:backup": "bash scripts/backup-database.sh",
     "db:restore": "bash scripts/restore-database.sh",
     "lint": "eslint src/**/*.ts",

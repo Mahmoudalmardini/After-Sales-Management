@@ -604,12 +604,17 @@ router.delete('/:id', async (req: any, res) => {
   const userFullName = `${req.user!.firstName || 'Unknown'} ${req.user!.lastName || 'User'}`;
   
   // Log deletion in spare part history BEFORE deleting
-  await logSparePartHistory(
-    existingPart.id,
-    req.user!.id,
-    'DELETED',
-    `${userFullName} قام بحذف قطعة الغيار: ${existingPart.name} (${existingPart.partNumber}) - كان عدد القطع: ${existingPart.presentPieces} - السعر: ${existingPart.unitPrice} ${existingPart.currency}`
-  );
+  try {
+    await logSparePartHistory(
+      existingPart.id,
+      req.user!.id,
+      'DELETED',
+      `${userFullName} قام بحذف قطعة الغيار: ${existingPart.name} (${existingPart.partNumber}) - كان عدد القطع: ${existingPart.presentPieces} - السعر: ${existingPart.unitPrice} ${existingPart.currency}`
+    );
+  } catch (logError) {
+    console.error('❌ Failed to log deletion history:', logError);
+    // Continue with deletion even if logging fails
+  }
 
   await prisma.sparePart.delete({
     where: { id: Number(id) },
@@ -617,12 +622,17 @@ router.delete('/:id', async (req: any, res) => {
 
   // Send notification to managers and supervisors
   const warehouseKeeperName = userFullName;
-  await notificationService.createWarehouseNotification(
-    'DELETED',
-    existingPart.name,
-    warehouseKeeperName,
-    req.user!.departmentId
-  );
+  try {
+    await notificationService.createWarehouseNotification(
+      'DELETED',
+      existingPart.name,
+      warehouseKeeperName,
+      req.user!.departmentId
+    );
+  } catch (notificationError) {
+    console.error('❌ Failed to send deletion notification:', notificationError);
+    // Continue even if notification fails
+  }
 
   const response: ApiResponse = {
     success: true,
