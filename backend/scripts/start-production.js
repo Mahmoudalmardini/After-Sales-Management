@@ -29,55 +29,29 @@ try {
   execSync('npx prisma generate', { stdio: 'inherit' });
   console.log('✅ Prisma client generated');
 
-  // Check if database has any tables - if not, it's a fresh database
-  console.log('🔍 Checking database state...');
-  let needsInitialization = false;
-  
+  // Apply database migrations
+  console.log('📦 Applying database migrations...');
   try {
-    // Try to query a simple table count - this will fail if no tables exist
-    execSync('npx prisma db execute --stdin < /dev/null', { stdio: 'pipe' });
-  } catch (e) {
-    needsInitialization = true;
-  }
-
-  if (needsInitialization) {
-    console.log('📦 Fresh database detected, initializing schema...');
-    execSync('npx prisma db push', { stdio: 'inherit' });
-    console.log('✅ Database schema created');
-  } else {
-    console.log('📦 Existing database detected, applying any pending changes...');
+    execSync('npx prisma migrate deploy', { stdio: 'inherit' });
+    console.log('✅ Database migrations applied');
+  } catch (migrateError) {
+    console.log('⚠️  Migration failed, trying db push...');
     try {
-      execSync('npx prisma migrate deploy', { stdio: 'inherit' });
-      console.log('✅ Database migrations applied');
-    } catch (migrateError) {
-      console.log('⚠️  No migrations to deploy, using db push...');
       execSync('npx prisma db push', { stdio: 'inherit' });
       console.log('✅ Database schema synchronized');
+    } catch (pushError) {
+      console.error('❌ Both migration and db push failed:', pushError.message);
+      throw pushError;
     }
   }
 
   // Seed the database if it's empty
-  console.log('🌱 Checking if seeding is needed...');
+  console.log('🌱 Attempting to seed database...');
   try {
-    const checkResult = execSync(`node -e "
-      const { PrismaClient } = require('@prisma/client');
-      const prisma = new PrismaClient();
-      prisma.user.count()
-        .then(count => {
-          console.log('Users found:', count);
-          process.exit(count === 0 ? 1 : 0);
-        })
-        .catch(() => process.exit(1))
-        .finally(() => prisma.\\$disconnect());
-    "`, { stdio: 'inherit' });
-  } catch (seedCheckError) {
-    console.log('🌱 No users found, seeding database...');
-    try {
-      execSync('npx prisma db seed', { stdio: 'inherit' });
-      console.log('✅ Database seeded successfully');
-    } catch (seedErr) {
-      console.warn('⚠️  Seeding failed:', seedErr.message);
-    }
+    execSync('npx prisma db seed', { stdio: 'inherit' });
+    console.log('✅ Database seeded successfully');
+  } catch (seedErr) {
+    console.warn('⚠️  Seeding failed (this is usually OK if data already exists):', seedErr.message);
   }
 
   // Start the application
