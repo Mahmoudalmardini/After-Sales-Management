@@ -621,7 +621,7 @@ router.delete('/:id', async (req: any, res) => {
     console.log('✅ Deletion logged successfully');
   } catch (logError) {
     console.error('❌ Failed to log deletion history:', logError);
-    console.error('Log error details:', logError.message);
+    console.error('Log error details:', logError instanceof Error ? logError.message : String(logError));
     // Continue with deletion even if logging fails
   }
 
@@ -644,7 +644,7 @@ router.delete('/:id', async (req: any, res) => {
     console.log('✅ Notification sent successfully');
   } catch (notificationError) {
     console.error('❌ Failed to send deletion notification:', notificationError);
-    console.error('Notification error details:', notificationError.message);
+    console.error('Notification error details:', notificationError instanceof Error ? notificationError.message : String(notificationError));
     // Continue even if notification fails
   }
 
