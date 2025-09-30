@@ -546,6 +546,15 @@ export const storageAPI = {
     }
   },
 
+  getAllActivities: async (params?: { limit?: number; filter?: string }) => {
+    try {
+      const response = await api.get('/storage/activities/all', { params });
+      return handleResponse(response);
+    } catch (error) {
+      return Promise.reject(handleError(error));
+    }
+  },
+
   getCategories: async () => {
     try {
       const response = await api.get('/storage/categories');

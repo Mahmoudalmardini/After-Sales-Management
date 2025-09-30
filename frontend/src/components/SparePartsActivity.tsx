@@ -44,42 +44,21 @@ const SparePartsActivity: React.FC = () => {
   const loadActivities = useCallback(async () => {
     try {
       setLoading(true);
-      // Get all spare parts first
-      const response = await storageAPI.getSpareParts({ limit: 100 });
-      const spareParts = response.data?.spareParts || [];
+      console.log('🔄 Loading activities with filter:', filter);
       
-      // Load history for each spare part
-      const allActivities: SparePartActivity[] = [];
+      // Use the new efficient endpoint
+      const response = await storageAPI.getAllActivities({ 
+        limit: 100, 
+        filter: filter 
+      }) as any;
       
-      for (const part of spareParts) {
-        try {
-          const historyResponse = await storageAPI.getSparePartHistory(part.id) as any;
-          const history = historyResponse.data?.history || [];
-          allActivities.push(...history);
-        } catch (error) {
-          console.error(`Error loading history for part ${part.id}:`, error);
-        }
-      }
-
-      // Sort by date descending
-      allActivities.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-
-      // Apply filter
-      const now = new Date();
-      const filtered = allActivities.filter(activity => {
-        const activityDate = new Date(activity.createdAt);
-        if (filter === 'today') {
-          return activityDate.toDateString() === now.toDateString();
-        } else if (filter === 'week') {
-          const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-          return activityDate >= weekAgo;
-        }
-        return true; // 'all'
-      });
-
-      setActivities(filtered);
+      const fetchedActivities = response.data?.activities || [];
+      console.log('✅ Loaded activities:', fetchedActivities.length);
+      
+      setActivities(fetchedActivities);
     } catch (error) {
-      console.error('Error loading activities:', error);
+      console.error('❌ Error loading activities:', error);
+      setActivities([]);
     } finally {
       setLoading(false);
     }

@@ -143,6 +143,75 @@ router.get('/categories', async (req, res) => {
 });
 
 /**
+ * @route   GET /api/storage/activities/all
+ * @desc    Get all spare parts activities
+ * @access  Private
+ */
+router.get('/activities/all', async (req, res) => {
+  const { limit = 50, filter = 'today' } = req.query;
+  
+  console.log('📋 Fetching all spare parts activities, filter:', filter);
+  
+  try {
+    // Calculate date filter
+    const now = new Date();
+    let dateFilter: any = {};
+    
+    if (filter === 'today') {
+      const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      dateFilter = { gte: startOfDay };
+    } else if (filter === 'week') {
+      const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      dateFilter = { gte: weekAgo };
+    }
+    // For 'all', no date filter
+
+    const whereClause = Object.keys(dateFilter).length > 0 
+      ? { createdAt: dateFilter } 
+      : {};
+
+    const activities = await prisma.sparePartHistory.findMany({
+      where: whereClause,
+      include: {
+        changedBy: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            role: true,
+          },
+        },
+        sparePart: {
+          select: {
+            id: true,
+            name: true,
+            partNumber: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: Number(limit),
+    });
+
+    console.log(`📊 Found ${activities.length} total activities`);
+    
+    const response: ApiResponse = {
+      success: true,
+      data: { activities },
+    };
+
+    res.status(200).json(response);
+  } catch (error) {
+    console.error('❌ Error fetching all activities:', error);
+    const response: ApiResponse = {
+      success: false,
+      message: 'Failed to fetch activities',
+    };
+    res.status(500).json(response);
+  }
+});
+
+/**
  * @route   GET /api/storage/:id
  * @desc    Get spare part by ID
  * @access  Private
