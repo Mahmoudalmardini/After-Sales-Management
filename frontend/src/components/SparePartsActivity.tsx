@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { storageAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { UserRole } from '../types';
@@ -41,13 +41,7 @@ const SparePartsActivity: React.FC = () => {
     UserRole.WAREHOUSE_KEEPER,
   ]);
 
-  useEffect(() => {
-    if (canViewActivity) {
-      loadActivities();
-    }
-  }, [filter, canViewActivity]);
-
-  const loadActivities = async () => {
+  const loadActivities = useCallback(async () => {
     try {
       setLoading(true);
       // Get all spare parts first
@@ -89,7 +83,13 @@ const SparePartsActivity: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filter]);
+
+  useEffect(() => {
+    if (canViewActivity) {
+      loadActivities();
+    }
+  }, [filter, canViewActivity, loadActivities]);
 
   const getActivityIcon = (changeType: string) => {
     switch (changeType) {
