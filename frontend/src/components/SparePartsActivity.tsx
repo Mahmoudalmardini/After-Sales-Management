@@ -6,7 +6,7 @@ import { UserRole } from '../types';
 interface SparePartActivity {
   id: number;
   sparePartId: number;
-  changeType: 'CREATED' | 'UPDATED' | 'QUANTITY_CHANGED' | 'USED_IN_REQUEST';
+  changeType: 'CREATED' | 'UPDATED' | 'QUANTITY_CHANGED' | 'USED_IN_REQUEST' | 'DELETED';
   fieldChanged?: string;
   oldValue?: string;
   newValue?: string;
@@ -82,6 +82,8 @@ const SparePartsActivity: React.FC = () => {
         return '📦';
       case 'USED_IN_REQUEST':
         return '🔧';
+      case 'DELETED':
+        return '🗑️';
       default:
         return '📋';
     }
@@ -96,6 +98,8 @@ const SparePartsActivity: React.FC = () => {
       case 'QUANTITY_CHANGED':
         return 'bg-yellow-100 text-yellow-800 border-yellow-200';
       case 'USED_IN_REQUEST':
+        return 'bg-purple-100 text-purple-800 border-purple-200';
+      case 'DELETED':
         return 'bg-red-100 text-red-800 border-red-200';
       default:
         return 'bg-gray-100 text-gray-800 border-gray-200';

@@ -148,7 +148,7 @@ router.get('/categories', async (req, res) => {
  * @access  Private
  */
 router.get('/activities/all', async (req, res) => {
-  const { limit = 50, filter = 'today' } = req.query;
+  const { limit = 50, filter = 'all' } = req.query; // Default filter to 'all'
   
   console.log('📋 Fetching all spare parts activities, filter:', filter);
   
@@ -600,14 +600,23 @@ router.delete('/:id', async (req: any, res) => {
     return;
   }
 
+  // Get user's full name for logging
+  const userFullName = `${req.user!.firstName || 'Unknown'} ${req.user!.lastName || 'User'}`;
+  
+  // Log deletion in spare part history BEFORE deleting
+  await logSparePartHistory(
+    existingPart.id,
+    req.user!.id,
+    'DELETED',
+    `${userFullName} قام بحذف قطعة الغيار: ${existingPart.name} (${existingPart.partNumber}) - كان عدد القطع: ${existingPart.presentPieces} - السعر: ${existingPart.unitPrice} ${existingPart.currency}`
+  );
+
   await prisma.sparePart.delete({
     where: { id: Number(id) },
   });
 
   // Send notification to managers and supervisors
-  const firstName = req.user!.firstName || 'Unknown';
-  const lastName = req.user!.lastName || 'User';
-  const warehouseKeeperName = `${firstName} ${lastName}`;
+  const warehouseKeeperName = userFullName;
   await notificationService.createWarehouseNotification(
     'DELETED',
     existingPart.name,

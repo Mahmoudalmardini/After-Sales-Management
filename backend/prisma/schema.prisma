@@ -268,7 +268,7 @@ model SparePartHistory {
   id             Int      @id @default(autoincrement())
   sparePartId    Int
   changedById    Int
-  changeType     String   // 'CREATED', 'UPDATED', 'QUANTITY_CHANGED', 'USED_IN_REQUEST'
+  changeType     String   // 'CREATED', 'UPDATED', 'QUANTITY_CHANGED', 'USED_IN_REQUEST', 'DELETED'
   fieldChanged   String?  // Which field was changed (if applicable)
   oldValue       String?  // Old value (as string)
   newValue       String?  // New value (as string)
