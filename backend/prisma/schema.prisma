@@ -278,7 +278,7 @@ model SparePartHistory {
   createdAt      DateTime @default(now())
 
   // Relations
-  sparePart SparePart @relation(fields: [sparePartId], references: [id])
+  sparePart SparePart @relation(fields: [sparePartId], references: [id], onDelete: Cascade)
   changedBy User      @relation(fields: [changedById], references: [id])
 
   @@map("spare_part_history")
