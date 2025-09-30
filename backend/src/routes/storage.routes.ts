@@ -573,6 +573,8 @@ router.put('/:id', async (req: any, res) => {
  * @access  Private
  */
 router.delete('/:id', async (req: any, res) => {
+  console.log('🗑️  DELETE request for spare part ID:', req.params.id);
+  
   // Only warehouse keeper can delete
   if (req.user?.role !== UserRole.WAREHOUSE_KEEPER) {
     const error = new ValidationError('Only warehouse keeper can delete spare parts');
@@ -582,16 +584,20 @@ router.delete('/:id', async (req: any, res) => {
   const { id } = req.params;
 
   // Check if spare part exists
+  console.log('🔍 Looking for spare part with ID:', Number(id));
   const existingPart = await prisma.sparePart.findUnique({
     where: { id: Number(id) },
     include: { requestParts: true },
   });
 
   if (!existingPart) {
+    console.log('❌ Spare part not found with ID:', id);
     const error = new ValidationError('Spare part not found');
     res.status(error.statusCode).json({ success: false, message: error.message });
     return;
   }
+  
+  console.log('✅ Found spare part:', existingPart.name, 'with', existingPart.requestParts.length, 'request parts');
 
   // Check if spare part is used in any requests
   if (existingPart.requestParts.length > 0) {
@@ -604,6 +610,7 @@ router.delete('/:id', async (req: any, res) => {
   const userFullName = `${req.user!.firstName || 'Unknown'} ${req.user!.lastName || 'User'}`;
   
   // Log deletion in spare part history BEFORE deleting
+  console.log('📝 Logging deletion to SparePartHistory table...');
   try {
     await logSparePartHistory(
       existingPart.id,
@@ -611,16 +618,21 @@ router.delete('/:id', async (req: any, res) => {
       'DELETED',
       `${userFullName} قام بحذف قطعة الغيار: ${existingPart.name} (${existingPart.partNumber}) - كان عدد القطع: ${existingPart.presentPieces} - السعر: ${existingPart.unitPrice} ${existingPart.currency}`
     );
+    console.log('✅ Deletion logged successfully');
   } catch (logError) {
     console.error('❌ Failed to log deletion history:', logError);
+    console.error('Log error details:', logError.message);
     // Continue with deletion even if logging fails
   }
 
+  console.log('🗑️  Deleting spare part from database...');
   await prisma.sparePart.delete({
     where: { id: Number(id) },
   });
+  console.log('✅ Spare part deleted successfully');
 
   // Send notification to managers and supervisors
+  console.log('📢 Sending deletion notification...');
   const warehouseKeeperName = userFullName;
   try {
     await notificationService.createWarehouseNotification(
@@ -629,8 +641,10 @@ router.delete('/:id', async (req: any, res) => {
       warehouseKeeperName,
       req.user!.departmentId
     );
+    console.log('✅ Notification sent successfully');
   } catch (notificationError) {
     console.error('❌ Failed to send deletion notification:', notificationError);
+    console.error('Notification error details:', notificationError.message);
     // Continue even if notification fails
   }
 
