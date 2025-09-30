@@ -18,7 +18,7 @@ interface SparePartActivity {
     id: number;
     name: string;
     partNumber: string;
-  };
+  } | null; // Can be null if spare part was deleted
   changedBy: {
     id: number;
     firstName: string;
@@ -217,8 +217,18 @@ const SparePartsActivity: React.FC = () => {
                   <div className="mt-2 flex items-center justify-between text-xs text-gray-600">
                     <div className="flex items-center gap-2">
                       <span>{activity.changedBy.firstName} {activity.changedBy.lastName}</span>
-                      <span className="text-gray-400">•</span>
-                      <span>{activity.sparePart.name}</span>
+                      {activity.sparePart && (
+                        <>
+                          <span className="text-gray-400">•</span>
+                          <span>{activity.sparePart.name}</span>
+                        </>
+                      )}
+                      {!activity.sparePart && activity.changeType === 'DELETED' && (
+                        <>
+                          <span className="text-gray-400">•</span>
+                          <span className="text-red-600 italic">تم حذف القطعة</span>
+                        </>
+                      )}
                     </div>
                     <span>{formatTime(activity.createdAt)}</span>
                   </div>

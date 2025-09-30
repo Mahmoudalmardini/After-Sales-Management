@@ -38,6 +38,7 @@ const StoragePage: React.FC = () => {
   const [selectedPartForHistory, setSelectedPartForHistory] = useState<SparePart | null>(null);
   const [historyData, setHistoryData] = useState<any[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
+  const [activityKey, setActivityKey] = useState(0); // Key to force refresh of activity widget
 
   const loadSpareParts = useCallback(async () => {
     try {
@@ -103,6 +104,7 @@ const StoragePage: React.FC = () => {
         departmentId: undefined,
       });
       await loadSpareParts();
+      setActivityKey(prev => prev + 1); // Refresh activity widget
     } catch (e: any) {
       setError(e.message || 'Failed to save spare part');
     } finally {
@@ -131,6 +133,7 @@ const StoragePage: React.FC = () => {
       setLoading(true);
       await storageAPI.deleteSparePart(id);
       await loadSpareParts();
+      setActivityKey(prev => prev + 1); // Refresh activity widget
     } catch (e: any) {
       setError(e.message || 'Failed to delete spare part');
     } finally {
@@ -183,7 +186,7 @@ const StoragePage: React.FC = () => {
       </div>
 
       {/* Spare Parts Activity Widget */}
-      <SparePartsActivity />
+      <SparePartsActivity key={activityKey} />
 
       {/* Filters */}
       <div className="card">
