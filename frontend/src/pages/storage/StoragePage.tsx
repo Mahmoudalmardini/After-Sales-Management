@@ -531,38 +531,35 @@ const StoragePage: React.FC = () => {
                           <div className="flex gap-0.5 justify-center">
                             {canEdit && (
                               <button
-                                className="inline-flex items-center px-2 py-1 text-[10px] font-medium rounded text-white bg-blue-600 hover:bg-blue-700 transition-colors"
+                                className="p-1.5 rounded hover:bg-blue-100 text-blue-600 hover:text-blue-700 transition-colors"
                                 onClick={(e) => { e.stopPropagation(); handleEdit(part); }}
-                                title={t('storage.edit')}
+                                title="تعديل"
                               >
-                                <svg className="w-3 h-3 ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                 </svg>
-                                تعديل
                               </button>
                             )}
                             {(canEdit || hasRole([UserRole.COMPANY_MANAGER, UserRole.DEPUTY_MANAGER])) && (
                               <button
-                                className="inline-flex items-center px-2 py-1 text-[10px] font-medium rounded text-white bg-green-600 hover:bg-green-700 transition-colors"
+                                className="p-1.5 rounded hover:bg-green-100 text-green-600 hover:text-green-700 transition-colors"
                                 onClick={(e) => { e.stopPropagation(); handleViewHistory(part); }}
-                                title={t('storage.history')}
+                                title="التاريخ"
                               >
-                                <svg className="w-3 h-3 ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
-                                تاريخ
                               </button>
                             )}
                             {canEdit && (
                               <button
-                                className="inline-flex items-center px-2 py-1 text-[10px] font-medium rounded text-white bg-red-600 hover:bg-red-700 transition-colors"
+                                className="p-1.5 rounded hover:bg-red-100 text-red-600 hover:text-red-700 transition-colors"
                                 onClick={(e) => { e.stopPropagation(); handleDelete(part.id); }}
-                                title={t('storage.delete')}
+                                title="حذف"
                               >
-                                <svg className="w-3 h-3 ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                 </svg>
-                                حذف
                               </button>
                             )}
                           </div>
