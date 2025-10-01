@@ -4,7 +4,6 @@ import { useAuth } from '../contexts/AuthContext';
 import { useI18n } from '../contexts/I18nContext';
 import { dashboardAPI, requestsAPI } from '../services/api';
 import { DashboardStats, Request } from '../types';
-import SparePartsActivity from '../components/SparePartsActivity';
 import {
   ClipboardDocumentListIcon,
   ClockIcon,
@@ -201,8 +200,7 @@ const Dashboard: React.FC = () => {
         ))}
       </div>
 
-      {/* Spare Parts Activity Widget */}
-      <SparePartsActivity />
+      {/* Spare Parts Activity Widget - Removed to prevent issues */}
 
       {/* Recent requests */}
       <div className="card">

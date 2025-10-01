@@ -153,27 +153,8 @@ router.post('/', async (req, res) => {
   const { requestPart, updatedSparePart } = result;
   const addedByName = `${requestPart.addedBy.firstName} ${requestPart.addedBy.lastName}`;
   
-  // Log history with proper error handling and detailed information
-  try {
-    const historyDescription = `${addedByName} قام بإضافة ${quantityUsed} قطعة من "${sparePart.name}" للطلب ${requestPart.request.requestNumber} - الكمية المتبقية: ${updatedSparePart.presentPieces} (تم التقليل بمقدار ${quantityUsed})`;
-    
-    await logSparePartHistory(
-      Number(sparePartId),
-      Number(addedById),
-      'USED_IN_REQUEST',
-      historyDescription,
-      'presentPieces',
-      String(sparePart.presentPieces),
-      String(updatedSparePart.presentPieces),
-      -Number(quantityUsed),
-      Number(requestId)
-    );
-    
-    console.log(`✅ Spare part history logged: ${sparePart.name} used in request ${requestPart.request.requestNumber}`);
-  } catch (error) {
-    console.error('❌ Error logging spare part history:', error);
-    // Don't throw error - we still want the operation to succeed even if logging fails
-  }
+  // Activity logging removed to prevent issues
+  // try { await logSparePartHistory(...) } catch (error) { ... }
   
   // Notify warehouse keeper about inventory decrease
   const warehouseKeepers = await prisma.user.findMany({
@@ -272,24 +253,8 @@ router.delete('/:id', async (req, res) => {
     return updatedPart;
   });
 
-  // Log the removal in spare part history
-  try {
-    const userFullName = `${requestPart.addedBy.firstName} ${requestPart.addedBy.lastName}`;
-    const historyDescription = `${userFullName} قام بإزالة ${requestPart.quantityUsed} قطعة من الطلب ${requestPart.request.requestNumber} - تمت إعادة القطع للمخزن (الكمية الجديدة: ${result.presentPieces})`;
-    
-    await logSparePartHistory(
-      requestPart.sparePartId,
-      requestPart.addedById,
-      'QUANTITY_CHANGED',
-      historyDescription,
-      'presentPieces',
-      String(requestPart.sparePart.presentPieces),
-      String(result.presentPieces),
-      requestPart.quantityUsed
-    );
-  } catch (error) {
-    console.error('Error logging spare part removal:', error);
-  }
+  // Activity logging removed to prevent issues
+  // try { await logSparePartHistory(...) } catch (error) { ... }
 
   const response: ApiResponse = {
     success: true,
@@ -368,28 +333,8 @@ router.put('/:id', async (req, res) => {
     return { updatedRequestPart, updatedSparePart };
   });
 
-  // Log the update in spare part history
-  try {
-    const userFullName = `${requestPart.addedBy.firstName} ${requestPart.addedBy.lastName}`;
-    const changeText = quantityDifference > 0 
-      ? `زيادة الكمية المستخدمة من ${oldQuantityUsed} إلى ${quantityUsed} (${quantityDifference}+ قطعة إضافية)`
-      : `تقليل الكمية المستخدمة من ${oldQuantityUsed} إلى ${quantityUsed} (${Math.abs(quantityDifference)}- قطعة)`;
-    
-    const historyDescription = `${userFullName} قام بتعديل الكمية المستخدمة في الطلب ${requestPart.request.requestNumber} - ${changeText} - الكمية المتبقية في المخزن: ${result.updatedSparePart.presentPieces}`;
-    
-    await logSparePartHistory(
-      requestPart.sparePartId,
-      requestPart.addedById,
-      'QUANTITY_CHANGED',
-      historyDescription,
-      'presentPieces',
-      String(requestPart.sparePart.presentPieces),
-      String(result.updatedSparePart.presentPieces),
-      -quantityDifference
-    );
-  } catch (error) {
-    console.error('Error logging spare part update:', error);
-  }
+  // Activity logging removed to prevent issues
+  // try { await logSparePartHistory(...) } catch (error) { ... }
 
   const response: ApiResponse = {
     success: true,
