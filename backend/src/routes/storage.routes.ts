@@ -188,14 +188,7 @@ router.get('/:id/history', async (req, res) => {
     const history = await prisma.sparePartHistory.findMany({
       where: { sparePartId: Number(id) },
       include: {
-        changedBy: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            role: true,
-          },
-        },
+        changedBy: true,
         sparePart: {
           select: {
             id: true,
@@ -208,6 +201,7 @@ router.get('/:id/history', async (req, res) => {
     });
 
     console.log(`📊 Found ${history.length} history records for spare part ${id}`);
+    console.log('📊 History data:', JSON.stringify(history, null, 2));
     
     const response: ApiResponse = {
       success: true,
@@ -217,6 +211,7 @@ router.get('/:id/history', async (req, res) => {
     res.status(200).json(response);
   } catch (error) {
     console.error('❌ Error fetching spare part history:', error);
+    console.error('❌ Error details:', error);
     const response: ApiResponse = {
       success: false,
       message: 'Failed to fetch history',
@@ -532,7 +527,8 @@ router.put('/:id', async (req: any, res) => {
       warehouseKeeperName, 
       sparePart.partNumber,
       changeReason,
-      detailedChanges
+      detailedChanges,
+      userId
     );
   }
   

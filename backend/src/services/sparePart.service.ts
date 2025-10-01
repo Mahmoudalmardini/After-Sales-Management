@@ -21,15 +21,19 @@ export const logPartUsedInRequest = async (
   quantity: number,
   requestNumber: string,
   performedBy: string,
-  partNumber: string
+  partNumber: string,
+  userId?: number
 ): Promise<void> => {
   try {
     const message = `تم استخدام ${quantity} قطعة من "${sparePartName}" في الطلب ${requestNumber}`;
     
+    // Get a valid user ID or use the first admin user
+    let validUserId = userId || 1;
+    
     await prisma.sparePartHistory.create({
       data: {
         sparePartId,
-        changedById: 0, // System log
+        changedById: validUserId,
         changeType: 'USED_IN_REQUEST',
         description: message,
         fieldChanged: 'presentPieces',
@@ -59,16 +63,20 @@ export const logPartUpdate = async (
     fieldAr: string;
     oldValue: string;
     newValue: string;
-  }>
+  }>,
+  userId?: number
 ): Promise<void> => {
   try {
     const reasonText = changeReason ? ` - السبب: ${changeReason}` : '';
     const message = `${performedBy} قام بتحديث "${sparePartName}" - التغييرات: ${changes.join(', ')}${reasonText}`;
     
+    // Get a valid user ID or use the first admin user
+    let validUserId = userId || 1;
+    
     await prisma.sparePartHistory.create({
       data: {
         sparePartId,
-        changedById: 0, // System log
+        changedById: validUserId,
         changeType: 'UPDATED',
         description: message,
       },
