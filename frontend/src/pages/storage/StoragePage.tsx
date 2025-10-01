@@ -25,6 +25,7 @@ const StoragePage: React.FC = () => {
     description: '',
     departmentId: undefined,
   });
+  const [changeReason, setChangeReason] = useState<string>('');
 
   const [filters, setFilters] = useState<StorageFilters>({
     search: '',
@@ -87,7 +88,7 @@ const StoragePage: React.FC = () => {
       }
       
       if (editingPart) {
-        await storageAPI.updateSparePart(editingPart.id, payload);
+        await storageAPI.updateSparePart(editingPart.id, { ...payload, changeReason });
       } else {
         await storageAPI.createSparePart(payload);
       }
@@ -103,6 +104,7 @@ const StoragePage: React.FC = () => {
         description: '',
         departmentId: undefined,
       });
+      setChangeReason('');
       await loadSpareParts();
     } catch (e: any) {
       setError(e.message || 'Failed to save spare part');
@@ -123,6 +125,7 @@ const StoragePage: React.FC = () => {
       description: part.description || '',
       departmentId: (part as any).departmentId || undefined,
     });
+    setChangeReason('');
     setShowForm(true);
   };
 
@@ -350,6 +353,25 @@ const StoragePage: React.FC = () => {
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
                 rows={3}
               />
+              {editingPart && (
+                <div className="md:col-span-2">
+                  <label htmlFor="changeReason" className="block text-sm font-medium text-gray-700 mb-1">
+                    سبب التعديل (مطلوب) *
+                  </label>
+                  <textarea
+                    id="changeReason"
+                    className="input w-full border-blue-300 focus:border-blue-500"
+                    placeholder="يرجى توضيح سبب التعديل (مثلاً: تحديث السعر بسبب تغير سعر الموّرد، تصحيح الكمية بعد الجرد...)"
+                    value={changeReason}
+                    onChange={(e) => setChangeReason(e.target.value)}
+                    rows={2}
+                    required
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    📝 سيتم حفظ هذا السبب في سجل التغييرات ليراه المديرون
+                  </p>
+                </div>
+              )}
               <div className="md:col-span-2 flex gap-2">
                 <button className="btn-primary" type="submit" disabled={loading}>
                   {loading ? t('common.loading') : (editingPart ? t('storage.update') : t('storage.save'))}
@@ -370,6 +392,7 @@ const StoragePage: React.FC = () => {
                       description: '',
                       departmentId: undefined,
                     });
+                    setChangeReason('');
                   }}
                 >
                   {t('storage.cancel')}
@@ -675,13 +698,21 @@ const StoragePage: React.FC = () => {
                     
                     {/* Show old and new values if available */}
                     {item.oldValue && item.newValue && item.changeType === 'UPDATED' && (
-                      <div className="bg-white rounded p-2 mb-3 text-xs">
-                        <div className="flex items-center gap-2">
-                          <span className="text-gray-500">من:</span>
-                          <span className="font-medium text-red-600">{item.oldValue}</span>
-                          <span className="text-gray-400">←</span>
-                          <span className="text-gray-500">إلى:</span>
-                          <span className="font-medium text-green-600">{item.newValue}</span>
+                      <div className="bg-white rounded p-3 mb-3 border border-gray-200">
+                        <div className="text-xs font-semibold text-gray-700 mb-2">التغيير التفصيلي:</div>
+                        <div className="grid grid-cols-2 gap-3 text-xs">
+                          <div>
+                            <span className="font-medium text-red-600">القيمة السابقة:</span>
+                            <p className="mt-1 text-gray-900 bg-red-50 p-2 rounded break-words">
+                              {item.oldValue}
+                            </p>
+                          </div>
+                          <div>
+                            <span className="font-medium text-green-600">القيمة الجديدة:</span>
+                            <p className="mt-1 text-gray-900 bg-green-50 p-2 rounded break-words">
+                              {item.newValue}
+                            </p>
+                          </div>
                         </div>
                       </div>
                     )}

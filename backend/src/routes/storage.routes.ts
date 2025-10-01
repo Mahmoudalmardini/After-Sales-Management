@@ -358,10 +358,18 @@ router.put('/:id', async (req: any, res) => {
     quantity, 
     description,
     departmentId,
+    changeReason,
   } = req.body;
 
   if (!name || !partNumber) {
     const error = new ValidationError('name and partNumber are required');
+    res.status(error.statusCode).json({ success: false, message: error.message });
+    return;
+  }
+
+  // Require change reason for updates
+  if (!changeReason || changeReason.trim() === '') {
+    const error = new ValidationError('سبب التعديل مطلوب');
     res.status(error.statusCode).json({ success: false, message: error.message });
     return;
   }
@@ -407,30 +415,132 @@ router.put('/:id', async (req: any, res) => {
     },
   });
 
-  // Track changes for logging
+  // Track changes for logging with detailed before/after values
   const changes: string[] = [];
-  if (existingPart.name !== sparePart.name) changes.push('الاسم');
-  if (existingPart.presentPieces !== sparePart.presentPieces) changes.push('عدد القطع');
-  if (existingPart.unitPrice !== sparePart.unitPrice) changes.push('السعر');
-  if (existingPart.currency !== sparePart.currency) changes.push('العملة');
-  if (existingPart.description !== sparePart.description) changes.push('الوصف');
-  if (existingPart.quantity !== sparePart.quantity) changes.push('الكمية');
-  if (existingPart.departmentId !== sparePart.departmentId) changes.push('القسم');
+  const detailedChanges: Array<{
+    field: string;
+    fieldAr: string;
+    oldValue: string;
+    newValue: string;
+  }> = [];
 
-  // Send notification to managers and supervisors with details
   const firstName = req.user!.firstName || 'Unknown';
   const lastName = req.user!.lastName || 'User';
   const warehouseKeeperName = `${firstName} ${lastName}`;
-  const changeDetails = changes.length > 0 ? ` - التغييرات: ${changes.join(', ')}` : '';
-  
-  // Log the update to سجل
-  if (changes.length > 0) {
-    await logPartUpdate(sparePart.id, sparePart.name, changes, warehouseKeeperName, sparePart.partNumber);
+
+  // Track each field change with before/after values
+  if (existingPart.name !== sparePart.name) {
+    changes.push('الاسم');
+    detailedChanges.push({
+      field: 'name',
+      fieldAr: 'الاسم',
+      oldValue: existingPart.name,
+      newValue: sparePart.name,
+    });
+  }
+  if (existingPart.presentPieces !== sparePart.presentPieces) {
+    changes.push('عدد القطع');
+    detailedChanges.push({
+      field: 'presentPieces',
+      fieldAr: 'عدد القطع',
+      oldValue: String(existingPart.presentPieces),
+      newValue: String(sparePart.presentPieces),
+    });
+  }
+  if (existingPart.unitPrice !== sparePart.unitPrice) {
+    changes.push('السعر');
+    detailedChanges.push({
+      field: 'unitPrice',
+      fieldAr: 'السعر',
+      oldValue: `${existingPart.unitPrice} ${existingPart.currency}`,
+      newValue: `${sparePart.unitPrice} ${sparePart.currency}`,
+    });
+  }
+  if (existingPart.currency !== sparePart.currency) {
+    changes.push('العملة');
+    detailedChanges.push({
+      field: 'currency',
+      fieldAr: 'العملة',
+      oldValue: existingPart.currency,
+      newValue: sparePart.currency,
+    });
+  }
+  if (existingPart.description !== sparePart.description) {
+    changes.push('الوصف');
+    detailedChanges.push({
+      field: 'description',
+      fieldAr: 'الوصف',
+      oldValue: existingPart.description || 'غير محدد',
+      newValue: sparePart.description || 'غير محدد',
+    });
+  }
+  if (existingPart.quantity !== sparePart.quantity) {
+    changes.push('الكمية');
+    detailedChanges.push({
+      field: 'quantity',
+      fieldAr: 'الكمية',
+      oldValue: String(existingPart.quantity),
+      newValue: String(sparePart.quantity),
+    });
+  }
+  if (existingPart.departmentId !== sparePart.departmentId) {
+    changes.push('القسم');
+    detailedChanges.push({
+      field: 'departmentId',
+      fieldAr: 'القسم',
+      oldValue: existingPart.department?.name || 'غير محدد',
+      newValue: sparePart.departmentId ? 
+        (await prisma.department.findUnique({ where: { id: sparePart.departmentId } }))?.name || 'غير محدد' 
+        : 'غير محدد',
+    });
+  }
+
+  // Log each change with detailed information
+  if (detailedChanges.length > 0) {
+    const userId = req.user!.id;
+    
+    // Create detailed history entries for each changed field
+    for (const change of detailedChanges) {
+      await logSparePartHistory(
+        sparePart.id,
+        userId,
+        'UPDATED',
+        `${warehouseKeeperName} قام بتحديث ${change.fieldAr} - السبب: ${changeReason}`,
+        change.field,
+        change.oldValue,
+        change.newValue
+      );
+    }
+
+    // Also create a summary log entry with all changes
+    const changesSummary = detailedChanges.map(c => 
+      `${c.fieldAr}: من "${c.oldValue}" إلى "${c.newValue}"`
+    ).join(' | ');
+    
+    await logSparePartHistory(
+      sparePart.id,
+      userId,
+      'UPDATED',
+      `${warehouseKeeperName} قام بتحديث "${sparePart.name}" - التغييرات: ${changesSummary} - السبب: ${changeReason}`
+    );
+
+    // Emit real-time notification with detailed changes
+    await logPartUpdate(
+      sparePart.id, 
+      sparePart.name, 
+      changes, 
+      warehouseKeeperName, 
+      sparePart.partNumber,
+      changeReason,
+      detailedChanges
+    );
   }
   
+  // Send notification to managers with details
+  const changeDetails = changes.length > 0 ? ` - التغييرات: ${changes.join(', ')}` : '';
   await notificationService.createWarehouseNotification(
     'MODIFIED',
-    sparePart.name + changeDetails,
+    sparePart.name + changeDetails + ` - السبب: ${changeReason}`,
     warehouseKeeperName,
     req.user!.departmentId
   );

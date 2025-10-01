@@ -63,10 +63,18 @@ export const logPartUpdate = async (
   sparePartName: string,
   changes: string[],
   performedBy: string,
-  partNumber: string
+  partNumber: string,
+  changeReason?: string,
+  detailedChanges?: Array<{
+    field: string;
+    fieldAr: string;
+    oldValue: string;
+    newValue: string;
+  }>
 ): Promise<void> => {
   try {
-    const message = `${performedBy} قام بتحديث "${sparePartName}" - التغييرات: ${changes.join(', ')}`;
+    const reasonText = changeReason ? ` - السبب: ${changeReason}` : '';
+    const message = `${performedBy} قام بتحديث "${sparePartName}" - التغييرات: ${changes.join(', ')}${reasonText}`;
     
     await prisma.sparePartHistory.create({
       data: {
@@ -77,13 +85,15 @@ export const logPartUpdate = async (
       },
     });
     
-    // Emit real-time notification via Socket.IO
+    // Emit real-time notification via Socket.IO with detailed changes
     emitSparePartUpdated({
       sparePartId,
       sparePartName,
       changes,
       performedBy,
       partNumber,
+      changeReason,
+      detailedChanges,
     });
     
     console.log('✅ Spare part update logged:', message);
@@ -113,6 +123,13 @@ export const getSparePartLogs = async (
             id: true,
             name: true,
             partNumber: true,
+          },
+        },
+        changedBy: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
           },
         },
       },
