@@ -48,13 +48,13 @@ export const login = asyncHandler(async (req: AuthenticatedRequest, res: Respons
   });
 
   if (!user || !user.isActive) {
-    throw new UnauthorizedError('Wrong username or password');
+    throw new UnauthorizedError('Invalid credentials');
   }
 
   // Check password
   const isValidPassword = await bcrypt.compare(password, user.passwordHash);
   if (!isValidPassword) {
-    throw new UnauthorizedError('Wrong username or password');
+    throw new UnauthorizedError('Invalid credentials');
   }
 
   // Generate token
