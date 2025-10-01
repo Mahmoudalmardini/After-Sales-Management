@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { storageAPI } from '../services/api';
+import { useI18n } from '../contexts/I18nContext';
 
 interface SparePartLog {
   id: number;
@@ -28,6 +29,7 @@ interface SparePartsLogModalProps {
 }
 
 const SparePartsLogModal: React.FC<SparePartsLogModalProps> = ({ isOpen, onClose }) => {
+  const { t } = useI18n();
   const [logs, setLogs] = useState<SparePartLog[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -96,14 +98,14 @@ const SparePartsLogModal: React.FC<SparePartsLogModalProps> = ({ isOpen, onClose
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div className="flex items-center gap-3">
             <span className="text-2xl">📋</span>
-            <h2 className="text-xl font-bold text-gray-900">تاريخ قطع الغيار</h2>
+            <h2 className="text-xl font-bold text-gray-900">{t('storage.changeHistory')}</h2>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={loadLogs}
               className="p-2 rounded-md bg-gray-100 hover:bg-gray-200 transition-colors"
-              title="تحديث"
-              aria-label="تحديث"
+              title={t('common.update')}
+              aria-label={t('common.update')}
             >
               <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -112,8 +114,8 @@ const SparePartsLogModal: React.FC<SparePartsLogModalProps> = ({ isOpen, onClose
             <button
               onClick={onClose}
               className="p-2 rounded-md bg-gray-100 hover:bg-gray-200 transition-colors"
-              title="إغلاق"
-              aria-label="إغلاق"
+              title={t('common.close')}
+              aria-label={t('common.close')}
             >
               <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -131,9 +133,9 @@ const SparePartsLogModal: React.FC<SparePartsLogModalProps> = ({ isOpen, onClose
           ) : logs.length === 0 ? (
             <div className="text-center py-12">
               <div className="text-gray-400 text-5xl mb-4">📋</div>
-              <p className="text-gray-600">لا توجد تغييرات حتى الآن</p>
+              <p className="text-gray-600">{t('storage.noChangesYet')}</p>
               <p className="text-sm text-gray-400 mt-2">
-                سيتم عرض التغييرات هنا عند استخدام أو تحديث قطع الغيار
+                {t('storage.changesWillAppear')}
               </p>
             </div>
           ) : (
@@ -214,13 +216,13 @@ const SparePartsLogModal: React.FC<SparePartsLogModalProps> = ({ isOpen, onClose
         {/* Footer */}
         <div className="flex items-center justify-between p-6 border-t border-gray-200 bg-gray-50">
           <p className="text-sm text-gray-600">
-            إجمالي التغييرات: {logs.length}
+            {t('storage.totalChanges')}: {logs.length}
           </p>
           <button
             onClick={onClose}
             className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
           >
-            إغلاق
+            {t('common.close')}
           </button>
         </div>
       </div>

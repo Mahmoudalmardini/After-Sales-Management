@@ -184,7 +184,7 @@ const StoragePage: React.FC = () => {
             className="btn bg-indigo-600 text-white hover:bg-indigo-700" 
             onClick={() => setShowLogsModal(true)}
           >
-            📋 التاريخ
+            📋 {t('storage.history')}
           </button>
           {canEdit && (
             <button className="btn-primary" onClick={() => setShowForm(true)}>
@@ -356,19 +356,19 @@ const StoragePage: React.FC = () => {
               {editingPart && (
                 <div className="md:col-span-2">
                   <label htmlFor="changeReason" className="block text-sm font-medium text-gray-700 mb-1">
-                    سبب التعديل (مطلوب) *
+                    {t('storage.changeReason')} *
                   </label>
                   <textarea
                     id="changeReason"
                     className="input w-full border-blue-300 focus:border-blue-500"
-                    placeholder="يرجى توضيح سبب التعديل (مثلاً: تحديث السعر بسبب تغير سعر الموّرد، تصحيح الكمية بعد الجرد...)"
+                    placeholder={t('storage.changeReasonPlaceholder')}
                     value={changeReason}
                     onChange={(e) => setChangeReason(e.target.value)}
                     rows={2}
                     required
                   />
                   <p className="text-xs text-gray-500 mt-1">
-                    📝 سيتم حفظ هذا السبب في التغييرات ليراه المديرون
+                    📝 {t('storage.changeReasonHelp')}
                   </p>
                 </div>
               )}
@@ -538,7 +538,7 @@ const StoragePage: React.FC = () => {
                                 <svg className="w-3.5 h-3.5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                 </svg>
-                                تعديل
+                                {t('storage.edit')}
                               </button>
                             )}
                             {(canEdit || hasRole([UserRole.COMPANY_MANAGER, UserRole.DEPUTY_MANAGER])) && (
@@ -549,7 +549,7 @@ const StoragePage: React.FC = () => {
                                 <svg className="w-3.5 h-3.5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                 </svg>
-                                التاريخ
+                                {t('storage.history')}
                               </button>
                             )}
                             {canEdit && (
@@ -560,7 +560,7 @@ const StoragePage: React.FC = () => {
                                 <svg className="w-3.5 h-3.5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                 </svg>
-                                حذف
+                                {t('storage.delete')}
                               </button>
                             )}
                           </div>
@@ -641,13 +641,13 @@ const StoragePage: React.FC = () => {
           <div className="bg-white rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex justify-between items-start mb-4">
               <div>
-                <h3 className="text-xl font-bold text-gray-900">تاريخ التغييرات</h3>
+                <h3 className="text-xl font-bold text-gray-900">{t('storage.changeHistory')}</h3>
                 <p className="text-sm text-gray-600">{selectedPartForHistory.name} ({selectedPartForHistory.partNumber})</p>
               </div>
               <button
                 onClick={() => setSelectedPartForHistory(null)}
                 className="text-gray-400 hover:text-gray-600"
-                aria-label="إغلاق النافذة"
+                aria-label={t('common.close')}
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -656,9 +656,9 @@ const StoragePage: React.FC = () => {
             </div>
             
             {loadingHistory ? (
-              <div className="text-center py-8 text-gray-500">جاري التحميل...</div>
+              <div className="text-center py-8 text-gray-500">{t('storage.loadingHistory')}</div>
             ) : historyData.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">لا توجد تغييرات</div>
+              <div className="text-center py-8 text-gray-500">{t('storage.noChanges')}</div>
             ) : (
               <div className="space-y-3">
                 {historyData.map((item: any) => (
@@ -671,8 +671,8 @@ const StoragePage: React.FC = () => {
                           item.changeType === 'QUANTITY_CHANGED' ? 'bg-yellow-100 text-yellow-800' :
                           'bg-red-100 text-red-800'
                         }`}>
-                          {item.changeType === 'CREATED' ? '🆕 إنشاء' :
-                           item.changeType === 'UPDATED' ? '✏️ تعديل' :
+                          {item.changeType === 'CREATED' ? `🆕 ${t('common.create')}` :
+                           item.changeType === 'UPDATED' ? `✏️ ${t('storage.update')}` :
                            item.changeType === 'QUANTITY_CHANGED' ? '📦 تغيير الكمية' :
                            '🔧 استخدام في طلب'}
                         </span>
@@ -719,9 +719,9 @@ const StoragePage: React.FC = () => {
                     
                     <div className="flex items-center justify-between text-xs text-gray-600">
                       <div className="flex items-center gap-2">
-                        <span className="font-medium">بواسطة:</span>
+                        <span className="font-medium">{t('common.by')}:</span>
                         <span className="text-gray-800">{item.changedBy.firstName} {item.changedBy.lastName}</span>
-                        <span className="text-gray-400">({item.changedBy.role === 'WAREHOUSE_KEEPER' ? 'أمين مستودع' : item.changedBy.role})</span>
+                        <span className="text-gray-400">({item.changedBy.role === 'WAREHOUSE_KEEPER' ? t('users.roles.warehouseKeeper') : item.changedBy.role})</span>
                       </div>
                       {item.quantityChange && (
                         <span className={`font-bold text-sm ${item.quantityChange > 0 ? 'text-green-600' : 'text-red-600'}`}>
