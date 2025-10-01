@@ -160,7 +160,8 @@ router.post('/', async (req, res) => {
     requestPart.sparePart.name,
     requestPart.quantityUsed,
     requestPart.request.requestNumber,
-    addedByName
+    addedByName,
+    requestPart.sparePart.partNumber
   );
   
   // Notify warehouse keeper about inventory decrease

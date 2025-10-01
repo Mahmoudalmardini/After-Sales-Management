@@ -3,9 +3,12 @@ import ReactDOM from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter } from 'react-router-dom';
 import './index.css';
+import 'react-toastify/dist/ReactToastify.css';
 import App from './App';
 import { AuthProvider } from './contexts/AuthContext';
 import { I18nProvider } from './contexts/I18nContext';
+import { SocketProvider } from './contexts/SocketContext';
+import { ToastContainer } from 'react-toastify';
 
 // Debug logging (can be removed in production)
 console.log('React app starting...');
@@ -43,7 +46,10 @@ root.render(
       <BrowserRouter>
         <AuthProvider>
           <I18nProvider>
-            <App />
+            <SocketProvider>
+              <App />
+              <ToastContainer />
+            </SocketProvider>
           </I18nProvider>
         </AuthProvider>
       </BrowserRouter>

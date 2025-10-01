@@ -425,7 +425,7 @@ router.put('/:id', async (req: any, res) => {
   
   // Log the update to سجل
   if (changes.length > 0) {
-    await logPartUpdate(sparePart.id, sparePart.name, changes, warehouseKeeperName);
+    await logPartUpdate(sparePart.id, sparePart.name, changes, warehouseKeeperName, sparePart.partNumber);
   }
   
   await notificationService.createWarehouseNotification(

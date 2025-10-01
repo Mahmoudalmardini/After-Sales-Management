@@ -4,11 +4,13 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 import path from 'path';
+import { createServer } from 'http';
 import { PrismaClient } from '@prisma/client';
 import { config } from './config/config';
 import { logger } from './utils/logger';
 import { errorHandler } from './middleware/errorHandler';
 import { authenticateToken } from './middleware/auth';
+import { initializeSocket } from './services/socket.service';
 import dotenv from 'dotenv';
 
 // Load environment variables
@@ -147,6 +149,10 @@ app.use('/api/*', (req, res) => {
 // Global error handler
 app.use(errorHandler);
 
+// Create HTTP server and initialize Socket.IO
+const httpServer = createServer(app);
+initializeSocket(httpServer);
+
 // Start server
 const PORT = config.port || 3001;
 
@@ -156,10 +162,11 @@ async function startServer() {
     await prisma.$connect();
     logger.info('Connected to database successfully');
 
-    app.listen(PORT, () => {
+    httpServer.listen(PORT, () => {
       logger.info(`🚀 Server running on port ${PORT}`);
       logger.info(`📱 Environment: ${config.nodeEnv}`);
       logger.info(`🔗 Health check: http://localhost:${PORT}/health`);
+      logger.info(`⚡ Socket.IO initialized`);
     });
   } catch (error) {
     logger.error('Failed to start server:', error);
