@@ -131,9 +131,9 @@ const SparePartsLogModal: React.FC<SparePartsLogModalProps> = ({ isOpen, onClose
           ) : logs.length === 0 ? (
             <div className="text-center py-12">
               <div className="text-gray-400 text-5xl mb-4">📋</div>
-              <p className="text-gray-600">لا توجد سجلات حتى الآن</p>
+              <p className="text-gray-600">لا توجد تغييرات حتى الآن</p>
               <p className="text-sm text-gray-400 mt-2">
-                سيتم عرض السجلات هنا عند استخدام أو تحديث قطع الغيار
+                سيتم عرض التغييرات هنا عند استخدام أو تحديث قطع الغيار
               </p>
             </div>
           ) : (
@@ -214,7 +214,7 @@ const SparePartsLogModal: React.FC<SparePartsLogModalProps> = ({ isOpen, onClose
         {/* Footer */}
         <div className="flex items-center justify-between p-6 border-t border-gray-200 bg-gray-50">
           <p className="text-sm text-gray-600">
-            إجمالي السجلات: {logs.length}
+            إجمالي التغييرات: {logs.length}
           </p>
           <button
             onClick={onClose}

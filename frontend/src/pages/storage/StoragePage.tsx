@@ -658,7 +658,7 @@ const StoragePage: React.FC = () => {
             {loadingHistory ? (
               <div className="text-center py-8 text-gray-500">جاري التحميل...</div>
             ) : historyData.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">لا توجد تغييرات مسجلة</div>
+              <div className="text-center py-8 text-gray-500">لا توجد تغييرات</div>
             ) : (
               <div className="space-y-3">
                 {historyData.map((item: any) => (
