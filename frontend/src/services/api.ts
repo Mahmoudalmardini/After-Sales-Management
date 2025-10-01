@@ -539,9 +539,13 @@ export const storageAPI = {
 
   getSparePartHistory: async (id: number) => {
     try {
+      console.log(`🔍 API Call: GET /storage/${id}/history`);
       const response = await api.get(`/storage/${id}/history`);
+      console.log('📊 Raw API response:', response);
+      console.log('📊 Response data:', response.data);
       return handleResponse(response);
     } catch (error) {
+      console.error('❌ API Error in getSparePartHistory:', error);
       return Promise.reject(handleError(error));
     }
   },

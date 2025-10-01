@@ -146,9 +146,16 @@ const StoragePage: React.FC = () => {
     setSelectedPartForHistory(part);
     setLoadingHistory(true);
     try {
+      console.log('🔍 Fetching history for spare part ID:', part.id);
       const response = await storageAPI.getSparePartHistory(part.id) as any;
-      setHistoryData(response.data?.history || []);
+      console.log('📊 History API response:', response);
+      
+      // The handleResponse returns response.data.data, so response should be { history: [...] }
+      const historyArray = response?.history || response || [];
+      console.log('📊 Parsed history array:', historyArray);
+      setHistoryData(historyArray);
     } catch (e: any) {
+      console.error('❌ Error loading history:', e);
       setError(e.message || 'Failed to load history');
       setHistoryData([]);
     } finally {
