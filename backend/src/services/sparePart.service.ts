@@ -1,5 +1,4 @@
 import { PrismaClient } from '@prisma/client';
-import { emitSparePartUsed, emitSparePartUpdated } from './socket.service';
 
 const prisma = new PrismaClient();
 
@@ -38,16 +37,6 @@ export const logPartUsedInRequest = async (
       },
     });
     
-    // Emit real-time notification via Socket.IO
-    emitSparePartUsed({
-      sparePartId,
-      sparePartName,
-      quantity,
-      requestNumber,
-      performedBy,
-      partNumber,
-    });
-    
     console.log('✅ Spare part usage logged:', message);
   } catch (error) {
     console.error('❌ Error logging spare part usage:', error);
@@ -83,17 +72,6 @@ export const logPartUpdate = async (
         changeType: 'UPDATED',
         description: message,
       },
-    });
-    
-    // Emit real-time notification via Socket.IO with detailed changes
-    emitSparePartUpdated({
-      sparePartId,
-      sparePartName,
-      changes,
-      performedBy,
-      partNumber,
-      changeReason,
-      detailedChanges,
     });
     
     console.log('✅ Spare part update logged:', message);

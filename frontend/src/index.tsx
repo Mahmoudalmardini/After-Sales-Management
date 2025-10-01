@@ -7,7 +7,6 @@ import 'react-toastify/dist/ReactToastify.css';
 import App from './App';
 import { AuthProvider } from './contexts/AuthContext';
 import { I18nProvider } from './contexts/I18nContext';
-import { SocketProvider } from './contexts/SocketContext';
 import { ToastContainer } from 'react-toastify';
 
 // Debug logging (can be removed in production)
@@ -46,10 +45,8 @@ root.render(
       <BrowserRouter>
         <AuthProvider>
           <I18nProvider>
-            <SocketProvider>
-              <App />
-              <ToastContainer />
-            </SocketProvider>
+            <App />
+            <ToastContainer />
           </I18nProvider>
         </AuthProvider>
       </BrowserRouter>
