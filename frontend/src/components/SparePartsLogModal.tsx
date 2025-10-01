@@ -139,71 +139,141 @@ const SparePartsLogModal: React.FC<SparePartsLogModalProps> = ({ isOpen, onClose
               </p>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-4">
               {logs.map((log) => (
                 <div
                   key={log.id}
-                  className={`p-4 rounded-lg border ${getLogColor(log.changeType)} hover:shadow-sm transition-shadow`}
+                  className={`rounded-lg border ${getLogColor(log.changeType)} hover:shadow-md transition-all`}
                 >
-                  <div className="flex items-start gap-3">
-                    <span className="text-2xl flex-shrink-0">{getLogIcon(log.changeType)}</span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 break-words">
-                        {log.description}
-                      </p>
-                      
-                      {/* Show detailed change information if available */}
-                      {log.fieldChanged && (log.oldValue || log.newValue) && (
-                        <div className="mt-2 p-3 bg-white rounded border border-gray-200">
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="text-xs font-semibold text-gray-700">التغيير التفصيلي:</span>
-                          </div>
-                          <div className="grid grid-cols-2 gap-3 text-xs">
-                            <div>
-                              <span className="font-medium text-red-600">القيمة السابقة:</span>
-                              <p className="mt-1 text-gray-900 bg-red-50 p-2 rounded">
-                                {log.oldValue || '-'}
-                              </p>
-                            </div>
-                            <div>
-                              <span className="font-medium text-green-600">القيمة الجديدة:</span>
-                              <p className="mt-1 text-gray-900 bg-green-50 p-2 rounded">
-                                {log.newValue || '-'}
-                              </p>
-                            </div>
+                  <div className="p-4">
+                    {/* Header with icon and spare part info */}
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        <span className="text-2xl flex-shrink-0">{getLogIcon(log.changeType)}</span>
+                        <div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
+                              log.changeType === 'CREATED' ? 'bg-green-100 text-green-800' :
+                              log.changeType === 'UPDATED' ? 'bg-blue-100 text-blue-800' :
+                              log.changeType === 'QUANTITY_CHANGED' ? 'bg-yellow-100 text-yellow-800' :
+                              'bg-red-100 text-red-800'
+                            }`}>
+                              {log.changeType === 'CREATED' ? '🆕 إنشاء' :
+                               log.changeType === 'UPDATED' ? '✏️ تعديل' :
+                               log.changeType === 'QUANTITY_CHANGED' ? '📦 تغيير الكمية' :
+                               '🔧 استخدام في طلب'}
+                            </span>
+                            {log.sparePart && (
+                              <>
+                                <span className="text-sm font-bold text-gray-900">{log.sparePart.name}</span>
+                                <span className="text-xs text-gray-500 font-mono bg-gray-100 px-2 py-1 rounded">
+                                  {log.sparePart.partNumber}
+                                </span>
+                              </>
+                            )}
                           </div>
                         </div>
-                      )}
+                      </div>
+                      <span className="text-xs text-gray-500 whitespace-nowrap">{formatDate(log.createdAt)}</span>
+                    </div>
 
-                      {/* Show quantity change if available */}
-                      {log.quantityChange !== undefined && log.quantityChange !== null && (
-                        <div className="mt-2 inline-flex items-center gap-1 px-2 py-1 bg-white rounded border border-gray-200">
-                          <span className="text-xs font-medium text-gray-700">التغيير في الكمية:</span>
-                          <span className={`text-xs font-bold ${log.quantityChange > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                            {log.quantityChange > 0 ? '+' : ''}{log.quantityChange}
+                    {/* Description */}
+                    <p className="text-sm text-gray-800 mb-3 leading-relaxed px-1">
+                      {log.description}
+                    </p>
+                    
+                    {/* Show detailed change information if available */}
+                    {log.fieldChanged && (log.oldValue || log.newValue) && log.changeType === 'UPDATED' && (
+                      <div className="bg-gradient-to-r from-red-50 to-green-50 rounded-lg p-4 mb-3 border border-gray-200 shadow-sm">
+                        <div className="flex items-center gap-2 mb-3">
+                          <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <span className="text-xs font-bold text-gray-700 uppercase tracking-wide">
+                            التغيير التفصيلي
                           </span>
                         </div>
-                      )}
-
-                      <div className="mt-2 flex items-center justify-between text-xs text-gray-600">
-                        <div className="flex items-center gap-2">
-                          {log.sparePart && (
-                            <>
-                              <span className="font-medium">{log.sparePart.name}</span>
-                              <span className="text-gray-400">•</span>
-                              <span className="text-gray-500 font-mono">{log.sparePart.partNumber}</span>
-                            </>
-                          )}
-                          {log.changedBy && (
-                            <>
-                              <span className="text-gray-400">•</span>
-                              <span className="text-blue-600">
-                                {log.changedBy.firstName} {log.changedBy.lastName}
-                              </span>
-                            </>
-                          )}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="bg-white rounded-lg p-3 border-l-4 border-red-400 shadow-sm">
+                            <div className="flex items-center gap-2 mb-2">
+                              <svg className="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                              <span className="text-xs font-bold text-red-600 uppercase">القيمة السابقة</span>
+                            </div>
+                            <p className="text-sm text-gray-900 font-medium break-words bg-red-50 p-2 rounded">
+                              {log.oldValue || '-'}
+                            </p>
+                          </div>
+                          <div className="bg-white rounded-lg p-3 border-l-4 border-green-400 shadow-sm">
+                            <div className="flex items-center gap-2 mb-2">
+                              <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                              </svg>
+                              <span className="text-xs font-bold text-green-600 uppercase">القيمة الجديدة</span>
+                            </div>
+                            <p className="text-sm text-gray-900 font-medium break-words bg-green-50 p-2 rounded">
+                              {log.newValue || '-'}
+                            </p>
+                          </div>
                         </div>
-                        <span className="text-gray-500">{formatDate(log.createdAt)}</span>
+                        {log.fieldChanged && (
+                          <div className="mt-3 flex items-center gap-2 text-xs text-gray-600 bg-white rounded p-2">
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                            </svg>
+                            <span className="font-medium">الحقل المعدل:</span>
+                            <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full font-semibold">
+                              {log.fieldChanged === 'name' ? 'اسم القطعة' :
+                               log.fieldChanged === 'presentPieces' ? 'عدد القطع الموجودة' :
+                               log.fieldChanged === 'unitPrice' ? 'سعر الوحدة' :
+                               log.fieldChanged === 'currency' ? 'العملة' :
+                               log.fieldChanged === 'quantity' ? 'الكمية' :
+                               log.fieldChanged === 'description' ? 'الوصف' :
+                               log.fieldChanged === 'departmentId' ? 'القسم' :
+                               log.fieldChanged}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Show quantity change badge if available */}
+                    {log.quantityChange !== undefined && log.quantityChange !== null && log.quantityChange !== 0 && (
+                      <div className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg mb-3 ${
+                        log.quantityChange > 0 ? 'bg-green-100 border border-green-300' : 'bg-red-100 border border-red-300'
+                      }`}>
+                        <svg className={`w-5 h-5 ${log.quantityChange > 0 ? 'text-green-600' : 'text-red-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          {log.quantityChange > 0 ? (
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                          ) : (
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                          )}
+                        </svg>
+                        <div>
+                          <span className="text-xs font-medium text-gray-700">تغيير في الكمية:</span>
+                          <span className={`ml-2 text-lg font-bold ${log.quantityChange > 0 ? 'text-green-700' : 'text-red-700'}`}>
+                            {log.quantityChange > 0 ? '+' : ''}{log.quantityChange}
+                          </span>
+                          <span className="text-xs text-gray-600 mr-1">قطعة</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* User and timestamp info */}
+                    <div className="flex items-center justify-between text-xs bg-gray-50 rounded-lg p-2">
+                      <div className="flex items-center gap-2">
+                        {log.changedBy && (
+                          <>
+                            <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
+                            <span className="font-medium text-gray-700">بواسطة:</span>
+                            <span className="text-gray-900 font-semibold">
+                              {log.changedBy.firstName} {log.changedBy.lastName}
+                            </span>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>
