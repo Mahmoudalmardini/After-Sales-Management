@@ -180,11 +180,11 @@ const StoragePage: React.FC = () => {
           <p className="mt-2 text-sm text-gray-700">{t('storage.subtitle')}</p>
         </div>
         <div className="flex gap-3">
-          <button 
+          <button
             className="btn bg-indigo-600 text-white hover:bg-indigo-700" 
             onClick={() => setShowLogsModal(true)}
           >
-            📋 سجل
+            📋 التاريخ
           </button>
           {canEdit && (
             <button className="btn-primary" onClick={() => setShowForm(true)}>
@@ -368,7 +368,7 @@ const StoragePage: React.FC = () => {
                     required
                   />
                   <p className="text-xs text-gray-500 mt-1">
-                    📝 سيتم حفظ هذا السبب في سجل التغييرات ليراه المديرون
+                    📝 سيتم حفظ هذا السبب في التغييرات ليراه المديرون
                   </p>
                 </div>
               )}
@@ -549,7 +549,7 @@ const StoragePage: React.FC = () => {
                                 <svg className="w-3.5 h-3.5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                 </svg>
-                                السجل
+                                التاريخ
                               </button>
                             )}
                             {canEdit && (
@@ -641,13 +641,13 @@ const StoragePage: React.FC = () => {
           <div className="bg-white rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex justify-between items-start mb-4">
               <div>
-                <h3 className="text-xl font-bold text-gray-900">سجل التغييرات</h3>
+                <h3 className="text-xl font-bold text-gray-900">تاريخ التغييرات</h3>
                 <p className="text-sm text-gray-600">{selectedPartForHistory.name} ({selectedPartForHistory.partNumber})</p>
               </div>
               <button
                 onClick={() => setSelectedPartForHistory(null)}
                 className="text-gray-400 hover:text-gray-600"
-                aria-label="إغلاق نافذة السجل"
+                aria-label="إغلاق النافذة"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
