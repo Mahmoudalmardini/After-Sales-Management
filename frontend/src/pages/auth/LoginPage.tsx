@@ -42,16 +42,24 @@ const LoginPage: React.FC = () => {
       await login(formData.username, formData.password);
       navigate('/');
     } catch (error: any) {
-      const fallbackMsg = 'اسم المستخدم أو كلمة المرور غير صحيحة';
-      const errorMessage = (error?.response?.status === 401)
-        ? (t?.('login.invalidCredentials') || fallbackMsg)
-        : (error?.message || t?.('login.failed') || fallbackMsg);
+      console.error('Login error:', error);
+      
+      // Check for 401 (Unauthorized) or login failure
+      const is401 = error?.response?.status === 401;
+      const errorMsg = error?.message || error?.response?.data?.message || '';
+      
+      // Show specific message for wrong credentials
+      let errorMessage = '';
+      if (is401 || errorMsg.toLowerCase().includes('invalid') || 
+          errorMsg.toLowerCase().includes('incorrect') || 
+          errorMsg.toLowerCase().includes('wrong')) {
+        errorMessage = t('login.wrongCredentials');
+      } else {
+        errorMessage = error?.message || t('login.failed');
+      }
+      
       setError(errorMessage);
-      // Stop loading immediately on failure to avoid spinner
       setIsLoading(false);
-      // Show alert for incorrect credentials
-      alert(errorMessage);
-      return;
     } finally {
       setIsLoading(false);
     }

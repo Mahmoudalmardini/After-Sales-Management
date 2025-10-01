@@ -429,47 +429,47 @@ const StoragePage: React.FC = () => {
           
           <div className="overflow-x-auto shadow-sm border border-gray-200 rounded-lg">
             <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
+              <thead className="bg-gradient-to-r from-blue-50 to-indigo-50">
                 <tr className="text-right">
-                  <th className="px-6 py-4 text-right text-sm font-semibold text-gray-700">
-                    {t('storage.name')}
+                  <th className="px-3 py-2.5 text-right text-xs font-semibold text-gray-700">
+                    اسم القطعة
                   </th>
-                  <th className="px-6 py-4 text-right text-sm font-semibold text-gray-700">
-                    {t('storage.partNumber')}
+                  <th className="px-3 py-2.5 text-right text-xs font-semibold text-gray-700">
+                    رقم القطعة
                   </th>
-                  <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700">
-                    {t('storage.presentPieces')}
+                  <th className="px-2 py-2.5 text-center text-xs font-semibold text-gray-700">
+                    عدد القطع
                   </th>
-                  <th className="px-6 py-4 text-right text-sm font-semibold text-gray-700">
-                    {t('storage.unitPrice')}
+                  <th className="px-3 py-2.5 text-right text-xs font-semibold text-gray-700">
+                    السعر
                   </th>
-                  <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700">
-                    {t('storage.currency')}
+                  <th className="px-2 py-2.5 text-center text-xs font-semibold text-gray-700">
+                    العملة
                   </th>
-                  <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700">
-                    {t('storage.quantity')}
+                  <th className="px-2 py-2.5 text-center text-xs font-semibold text-gray-700">
+                    الكمية
                   </th>
-                  <th className="px-6 py-4 text-right text-sm font-semibold text-gray-700">
-                    {t('storage.description')}
+                  <th className="px-3 py-2.5 text-right text-xs font-semibold text-gray-700">
+                    الوصف
                   </th>
-                  <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700">
-                    {t('products.department')}
+                  <th className="px-2 py-2.5 text-center text-xs font-semibold text-gray-700">
+                    القسم
                   </th>
-                  <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700">
-                    {t('storage.actions')}
+                  <th className="px-2 py-2.5 text-center text-xs font-semibold text-gray-700">
+                    إجراءات
                   </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-100">
                 {loading ? (
                   <tr>
-                    <td colSpan={9} className="py-8 text-center text-gray-500">
+                    <td colSpan={9} className="py-6 text-center text-sm text-gray-500">
                       {t('storage.loading')}
                     </td>
                   </tr>
                 ) : spareParts.length === 0 ? (
                   <tr>
-                    <td colSpan={9} className="py-8 text-center text-gray-500">
+                    <td colSpan={9} className="py-6 text-center text-sm text-gray-500">
                       {filters.search ? 
                         `No spare parts found matching "${filters.search}"` : 
                         t('storage.empty')
@@ -485,33 +485,33 @@ const StoragePage: React.FC = () => {
                     return (
                       <tr 
                         key={part.id} 
-                        className={`hover:bg-blue-50 hover:shadow-sm cursor-pointer transition-all duration-150 ${isRecentlyUpdated ? 'bg-yellow-50' : ''}`} 
+                        className={`hover:bg-blue-50 cursor-pointer transition-colors ${isRecentlyUpdated ? 'bg-yellow-50' : ''}`} 
                         onClick={() => setSelectedPartForDescription(part)}
                       >
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center gap-2">
-                            <div className="text-sm font-medium text-gray-900">{part.name}</div>
+                        <td className="px-3 py-2.5 whitespace-nowrap">
+                          <div className="flex items-center gap-1.5">
+                            <div className="text-xs font-medium text-gray-900">{part.name}</div>
                             {isRecentlyUpdated && (
-                              <span className="text-xs bg-yellow-200 text-yellow-800 px-2 py-0.5 rounded-full">محدث</span>
+                              <span className="text-[10px] bg-yellow-200 text-yellow-800 px-1.5 py-0.5 rounded-full">محدث</span>
                             )}
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-mono text-gray-900">{part.partNumber}</div>
+                        <td className="px-3 py-2.5 whitespace-nowrap">
+                          <div className="text-xs font-mono text-gray-600">{part.partNumber}</div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-center">
-                          <div className="text-sm font-medium text-gray-900">{part.presentPieces}</div>
+                        <td className="px-2 py-2.5 whitespace-nowrap text-center">
+                          <div className="text-xs font-semibold text-gray-900">{part.presentPieces}</div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right">
-                          <div className="text-sm font-medium text-gray-900">{part.unitPrice.toLocaleString()}</div>
+                        <td className="px-3 py-2.5 whitespace-nowrap text-right">
+                          <div className="text-xs font-medium text-gray-900">{part.unitPrice.toLocaleString()}</div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-center">
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        <td className="px-2 py-2.5 whitespace-nowrap text-center">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-blue-100 text-blue-800">
                             {part.currency || 'SYP'}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-center">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        <td className="px-2 py-2.5 whitespace-nowrap text-center">
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
                             part.quantity <= 5 ? 'bg-red-100 text-red-800' : 
                             part.quantity <= 10 ? 'bg-yellow-100 text-yellow-800' : 
                             'bg-green-100 text-green-800'
@@ -519,47 +519,50 @@ const StoragePage: React.FC = () => {
                             {part.quantity}
                           </span>
                         </td>
-                        <td className="px-6 py-4 max-w-xs">
-                          <div className="text-sm text-gray-600 truncate" title={part.description || '-'}>
+                        <td className="px-3 py-2.5 max-w-[180px]">
+                          <div className="text-xs text-gray-600 truncate" title={part.description || '-'}>
                             {part.description || '-'}
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-center">
-                          <div className="text-sm text-gray-900">{part.department?.name || '-'}</div>
+                        <td className="px-2 py-2.5 whitespace-nowrap text-center">
+                          <div className="text-xs text-gray-700">{part.department?.name || '-'}</div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-center" onClick={(e) => e.stopPropagation()}>
-                          <div className="flex gap-1 justify-center">
+                        <td className="px-2 py-2.5 whitespace-nowrap text-center" onClick={(e) => e.stopPropagation()}>
+                          <div className="flex gap-0.5 justify-center">
                             {canEdit && (
                               <button
-                                className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors duration-150"
+                                className="inline-flex items-center px-2 py-1 text-[10px] font-medium rounded text-white bg-blue-600 hover:bg-blue-700 transition-colors"
                                 onClick={(e) => { e.stopPropagation(); handleEdit(part); }}
+                                title={t('storage.edit')}
                               >
-                                <svg className="w-3.5 h-3.5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="w-3 h-3 ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                 </svg>
-                                {t('storage.edit')}
+                                تعديل
                               </button>
                             )}
                             {(canEdit || hasRole([UserRole.COMPANY_MANAGER, UserRole.DEPUTY_MANAGER])) && (
                               <button
-                                className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md text-white bg-green-600 hover:bg-green-700 transition-colors duration-150"
+                                className="inline-flex items-center px-2 py-1 text-[10px] font-medium rounded text-white bg-green-600 hover:bg-green-700 transition-colors"
                                 onClick={(e) => { e.stopPropagation(); handleViewHistory(part); }}
+                                title={t('storage.history')}
                               >
-                                <svg className="w-3.5 h-3.5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="w-3 h-3 ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                 </svg>
-                                {t('storage.history')}
+                                تاريخ
                               </button>
                             )}
                             {canEdit && (
                               <button
-                                className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md text-white bg-red-600 hover:bg-red-700 transition-colors duration-150"
+                                className="inline-flex items-center px-2 py-1 text-[10px] font-medium rounded text-white bg-red-600 hover:bg-red-700 transition-colors"
                                 onClick={(e) => { e.stopPropagation(); handleDelete(part.id); }}
+                                title={t('storage.delete')}
                               >
-                                <svg className="w-3.5 h-3.5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="w-3 h-3 ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                 </svg>
-                                {t('storage.delete')}
+                                حذف
                               </button>
                             )}
                           </div>

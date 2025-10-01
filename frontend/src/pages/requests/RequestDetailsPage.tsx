@@ -203,6 +203,12 @@ const RequestDetailsPage: React.FC = () => {
 
   const handleClose = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Single confirmation
+    if (!window.confirm('هل أنت متأكد من إغلاق هذا الطلب نهائياً؟ لا يمكن التراجع عن هذا الإجراء.')) {
+      return;
+    }
+    
     try {
       setLoading(true);
       await requestsAPI.closeRequest(requestId, closeForm);
@@ -672,10 +678,17 @@ const RequestDetailsPage: React.FC = () => {
                   </div>
                   <button 
                     className="btn-primary w-full bg-green-600 hover:bg-green-700" 
-                    onClick={() => {
+                    onClick={async () => {
                       if (window.confirm('هل أنت متأكد من إغلاق هذا الطلب نهائياً؟ لا يمكن التراجع عن هذا الإجراء.')) {
-                        setStatusTo('CLOSED');
-                        handleStatus();
+                        try {
+                          setLoading(true);
+                          await requestsAPI.updateRequestStatus(requestId, { status: 'CLOSED', comment: statusComment || 'تم الإغلاق' });
+                          await reload();
+                        } catch (e: any) {
+                          setError(e.message || t('error.failedToUpdate'));
+                        } finally {
+                          setLoading(false);
+                        }
                       }
                     }} 
                     disabled={loading}
