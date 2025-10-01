@@ -3,6 +3,7 @@ import { storageAPI, departmentsAPI } from '../../services/api';
 import { SparePart, CreateSparePartForm, StorageFilters, Department, UserRole } from '../../types';
 import { useI18n } from '../../contexts/I18nContext';
 import { useAuth } from '../../contexts/AuthContext';
+import SparePartsLogModal from '../../components/SparePartsLogModal';
 
 const StoragePage: React.FC = () => {
   const { t } = useI18n();
@@ -37,6 +38,7 @@ const StoragePage: React.FC = () => {
   const [selectedPartForHistory, setSelectedPartForHistory] = useState<SparePart | null>(null);
   const [historyData, setHistoryData] = useState<any[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
+  const [showLogsModal, setShowLogsModal] = useState(false);
 
   const loadSpareParts = useCallback(async () => {
     try {
@@ -174,11 +176,19 @@ const StoragePage: React.FC = () => {
           <h1 className="text-2xl font-semibold text-gray-900">{t('storage.title')}</h1>
           <p className="mt-2 text-sm text-gray-700">{t('storage.subtitle')}</p>
         </div>
-        {canEdit && (
-          <button className="btn-primary" onClick={() => setShowForm(true)}>
-            {t('storage.add')}
+        <div className="flex gap-3">
+          <button 
+            className="btn bg-indigo-600 text-white hover:bg-indigo-700" 
+            onClick={() => setShowLogsModal(true)}
+          >
+            📋 سجل
           </button>
-        )}
+          {canEdit && (
+            <button className="btn-primary" onClick={() => setShowForm(true)}>
+              {t('storage.add')}
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Spare Parts Activity Widget - Removed to prevent issues */}
@@ -711,6 +721,12 @@ const StoragePage: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Spare Parts Log Modal */}
+      <SparePartsLogModal 
+        isOpen={showLogsModal} 
+        onClose={() => setShowLogsModal(false)} 
+      />
     </div>
   );
 };

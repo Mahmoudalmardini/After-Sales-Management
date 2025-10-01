@@ -3,6 +3,7 @@ import { prisma } from '../index';
 import { ApiResponse, ValidationError, UserRole } from '../types';
 import { authenticateToken, requireRoles, isManagerLevel } from '../middleware/auth';
 import * as notificationService from '../services/notification.service';
+import { logPartUpdate, getAllRecentLogs } from '../services/sparePart.service';
 
 const router = Router();
 
@@ -143,69 +144,31 @@ router.get('/categories', async (req, res) => {
 });
 
 /**
- * @route   GET /api/storage/activities/all
- * @desc    Get all spare parts activities
+ * @route   GET /api/storage/logs
+ * @desc    Get spare parts logs (سجل)
  * @access  Private
  */
-router.get('/activities/all', async (req, res) => {
-  const { limit = 50, filter = 'all' } = req.query; // Default filter to 'all'
+router.get('/logs', async (req, res) => {
+  const { limit = 100 } = req.query;
   
-  console.log('📋 Fetching all spare parts activities, filter:', filter);
+  console.log('📋 Fetching spare parts logs...');
   
   try {
-    // Calculate date filter
-    const now = new Date();
-    let dateFilter: any = {};
+    const logs = await getAllRecentLogs(Number(limit));
     
-    if (filter === 'today') {
-      const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      dateFilter = { gte: startOfDay };
-    } else if (filter === 'week') {
-      const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-      dateFilter = { gte: weekAgo };
-    }
-    // For 'all', no date filter
-
-    const whereClause = Object.keys(dateFilter).length > 0 
-      ? { createdAt: dateFilter } 
-      : {};
-
-    const activities = await prisma.sparePartHistory.findMany({
-      where: whereClause,
-      include: {
-        changedBy: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            role: true,
-          },
-        },
-        sparePart: {
-          select: {
-            id: true,
-            name: true,
-            partNumber: true,
-          },
-        },
-      },
-      orderBy: { createdAt: 'desc' },
-      take: Number(limit),
-    });
-
-    console.log(`📊 Found ${activities.length} total activities`);
+    console.log(`📊 Found ${logs.length} logs`);
     
     const response: ApiResponse = {
       success: true,
-      data: { activities },
+      data: { logs },
     };
 
     res.status(200).json(response);
   } catch (error) {
-    console.error('❌ Error fetching all activities:', error);
+    console.error('❌ Error fetching spare parts logs:', error);
     const response: ApiResponse = {
       success: false,
-      message: 'Failed to fetch activities',
+      message: 'Failed to fetch logs',
     };
     res.status(500).json(response);
   }
@@ -444,11 +407,10 @@ router.put('/:id', async (req: any, res) => {
     },
   });
 
-  // Activity logging removed to prevent issues
-  // const userFullName = `${req.user!.firstName || 'Unknown'} ${req.user!.lastName || 'User'}`;
-  // const changes: string[] = [];
-  // Activity logging removed to prevent issues
+  // Track changes for logging
   const changes: string[] = [];
+  if (existingPart.name !== sparePart.name) changes.push('الاسم');
+  if (existingPart.presentPieces !== sparePart.presentPieces) changes.push('عدد القطع');
   if (existingPart.unitPrice !== sparePart.unitPrice) changes.push('السعر');
   if (existingPart.currency !== sparePart.currency) changes.push('العملة');
   if (existingPart.description !== sparePart.description) changes.push('الوصف');
@@ -460,6 +422,12 @@ router.put('/:id', async (req: any, res) => {
   const lastName = req.user!.lastName || 'User';
   const warehouseKeeperName = `${firstName} ${lastName}`;
   const changeDetails = changes.length > 0 ? ` - التغييرات: ${changes.join(', ')}` : '';
+  
+  // Log the update to سجل
+  if (changes.length > 0) {
+    await logPartUpdate(sparePart.id, sparePart.name, changes, warehouseKeeperName);
+  }
+  
   await notificationService.createWarehouseNotification(
     'MODIFIED',
     sparePart.name + changeDetails,

@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { prisma } from '../index';
 import { ApiResponse, ValidationError, UserRole, NotificationType } from '../types';
 import { createNotification } from '../services/notification.service';
+import { logPartUsedInRequest } from '../services/sparePart.service';
 import { authenticateToken } from '../middleware/auth';
 
 const router = Router();
@@ -153,8 +154,14 @@ router.post('/', async (req, res) => {
   const { requestPart, updatedSparePart } = result;
   const addedByName = `${requestPart.addedBy.firstName} ${requestPart.addedBy.lastName}`;
   
-  // Activity logging removed to prevent issues
-  // try { await logSparePartHistory(...) } catch (error) { ... }
+  // Log to سجل when part is used in request
+  await logPartUsedInRequest(
+    requestPart.sparePartId,
+    requestPart.sparePart.name,
+    requestPart.quantityUsed,
+    requestPart.request.requestNumber,
+    addedByName
+  );
   
   // Notify warehouse keeper about inventory decrease
   const warehouseKeepers = await prisma.user.findMany({

@@ -555,6 +555,15 @@ export const storageAPI = {
     }
   },
 
+  getSparePartLogs: async (limit?: number) => {
+    try {
+      const response = await api.get('/storage/logs', { params: { limit } });
+      return handleResponse(response);
+    } catch (error) {
+      return Promise.reject(handleError(error));
+    }
+  },
+
   getCategories: async () => {
     try {
       const response = await api.get('/storage/categories');
