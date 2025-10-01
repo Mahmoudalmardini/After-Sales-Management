@@ -175,47 +175,6 @@ router.get('/logs', async (req, res) => {
 });
 
 /**
- * @route   GET /api/storage/:id
- * @desc    Get spare part by ID
- * @access  Private
- */
-router.get('/:id', async (req, res) => {
-  const { id } = req.params;
-  const numId = Number(id);
-  if (!Number.isInteger(numId)) {
-    const error = new ValidationError('Invalid spare part id');
-    res.status(400).json({ success: false, message: error.message });
-    return;
-  }
-
-  const sparePart = await prisma.sparePart.findUnique({
-    where: { id: numId },
-    include: {
-      requestParts: {
-        include: {
-          request: true,
-          addedBy: { select: { firstName: true, lastName: true } },
-        },
-        orderBy: { createdAt: 'desc' },
-      },
-    },
-  });
-
-  if (!sparePart) {
-    const error = new ValidationError('Spare part not found');
-    res.status(error.statusCode).json({ success: false, message: error.message });
-    return;
-  }
-
-  const response: ApiResponse = {
-    success: true,
-    data: { sparePart },
-  };
-
-  res.status(200).json(response);
-});
-
-/**
  * @route   GET /api/storage/:id/history
  * @desc    Get spare part history
  * @access  Private (Admin, Warehouse Keeper)
@@ -264,6 +223,47 @@ router.get('/:id/history', async (req, res) => {
     };
     res.status(500).json(response);
   }
+});
+
+/**
+ * @route   GET /api/storage/:id
+ * @desc    Get spare part by ID
+ * @access  Private
+ */
+router.get('/:id', async (req, res) => {
+  const { id } = req.params;
+  const numId = Number(id);
+  if (!Number.isInteger(numId)) {
+    const error = new ValidationError('Invalid spare part id');
+    res.status(400).json({ success: false, message: error.message });
+    return;
+  }
+
+  const sparePart = await prisma.sparePart.findUnique({
+    where: { id: numId },
+    include: {
+      requestParts: {
+        include: {
+          request: true,
+          addedBy: { select: { firstName: true, lastName: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+      },
+    },
+  });
+
+  if (!sparePart) {
+    const error = new ValidationError('Spare part not found');
+    res.status(error.statusCode).json({ success: false, message: error.message });
+    return;
+  }
+
+  const response: ApiResponse = {
+    success: true,
+    data: { sparePart },
+  };
+
+  res.status(200).json(response);
 });
 
 /**
