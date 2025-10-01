@@ -698,36 +698,93 @@ const StoragePage: React.FC = () => {
                     
                     {/* Show old and new values if available */}
                     {item.oldValue && item.newValue && item.changeType === 'UPDATED' && (
-                      <div className="bg-white rounded p-3 mb-3 border border-gray-200">
-                        <div className="text-xs font-semibold text-gray-700 mb-2">التغيير التفصيلي:</div>
-                        <div className="grid grid-cols-2 gap-3 text-xs">
-                          <div>
-                            <span className="font-medium text-red-600">القيمة السابقة:</span>
-                            <p className="mt-1 text-gray-900 bg-red-50 p-2 rounded break-words">
+                      <div className="bg-gradient-to-r from-red-50 to-green-50 rounded-lg p-4 mb-3 border border-gray-200 shadow-sm">
+                        <div className="flex items-center gap-2 mb-3">
+                          <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <span className="text-xs font-bold text-gray-700 uppercase tracking-wide">
+                            {t('storage.changeHistory')}
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="bg-white rounded-lg p-3 border-l-4 border-red-400 shadow-sm">
+                            <div className="flex items-center gap-2 mb-2">
+                              <svg className="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                              <span className="text-xs font-bold text-red-600 uppercase">القيمة السابقة</span>
+                            </div>
+                            <p className="text-sm text-gray-900 font-medium break-words bg-red-50 p-2 rounded">
                               {item.oldValue}
                             </p>
                           </div>
-                          <div>
-                            <span className="font-medium text-green-600">القيمة الجديدة:</span>
-                            <p className="mt-1 text-gray-900 bg-green-50 p-2 rounded break-words">
+                          <div className="bg-white rounded-lg p-3 border-l-4 border-green-400 shadow-sm">
+                            <div className="flex items-center gap-2 mb-2">
+                              <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                              </svg>
+                              <span className="text-xs font-bold text-green-600 uppercase">القيمة الجديدة</span>
+                            </div>
+                            <p className="text-sm text-gray-900 font-medium break-words bg-green-50 p-2 rounded">
                               {item.newValue}
                             </p>
                           </div>
                         </div>
+                        {item.fieldChanged && (
+                          <div className="mt-3 flex items-center gap-2 text-xs text-gray-600 bg-white rounded p-2">
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                            </svg>
+                            <span className="font-medium">الحقل المعدل:</span>
+                            <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full font-semibold">
+                              {item.fieldChanged === 'name' ? t('storage.name') :
+                               item.fieldChanged === 'presentPieces' ? t('storage.presentPieces') :
+                               item.fieldChanged === 'unitPrice' ? t('storage.unitPrice') :
+                               item.fieldChanged === 'currency' ? t('storage.currency') :
+                               item.fieldChanged === 'quantity' ? t('storage.quantity') :
+                               item.fieldChanged === 'description' ? t('storage.description') :
+                               item.fieldChanged === 'departmentId' ? t('products.department') :
+                               item.fieldChanged}
+                            </span>
+                          </div>
+                        )}
                       </div>
                     )}
                     
-                    <div className="flex items-center justify-between text-xs text-gray-600">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">{t('common.by')}:</span>
-                        <span className="text-gray-800">{item.changedBy.firstName} {item.changedBy.lastName}</span>
-                        <span className="text-gray-400">({item.changedBy.role === 'WAREHOUSE_KEEPER' ? t('users.roles.warehouseKeeper') : item.changedBy.role})</span>
+                    {/* Show quantity change badge if available */}
+                    {item.quantityChange !== undefined && item.quantityChange !== null && item.quantityChange !== 0 && (
+                      <div className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg mb-3 ${
+                        item.quantityChange > 0 ? 'bg-green-100 border border-green-300' : 'bg-red-100 border border-red-300'
+                      }`}>
+                        <svg className={`w-5 h-5 ${item.quantityChange > 0 ? 'text-green-600' : 'text-red-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          {item.quantityChange > 0 ? (
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                          ) : (
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                          )}
+                        </svg>
+                        <div>
+                          <span className="text-xs font-medium text-gray-700">تغيير في الكمية:</span>
+                          <span className={`ml-2 text-lg font-bold ${item.quantityChange > 0 ? 'text-green-700' : 'text-red-700'}`}>
+                            {item.quantityChange > 0 ? '+' : ''}{item.quantityChange}
+                          </span>
+                          <span className="text-xs text-gray-600 mr-1">قطعة</span>
+                        </div>
                       </div>
-                      {item.quantityChange && (
-                        <span className={`font-bold text-sm ${item.quantityChange > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                          {item.quantityChange > 0 ? '+' : ''}{item.quantityChange} قطعة
+                    )}
+                    
+                    <div className="flex items-center justify-between text-xs bg-gray-50 rounded-lg p-2">
+                      <div className="flex items-center gap-2">
+                        <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                        <span className="font-medium text-gray-700">{t('common.by')}:</span>
+                        <span className="text-gray-900 font-semibold">{item.changedBy.firstName} {item.changedBy.lastName}</span>
+                        <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
+                          {item.changedBy.role === 'WAREHOUSE_KEEPER' ? t('users.roles.warehouseKeeper') : item.changedBy.role}
                         </span>
-                      )}
+                      </div>
                     </div>
                     
                     {/* Show request ID if related to a request */}
