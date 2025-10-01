@@ -60,17 +60,31 @@ export const emitSparePartUpdated = (data: {
   changes: string[];
   performedBy: string;
   partNumber: string;
+  changeReason?: string;
+  detailedChanges?: Array<{
+    field: string;
+    fieldAr: string;
+    oldValue: string;
+    newValue: string;
+  }>;
 }) => {
   if (io) {
+    const reasonText = data.changeReason ? ` - السبب: ${data.changeReason}` : '';
+    const detailsText = data.detailedChanges && data.detailedChanges.length > 0
+      ? `التغييرات: ${data.detailedChanges.map(c => `${c.fieldAr} (${c.oldValue} → ${c.newValue})`).join(', ')}`
+      : `التغييرات: ${data.changes.join(', ')}`;
+    
     io.emit('sparePart:updated', {
       type: 'UPDATED',
       icon: '✏️',
-      message: `${data.performedBy} قام بتحديث "${data.sparePartName}"`,
-      details: `التغييرات: ${data.changes.join(', ')}`,
+      message: `${data.performedBy} قام بتحديث "${data.sparePartName}"${reasonText}`,
+      details: detailsText,
       sparePartId: data.sparePartId,
       sparePartName: data.sparePartName,
       partNumber: data.partNumber,
       changes: data.changes,
+      changeReason: data.changeReason,
+      detailedChanges: data.detailedChanges,
       timestamp: new Date().toISOString(),
     });
     console.log('📡 Socket event emitted: sparePart:updated');
