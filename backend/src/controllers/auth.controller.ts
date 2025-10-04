@@ -143,8 +143,8 @@ export const updateProfile = asyncHandler(async (req: AuthenticatedRequest, res:
   const { firstName, lastName, email, phone } = req.body;
 
   // Validate email format if provided
-  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    throw new ValidationError('Invalid email format');
+  if (email && !email.includes('@')) {
+    throw new ValidationError('Email must contain @ symbol');
   }
 
   // Check if user is trying to update firstName or lastName
