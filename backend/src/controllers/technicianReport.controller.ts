@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
-import { AuthenticatedRequest, CreateTechnicianReportForm, TechnicianReportFilters, ValidationError, NotFoundError, ForbiddenError } from '../types';
+import { AuthenticatedRequest, CreateTechnicianReportForm, TechnicianReportFilters, ValidationError, NotFoundError, ForbiddenError, NotificationType } from '../types';
 import { logActivity } from '../services/activity.service';
 import { createNotification } from '../services/notification.service';
 
@@ -25,7 +25,6 @@ export const createTechnicianReport = async (req: AuthenticatedRequest, res: Res
       where: {
         id: requestId,
         OR: [
-          { technicianId },
           { assignedTechnicianId: technicianId }
         ]
       },
@@ -54,7 +53,11 @@ export const createTechnicianReport = async (req: AuthenticatedRequest, res: Res
           select: {
             id: true,
             requestNumber: true,
-            customerName: true
+            customer: {
+              select: {
+                name: true
+              }
+            }
           }
         },
         technician: {
@@ -69,16 +72,12 @@ export const createTechnicianReport = async (req: AuthenticatedRequest, res: Res
     });
 
     // Log activity
-    await logActivity({
-      userId: technicianId,
-      action: 'CREATE_TECHNICIAN_REPORT',
-      details: `Created report for request ${request.requestNumber}`,
+    await logActivity(
       requestId,
-      metadata: {
-        reportId: report.id,
-        reportContent: reportContent.substring(0, 100) + (reportContent.length > 100 ? '...' : '')
-      }
-    });
+      technicianId,
+      'CREATE_TECHNICIAN_REPORT' as any,
+      `Created report for request ${request.requestNumber}`
+    );
 
     // Send notifications if requested
     if (sendToSupervisor || sendToAdmin) {
@@ -100,14 +99,9 @@ export const createTechnicianReport = async (req: AuthenticatedRequest, res: Res
       for (const recipient of recipients) {
         await createNotification({
           userId: recipient.id,
-          type: 'TECHNICIAN_REPORT',
+          type: NotificationType.TECHNICIAN_REPORT,
           title: 'New Technician Report',
           message: `Technician ${report.technician.firstName} ${report.technician.lastName} submitted a report for request ${request.requestNumber}`,
-          data: {
-            requestId,
-            reportId: report.id,
-            technicianId: report.technicianId
-          }
         });
       }
     }
@@ -174,7 +168,11 @@ export const getTechnicianReports = async (req: AuthenticatedRequest, res: Respo
           select: {
             id: true,
             requestNumber: true,
-            customerName: true
+            customer: {
+              select: {
+                name: true
+              }
+            }
           }
         },
         technician: {
@@ -242,7 +240,11 @@ export const approveTechnicianReport = async (req: AuthenticatedRequest, res: Re
           select: {
             id: true,
             requestNumber: true,
-            customerName: true
+            customer: {
+              select: {
+                name: true
+              }
+            }
           }
         },
         technician: {
@@ -273,7 +275,11 @@ export const approveTechnicianReport = async (req: AuthenticatedRequest, res: Re
           select: {
             id: true,
             requestNumber: true,
-            customerName: true
+            customer: {
+              select: {
+                name: true
+              }
+            }
           }
         },
         technician: {
@@ -296,27 +302,19 @@ export const approveTechnicianReport = async (req: AuthenticatedRequest, res: Re
     });
 
     // Log activity
-    await logActivity({
-      userId: approverId,
-      action: 'APPROVE_TECHNICIAN_REPORT',
-      details: `Approved technician report for request ${report.request.requestNumber}`,
-      requestId: report.requestId,
-      metadata: {
-        reportId: report.id,
-        technicianId: report.technicianId
-      }
-    });
+    await logActivity(
+      report.requestId,
+      approverId,
+      'APPROVE_TECHNICIAN_REPORT' as any,
+      `Approved technician report for request ${report.request.requestNumber}`
+    );
 
     // Send notification to technician
     await createNotification({
       userId: report.technicianId,
-      type: 'REPORT_APPROVED',
+      type: NotificationType.REPORT_APPROVED,
       title: 'Report Approved',
       message: `Your report for request ${report.request.requestNumber} has been approved`,
-      data: {
-        requestId: report.requestId,
-        reportId: report.id
-      }
     });
 
     res.json({
@@ -355,7 +353,11 @@ export const rejectTechnicianReport = async (req: AuthenticatedRequest, res: Res
           select: {
             id: true,
             requestNumber: true,
-            customerName: true
+            customer: {
+              select: {
+                name: true
+              }
+            }
           }
         },
         technician: {
@@ -386,7 +388,11 @@ export const rejectTechnicianReport = async (req: AuthenticatedRequest, res: Res
           select: {
             id: true,
             requestNumber: true,
-            customerName: true
+            customer: {
+              select: {
+                name: true
+              }
+            }
           }
         },
         technician: {
@@ -409,28 +415,19 @@ export const rejectTechnicianReport = async (req: AuthenticatedRequest, res: Res
     });
 
     // Log activity
-    await logActivity({
-      userId: approverId,
-      action: 'REJECT_TECHNICIAN_REPORT',
-      details: `Rejected technician report for request ${report.request.requestNumber}`,
-      requestId: report.requestId,
-      metadata: {
-        reportId: report.id,
-        technicianId: report.technicianId,
-        rejectionReason: approvalComment
-      }
-    });
+    await logActivity(
+      report.requestId,
+      approverId,
+      'REJECT_TECHNICIAN_REPORT' as any,
+      `Rejected technician report for request ${report.request.requestNumber}`
+    );
 
     // Send notification to technician
     await createNotification({
       userId: report.technicianId,
-      type: 'REPORT_REJECTED',
+      type: NotificationType.REPORT_REJECTED,
       title: 'Report Rejected',
       message: `Your report for request ${report.request.requestNumber} has been rejected. Reason: ${approvalComment}`,
-      data: {
-        requestId: report.requestId,
-        reportId: report.id
-      }
     });
 
     res.json({

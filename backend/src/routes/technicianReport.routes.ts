@@ -1,13 +1,13 @@
 import express from 'express';
 import { createTechnicianReport, getTechnicianReports, approveTechnicianReport, rejectTechnicianReport } from '../controllers/technicianReport.controller';
-import { requireAuth } from '../middleware/auth.middleware';
-import { requireRoles } from '../middleware/role.middleware';
+import { authenticateToken } from '../middleware/auth';
+import { requireRoles } from '../middleware/auth';
 import { UserRole } from '../types';
 
 const router = express.Router();
 
 // All routes require authentication
-router.use(requireAuth);
+router.use(authenticateToken);
 
 /**
  * @route   POST /api/technician-reports
