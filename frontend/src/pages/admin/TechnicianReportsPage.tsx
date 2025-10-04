@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useI18n } from '../../contexts/I18nContext';
 import { useAuth } from '../../contexts/AuthContext';
-import { technicianReportsAPI } from '../../services/api';
+import { technicianReportsAPI, usersAPI } from '../../services/api';
 import { TechnicianReport, UserRole } from '../../types';
 
 const TechnicianReportsPage: React.FC = () => {
@@ -10,23 +10,47 @@ const TechnicianReportsPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [reports, setReports] = useState<TechnicianReport[]>([]);
+  const [technicians, setTechnicians] = useState<any[]>([]);
   const [filters, setFilters] = useState({
     page: 1,
     limit: 20,
     status: 'all',
-    requestId: undefined as number | undefined
+    requestId: undefined as number | undefined,
+    technicianId: undefined as number | undefined
   });
   const [selectedReport, setSelectedReport] = useState<TechnicianReport | null>(null);
   const [showApprovalModal, setShowApprovalModal] = useState(false);
   const [showRejectionModal, setShowRejectionModal] = useState(false);
   const [approvalComment, setApprovalComment] = useState('');
 
+  const loadTechnicians = useCallback(async () => {
+    try {
+      const response = await usersAPI.getUsers({ role: 'TECHNICIAN' });
+      setTechnicians(response.data || []);
+    } catch (e: any) {
+      console.error('Failed to load technicians:', e);
+    }
+  }, []);
+
   const loadReports = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await technicianReportsAPI.getTechnicianReports(filters);
-      setReports((response as any)?.data?.reports || []);
+      
+      // Convert status filter to isApproved boolean
+      let isApproved: boolean | undefined;
+      if (filters.status === 'approved') isApproved = true;
+      else if (filters.status === 'rejected') isApproved = false;
+      else if (filters.status === 'pending') isApproved = undefined;
+      
+      const apiFilters = {
+        ...filters,
+        isApproved,
+        status: undefined // Remove status as we're using isApproved
+      };
+      
+      const response = await technicianReportsAPI.getTechnicianReports(apiFilters);
+      setReports((response as any)?.data || []);
     } catch (e: any) {
       setError(e.message || 'Failed to load technician reports');
     } finally {
@@ -35,8 +59,9 @@ const TechnicianReportsPage: React.FC = () => {
   }, [filters]);
 
   useEffect(() => {
+    loadTechnicians();
     loadReports();
-  }, [loadReports]);
+  }, [loadTechnicians, loadReports]);
 
   const handleApprove = async (report: TechnicianReport) => {
     try {
@@ -107,7 +132,7 @@ const TechnicianReportsPage: React.FC = () => {
 
       {/* Filters */}
       <div className="bg-white p-4 rounded-lg shadow">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
             <select
@@ -119,6 +144,21 @@ const TechnicianReportsPage: React.FC = () => {
               <option value="pending">Pending</option>
               <option value="approved">Approved</option>
               <option value="rejected">Rejected</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Technician</label>
+            <select
+              value={filters.technicianId || ''}
+              onChange={(e) => setFilters(prev => ({ ...prev, technicianId: e.target.value ? Number(e.target.value) : undefined }))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">All Technicians</option>
+              {technicians.map((tech) => (
+                <option key={tech.id} value={tech.id}>
+                  {tech.firstName} {tech.lastName}
+                </option>
+              ))}
             </select>
           </div>
           <div>
