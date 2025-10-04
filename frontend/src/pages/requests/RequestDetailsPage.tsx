@@ -9,6 +9,7 @@ import { useCurrency } from '../../hooks/useCurrency';
 import AddPartToRequestModal from '../../components/storage/AddPartToRequestModal';
 import RequestSparePartModal from '../../components/requests/RequestSparePartModal';
 import AddReportModal from '../../components/requests/AddReportModal';
+import TechnicianReportsSection from '../../components/requests/TechnicianReportsSection';
 
 interface CostFormState extends AddCostForm {
   sparePartId?: string;
@@ -575,6 +576,21 @@ const RequestDetailsPage: React.FC = () => {
                     </div>
                   </div>
                 </div>
+              </div>
+            </div>
+
+            {/* Technician Reports Section */}
+            <div className="card">
+              <div className="card-header">
+                <h3>تقارير الفنيين</h3>
+                <p>تقارير وتحديثات الفنيين حول هذا الطلب</p>
+              </div>
+              <div className="card-content">
+                <TechnicianReportsSection
+                  reports={request.technicianReports || []}
+                  requestId={requestId}
+                  onReportsUpdated={reload}
+                />
               </div>
             </div>
 

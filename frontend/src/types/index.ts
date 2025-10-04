@@ -131,6 +131,7 @@ export interface Request {
   activities?: RequestActivity[];
   costs?: RequestCost[];
   requestParts?: RequestPart[];
+  technicianReports?: TechnicianReport[];
 }
 
 // Activity types

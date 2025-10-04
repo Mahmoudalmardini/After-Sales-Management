@@ -413,6 +413,27 @@ export const getRequestById = asyncHandler(async (req: AuthenticatedRequest, res
         },
         orderBy: { createdAt: 'desc' },
       },
+      technicianReports: {
+        include: {
+          technician: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              username: true,
+            },
+          },
+          approvedBy: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              username: true,
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+      },
     },
   });
 
