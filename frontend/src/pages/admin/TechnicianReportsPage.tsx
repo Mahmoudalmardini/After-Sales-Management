@@ -7,7 +7,8 @@ import { TechnicianReport, UserRole } from '../../types';
 const TechnicianReportsPage: React.FC = () => {
   console.log('🚀 TechnicianReportsPage component rendering...');
   const { t } = useI18n();
-  const { hasRole } = useAuth();
+  const { hasRole, user } = useAuth();
+  console.log('👤 Current user:', user);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [reports, setReports] = useState<TechnicianReport[]>([]);
@@ -118,8 +119,12 @@ const TechnicianReportsPage: React.FC = () => {
 
   // Check if user can manage technician reports
   const canManage = hasRole([UserRole.COMPANY_MANAGER, UserRole.DEPUTY_MANAGER, UserRole.DEPARTMENT_MANAGER, UserRole.SECTION_SUPERVISOR]);
+  
+  console.log('🔐 User role check - canManage:', canManage);
+  console.log('🔐 User roles:', [UserRole.COMPANY_MANAGER, UserRole.DEPUTY_MANAGER, UserRole.DEPARTMENT_MANAGER, UserRole.SECTION_SUPERVISOR]);
 
   if (!canManage) {
+    console.log('❌ Access denied - user does not have required role');
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
