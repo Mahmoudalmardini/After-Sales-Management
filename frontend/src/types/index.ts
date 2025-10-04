@@ -446,3 +446,73 @@ export const STOCK_STATUS_LABELS: Record<StockStatus, string> = {
   'LOW_STOCK': 'Low Stock',
   'OUT_OF_STOCK': 'Out of Stock',
 };
+
+// Spare Part Request types
+export interface SparePartRequest {
+  id: number;
+  requestId: number;
+  technicianId: number;
+  partName: string;
+  partNumber?: string;
+  description: string;
+  quantity: number;
+  urgency: 'LOW' | 'NORMAL' | 'URGENT';
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'FULFILLED';
+  rejectionReason?: string;
+  approvedById?: number;
+  fulfilledById?: number;
+  createdAt: string;
+  updatedAt: string;
+  technician: {
+    id: number;
+    firstName: string;
+    lastName: string;
+  };
+  request: {
+    id: number;
+    requestNumber: string;
+    customer?: {
+      name: string;
+    };
+  };
+  approvedBy?: {
+    id: number;
+    firstName: string;
+    lastName: string;
+  };
+  fulfilledBy?: {
+    id: number;
+    firstName: string;
+    lastName: string;
+  };
+}
+
+export interface CreateSparePartRequestForm {
+  requestId: number;
+  partName: string;
+  partNumber?: string;
+  description: string;
+  quantity: number;
+  urgency: 'LOW' | 'NORMAL' | 'URGENT';
+}
+
+export interface SparePartRequestFilters extends PaginationParams {
+  status?: string;
+  requestId?: number;
+  technicianId?: number;
+}
+
+// Spare Part Request status labels
+export const SPARE_PART_REQUEST_STATUS_LABELS: Record<string, string> = {
+  'PENDING': 'Pending',
+  'APPROVED': 'Approved',
+  'REJECTED': 'Rejected',
+  'FULFILLED': 'Fulfilled',
+};
+
+// Spare Part Request urgency labels
+export const SPARE_PART_REQUEST_URGENCY_LABELS: Record<string, string> = {
+  'LOW': 'Low',
+  'NORMAL': 'Normal',
+  'URGENT': 'Urgent',
+};

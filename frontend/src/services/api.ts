@@ -626,5 +626,52 @@ export const requestPartsAPI = {
   },
 };
 
+// Spare Part Requests API
+export const sparePartRequestsAPI = {
+  getSparePartRequests: async (params?: any) => {
+    try {
+      const response = await api.get('/spare-part-requests', { params });
+      return response.data;
+    } catch (error) {
+      throw handleError(error);
+    }
+  },
+
+  createSparePartRequest: async (data: any) => {
+    try {
+      const response = await api.post('/spare-part-requests', data);
+      return handleResponse(response);
+    } catch (error) {
+      throw handleError(error);
+    }
+  },
+
+  approveSparePartRequest: async (id: number) => {
+    try {
+      const response = await api.put(`/spare-part-requests/${id}/approve`);
+      return handleResponse(response);
+    } catch (error) {
+      throw handleError(error);
+    }
+  },
+
+  rejectSparePartRequest: async (id: number, rejectionReason: string) => {
+    try {
+      const response = await api.put(`/spare-part-requests/${id}/reject`, { rejectionReason });
+      return handleResponse(response);
+    } catch (error) {
+      throw handleError(error);
+    }
+  },
+
+  fulfillSparePartRequest: async (id: number) => {
+    try {
+      const response = await api.put(`/spare-part-requests/${id}/fulfill`);
+      return handleResponse(response);
+    } catch (error) {
+      throw handleError(error);
+    }
+  },
+};
 
 export default api;

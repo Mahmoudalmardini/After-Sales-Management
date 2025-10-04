@@ -58,6 +58,9 @@ model User {
   sparePartHistoryChanges  SparePartHistory[]
   technicianReports        TechnicianReport[]    @relation("TechnicianReports")
   approvedReports          TechnicianReport[]    @relation("ApprovedReports")
+  sparePartRequests        SparePartRequest[]    @relation("SparePartRequests")
+  approvedSparePartRequests SparePartRequest[]   @relation("ApprovedSparePartRequests")
+  fulfilledSparePartRequests SparePartRequest[]  @relation("FulfilledSparePartRequests")
 
   @@map("users")
 }
@@ -140,6 +143,7 @@ model Request {
   notifications        Notification[]
   requestParts         RequestPart[]
   technicianReports    TechnicianReport[]
+  sparePartRequests    SparePartRequest[]
 
   @@map("requests")
 }
@@ -305,4 +309,29 @@ model TechnicianReport {
   approvedBy User?   @relation("ApprovedReports", fields: [approvedById], references: [id])
 
   @@map("technician_reports")
+}
+
+model SparePartRequest {
+  id              Int      @id @default(autoincrement())
+  requestId       Int      // The service request this spare part request is for
+  technicianId    Int      // Technician who requested the spare part
+  partName        String   // Name of the spare part requested
+  partNumber      String?  // Optional part number if known
+  description     String   // Why this spare part is needed
+  quantity        Int      @default(1) // Quantity requested
+  urgency         String   @default("NORMAL") // URGENT, NORMAL, LOW
+  status          String   @default("PENDING") // PENDING, APPROVED, REJECTED, FULFILLED
+  rejectionReason String?  // Reason for rejection if rejected
+  approvedById    Int?     // Admin/supervisor who approved/rejected
+  fulfilledById   Int?     // Warehouse keeper who fulfilled the request
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  request      Request @relation(fields: [requestId], references: [id])
+  technician   User    @relation("SparePartRequests", fields: [technicianId], references: [id])
+  approvedBy   User?   @relation("ApprovedSparePartRequests", fields: [approvedById], references: [id])
+  fulfilledBy  User?   @relation("FulfilledSparePartRequests", fields: [fulfilledById], references: [id])
+
+  @@map("spare_part_requests")
 }

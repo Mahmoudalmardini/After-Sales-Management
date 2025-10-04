@@ -77,6 +77,12 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen }) => {
       icon: CogIcon,
       roles: [UserRole.COMPANY_MANAGER, UserRole.DEPUTY_MANAGER, UserRole.DEPARTMENT_MANAGER, UserRole.SECTION_SUPERVISOR, UserRole.TECHNICIAN],
     },
+    {
+      name: 'Spare Part Requests',
+      href: '/spare-part-requests',
+      icon: ArchiveBoxIcon,
+      roles: [UserRole.COMPANY_MANAGER, UserRole.DEPUTY_MANAGER, UserRole.DEPARTMENT_MANAGER, UserRole.SECTION_SUPERVISOR],
+    },
   ];
 
   const filteredNavigation = navigation.filter(item => 

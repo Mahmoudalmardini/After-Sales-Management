@@ -27,6 +27,7 @@ import ReportsPage from './pages/reports/ReportsPage';
 import NotificationsPage from './pages/NotificationsPage';
 import StoragePage from './pages/storage/StoragePage';
 import StatusManagementPage from './pages/StatusManagementPage';
+import SparePartRequestsPage from './pages/admin/SparePartRequestsPage';
 
 // Clear Storage Page component
 const ClearStoragePage: React.FC = () => {
@@ -339,6 +340,17 @@ function App() {
             <ProtectedRoute>
               <DashboardLayout>
                 <StatusManagementPage />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/spare-part-requests"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <SparePartRequestsPage />
               </DashboardLayout>
             </ProtectedRoute>
           }

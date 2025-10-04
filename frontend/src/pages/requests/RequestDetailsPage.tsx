@@ -7,6 +7,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { formatCurrency, getCurrentCurrency } from '../../utils/currency';
 import { useCurrency } from '../../hooks/useCurrency';
 import AddPartToRequestModal from '../../components/storage/AddPartToRequestModal';
+import RequestSparePartModal from '../../components/requests/RequestSparePartModal';
 
 interface CostFormState extends AddCostForm {
   sparePartId?: string;
@@ -33,6 +34,7 @@ const RequestDetailsPage: React.FC = () => {
   const [spareParts, setSpareParts] = useState<any[]>([]);
   const [loadingSpareParts, setLoadingSpareParts] = useState(false);
   const [showSparePartsModal, setShowSparePartsModal] = useState(false);
+  const [showRequestSparePartModal, setShowRequestSparePartModal] = useState(false);
   useEffect(() => {
     const loadSpareParts = async () => {
       try {
@@ -464,6 +466,18 @@ const RequestDetailsPage: React.FC = () => {
                       </svg>
                       إضافة قطع غيار
                     </button>
+                    {user?.role === UserRole.TECHNICIAN && (
+                      <button 
+                        type="button"
+                        className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors flex items-center justify-center"
+                        onClick={() => setShowRequestSparePartModal(true)}
+                      >
+                        <svg className="w-4 h-4 ml-1" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd"/>
+                        </svg>
+                        طلب قطع غيار جديدة
+                      </button>
+                    )}
                   </div>
                 </form>
                 )}
@@ -800,6 +814,17 @@ const RequestDetailsPage: React.FC = () => {
         requestId={requestId}
         onPartAdded={() => {
           setShowSparePartsModal(false);
+          reload(); // Refresh the request to show new parts
+        }}
+      />
+
+      {/* Request New Spare Part Modal */}
+      <RequestSparePartModal
+        isOpen={showRequestSparePartModal}
+        onClose={() => setShowRequestSparePartModal(false)}
+        requestId={requestId}
+        onRequestCreated={() => {
+          setShowRequestSparePartModal(false);
           reload(); // Refresh the request to show new parts
         }}
       />

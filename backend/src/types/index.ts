@@ -61,7 +61,23 @@ export enum NotificationType {
   READ_RECEIPT = 'READ_RECEIPT',
   WAREHOUSE_UPDATE = 'WAREHOUSE_UPDATE',
   PRODUCT_ADDED = 'PRODUCT_ADDED',
-  COST_ADDED = 'COST_ADDED'
+  COST_ADDED = 'COST_ADDED',
+  SPARE_PART_REQUEST = 'SPARE_PART_REQUEST',
+  SPARE_PART_APPROVED = 'SPARE_PART_APPROVED',
+  SPARE_PART_REJECTED = 'SPARE_PART_REJECTED'
+}
+
+export enum SparePartRequestStatus {
+  PENDING = 'PENDING',
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED',
+  FULFILLED = 'FULFILLED'
+}
+
+export enum SparePartRequestUrgency {
+  LOW = 'LOW',
+  NORMAL = 'NORMAL',
+  URGENT = 'URGENT'
 }
 
 // Extend Express Request type to include user

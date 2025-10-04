@@ -27,6 +27,7 @@ import { exportRoutes } from './routes/export.routes';
 import storageRoutes from './routes/storage.routes';
 import requestPartsRoutes from './routes/request-parts.routes';
 import statusRoutes from './routes/status.routes';
+import sparePartRequestRoutes from './routes/sparePartRequest.routes';
 
 // Initialize Prisma Client
 export const prisma = new PrismaClient();
@@ -120,6 +121,7 @@ app.use('/api/reports', authenticateToken, reportRoutes);
 app.use('/api/storage', authenticateToken, storageRoutes);
 app.use('/api/request-parts', authenticateToken, requestPartsRoutes);
 app.use('/api/statuses', authenticateToken, statusRoutes);
+app.use('/api/spare-part-requests', sparePartRequestRoutes);
 
 // Serve static files from React build (for production)
 if (config.nodeEnv === 'production') {
