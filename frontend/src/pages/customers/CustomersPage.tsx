@@ -52,8 +52,8 @@ const CustomersPage: React.FC = () => {
     }
     
     // Validate email format if provided
-    if (form.email && !form.email.endsWith('@gmail.com')) {
-      setError('البريد الإلكتروني يجب أن ينتهي بـ @gmail.com');
+    if (form.email && !form.email.includes('@')) {
+      setError('البريد الإلكتروني يجب أن يحتوي على @');
       return;
     }
     
@@ -113,7 +113,7 @@ const CustomersPage: React.FC = () => {
               />
             </div>
             
-            <input className="input" placeholder={t('customers.email') || 'Email (example@gmail.com)'} value={form.email} onChange={e=>{setForm(f=>({...f, email: e.target.value})); setError(null);}} />
+            <input className="input" placeholder={t('customers.email') || 'Email (example@domain.com)'} value={form.email} onChange={e=>{setForm(f=>({...f, email: e.target.value})); setError(null);}} />
             <select className="input" value={form.city} onChange={e=>{setForm(f=>({...f, city: e.target.value})); setError(null);}} title={t('customers.city') || 'City'}>
               <option value="">اختر المحافظة...</option>
               {SYRIAN_CITIES.map(city => (

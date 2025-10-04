@@ -251,16 +251,15 @@ const StoragePage: React.FC = () => {
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
                 required
               />
-              {editingPart && (
-                <input
-                  className="input bg-gray-100"
-                  type="text"
-                  placeholder={t('storage.partNumber')}
-                  value={form.partNumber}
-                  disabled
-                  title="رقم القطعة يتم توليده تلقائياً"
-                />
-              )}
+              <input
+                className="input"
+                type="text"
+                placeholder={t('storage.partNumber') + ' (مثل: ABC-123, PART-001, etc.)'}
+                value={form.partNumber}
+                onChange={(e) => setForm({ ...form, partNumber: e.target.value })}
+                required
+                title="يمكن إدخال أرقام وحروف ورموز"
+              />
               <input
                 className="input"
                 type="text"

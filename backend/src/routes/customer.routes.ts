@@ -80,8 +80,8 @@ router.post('/', authenticateToken, requireRoles([UserRole.COMPANY_MANAGER, User
   }
 
   // Validate email format if provided
-  if (email && !email.endsWith('@gmail.com')) {
-    const error = new ValidationError('Email must end with @gmail.com');
+  if (email && !email.includes('@')) {
+    const error = new ValidationError('Email must contain @ symbol');
     res.status(error.statusCode).json({ success: false, message: error.message });
     return;
   }

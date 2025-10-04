@@ -275,6 +275,7 @@ router.post('/', async (req: any, res) => {
   }
   const { 
     name, 
+    partNumber,
     unitPrice = 0, 
     quantity = 0, 
     description,
@@ -287,15 +288,29 @@ router.post('/', async (req: any, res) => {
     return;
   }
 
-  // Auto-generate part number
-  const partNumber = await generatePartNumber();
+  if (!partNumber) {
+    const error = new ValidationError('partNumber is required');
+    res.status(error.statusCode).json({ success: false, message: error.message });
+    return;
+  }
+
+  // Check if part number already exists
+  const existingPart = await prisma.sparePart.findUnique({
+    where: { partNumber: String(partNumber) },
+  });
+
+  if (existingPart) {
+    const error = new ValidationError('Part number already exists');
+    res.status(error.statusCode).json({ success: false, message: error.message });
+    return;
+  }
 
   const { presentPieces = 0 } = req.body;
 
   const sparePart = await prisma.sparePart.create({
     data: {
       name: String(name),
-      partNumber, // Auto-generated alphanumeric identifier
+      partNumber: String(partNumber), // Manual part number input
       presentPieces: Number(presentPieces) || 0, // Number of present pieces
       category: 'GENERAL', // Default category
       quantity: typeof quantity === 'number' ? quantity : 0,
@@ -309,14 +324,22 @@ router.post('/', async (req: any, res) => {
     },
   });
 
-  // Activity logging removed to prevent issues
-  // const userFullName = `${req.user!.firstName || 'Unknown'} ${req.user!.lastName || 'User'}`;
-  // await logSparePartHistory(...)
-
-  // Send notification to managers and supervisors
+  // Log the creation
   const firstName = req.user!.firstName || 'Unknown';
   const lastName = req.user!.lastName || 'User';
   const warehouseKeeperName = `${firstName} ${lastName}`;
+  
+  await logSparePartHistory(
+    sparePart.id,
+    req.user!.id,
+    'CREATED',
+    `${warehouseKeeperName} قام بإضافة قطعة غيار جديدة "${sparePart.name}" برقم ${sparePart.partNumber}`,
+    'partNumber',
+    undefined,
+    sparePart.partNumber
+  );
+
+  // Send notification to managers and supervisors
   await notificationService.createWarehouseNotification(
     'ADDED',
     sparePart.name,
@@ -431,6 +454,15 @@ router.put('/:id', async (req: any, res) => {
       fieldAr: 'الاسم',
       oldValue: existingPart.name,
       newValue: sparePart.name,
+    });
+  }
+  if (existingPart.partNumber !== sparePart.partNumber) {
+    changes.push('رقم القطعة');
+    detailedChanges.push({
+      field: 'partNumber',
+      fieldAr: 'رقم القطعة',
+      oldValue: existingPart.partNumber,
+      newValue: sparePart.partNumber,
     });
   }
   if (existingPart.presentPieces !== sparePart.presentPieces) {
