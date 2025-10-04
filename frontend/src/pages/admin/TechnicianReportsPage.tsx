@@ -30,9 +30,20 @@ const TechnicianReportsPage: React.FC = () => {
       console.log('🔍 Loading technicians...');
       const response = await usersAPI.getUsers({ role: 'TECHNICIAN' });
       console.log('📊 Technicians response:', response);
-      setTechnicians(response.data || []);
+      
+      // Handle different possible response structures
+      let techniciansData = [];
+      if (response && response.data) {
+        techniciansData = Array.isArray(response.data) ? response.data : [];
+      } else if (Array.isArray(response)) {
+        techniciansData = response;
+      }
+      
+      console.log('📊 Processed technicians data:', techniciansData);
+      setTechnicians(techniciansData);
     } catch (e: any) {
       console.error('❌ Failed to load technicians:', e);
+      setTechnicians([]); // Set empty array on error
     }
   }, []);
 
@@ -168,7 +179,7 @@ const TechnicianReportsPage: React.FC = () => {
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">All Technicians</option>
-              {technicians.map((tech) => (
+              {Array.isArray(technicians) && technicians.map((tech) => (
                 <option key={tech.id} value={tech.id}>
                   {tech.firstName} {tech.lastName}
                 </option>
@@ -240,7 +251,7 @@ const TechnicianReportsPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {reports.map((report) => (
+                {Array.isArray(reports) && reports.map((report) => (
                   <tr key={report.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">
