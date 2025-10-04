@@ -5,6 +5,7 @@ import { technicianReportsAPI, usersAPI } from '../../services/api';
 import { TechnicianReport, UserRole } from '../../types';
 
 const TechnicianReportsPage: React.FC = () => {
+  console.log('🚀 TechnicianReportsPage component rendering...');
   const { t } = useI18n();
   const { hasRole } = useAuth();
   const [loading, setLoading] = useState(false);
@@ -25,10 +26,12 @@ const TechnicianReportsPage: React.FC = () => {
 
   const loadTechnicians = useCallback(async () => {
     try {
+      console.log('🔍 Loading technicians...');
       const response = await usersAPI.getUsers({ role: 'TECHNICIAN' });
+      console.log('📊 Technicians response:', response);
       setTechnicians(response.data || []);
     } catch (e: any) {
-      console.error('Failed to load technicians:', e);
+      console.error('❌ Failed to load technicians:', e);
     }
   }, []);
 
@@ -49,9 +52,14 @@ const TechnicianReportsPage: React.FC = () => {
         status: undefined // Remove status as we're using isApproved
       };
       
+      console.log('🔍 Loading technician reports with filters:', apiFilters);
       const response = await technicianReportsAPI.getTechnicianReports(apiFilters);
+      console.log('📊 API Response:', response);
+      console.log('📊 Response data:', (response as any)?.data);
+      
       setReports((response as any)?.data || []);
     } catch (e: any) {
+      console.error('❌ Error loading technician reports:', e);
       setError(e.message || 'Failed to load technician reports');
     } finally {
       setLoading(false);
@@ -59,6 +67,7 @@ const TechnicianReportsPage: React.FC = () => {
   }, [filters]);
 
   useEffect(() => {
+    console.log('🔄 useEffect triggered - loading data...');
     loadTechnicians();
     loadReports();
   }, [loadTechnicians, loadReports]);
