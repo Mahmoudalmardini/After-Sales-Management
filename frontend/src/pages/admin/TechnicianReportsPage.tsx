@@ -13,7 +13,8 @@ const TechnicianReportsPage: React.FC = () => {
   const [filters, setFilters] = useState({
     page: 1,
     limit: 20,
-    status: 'all'
+    status: 'all',
+    requestId: undefined as number | undefined
   });
   const [selectedReport, setSelectedReport] = useState<TechnicianReport | null>(null);
   const [showApprovalModal, setShowApprovalModal] = useState(false);
@@ -25,7 +26,7 @@ const TechnicianReportsPage: React.FC = () => {
       setLoading(true);
       setError(null);
       const response = await technicianReportsAPI.getTechnicianReports(filters);
-      setReports(response.data?.reports || []);
+      setReports((response as any)?.data?.reports || []);
     } catch (e: any) {
       setError(e.message || 'Failed to load technician reports');
     } finally {
@@ -69,14 +70,14 @@ const TechnicianReportsPage: React.FC = () => {
     }
   };
 
-  const getStatusColor = (isApproved: boolean | null) => {
-    if (isApproved === null) return 'bg-yellow-100 text-yellow-800';
+  const getStatusColor = (isApproved: boolean | null | undefined) => {
+    if (isApproved === null || isApproved === undefined) return 'bg-yellow-100 text-yellow-800';
     if (isApproved === true) return 'bg-green-100 text-green-800';
     return 'bg-red-100 text-red-800';
   };
 
-  const getStatusText = (isApproved: boolean | null) => {
-    if (isApproved === null) return 'Pending';
+  const getStatusText = (isApproved: boolean | null | undefined) => {
+    if (isApproved === null || isApproved === undefined) return 'Pending';
     if (isApproved === true) return 'Approved';
     return 'Rejected';
   };
@@ -99,8 +100,8 @@ const TechnicianReportsPage: React.FC = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Technician Reports</h1>
-          <p className="mt-2 text-sm text-gray-700">View and manage reports from technicians</p>
+          <h1 className="text-2xl font-semibold text-gray-900">{t('technicianReports.title') || 'Technician Reports'}</h1>
+          <p className="mt-2 text-sm text-gray-700">{t('technicianReports.subtitle') || 'View and manage reports from technicians'}</p>
         </div>
       </div>
 
@@ -189,15 +190,15 @@ const TechnicianReportsPage: React.FC = () => {
                   <tr key={report.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">
-                        #{report.request.requestNumber}
+                        #{report.request?.requestNumber || 'N/A'}
                       </div>
                       <div className="text-sm text-gray-500">
-                        {report.request.customer?.name}
+                        {report.request?.customerName || 'N/A'}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">
-                        {report.technician.firstName} {report.technician.lastName}
+                        {report.technician?.firstName} {report.technician?.lastName}
                       </div>
                     </td>
                     <td className="px-6 py-4">
@@ -261,7 +262,7 @@ const TechnicianReportsPage: React.FC = () => {
           <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
             <h3 className="text-lg font-medium text-gray-900 mb-4">Approve Technician Report</h3>
             <p className="text-sm text-gray-600 mb-4">
-              Are you sure you want to approve the report from {selectedReport.technician.firstName} {selectedReport.technician.lastName}?
+              Are you sure you want to approve the report from {selectedReport.technician?.firstName} {selectedReport.technician?.lastName}?
             </p>
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-1">Approval Comment (Optional)</label>
@@ -301,7 +302,7 @@ const TechnicianReportsPage: React.FC = () => {
           <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
             <h3 className="text-lg font-medium text-gray-900 mb-4">Reject Technician Report</h3>
             <p className="text-sm text-gray-600 mb-4">
-              Please provide a reason for rejecting the report from {selectedReport.technician.firstName} {selectedReport.technician.lastName}.
+              Please provide a reason for rejecting the report from {selectedReport.technician?.firstName} {selectedReport.technician?.lastName}.
             </p>
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-1">Rejection Reason *</label>
