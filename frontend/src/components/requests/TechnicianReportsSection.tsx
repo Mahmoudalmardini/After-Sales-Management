@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useI18n } from '../../contexts/I18nContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { TechnicianReport, UserRole } from '../../types';
 import { technicianReportsAPI } from '../../services/api';
@@ -15,18 +14,17 @@ const TechnicianReportsSection: React.FC<TechnicianReportsSectionProps> = ({
   requestId,
   onReportsUpdated,
 }) => {
-  const { t } = useI18n();
   const { hasRole } = useAuth();
   const [loading, setLoading] = useState<number | null>(null);
 
-  const getStatusColor = (isApproved: boolean | null) => {
-    if (isApproved === null) return 'bg-yellow-100 text-yellow-800';
+  const getStatusColor = (isApproved: boolean | null | undefined) => {
+    if (isApproved === null || isApproved === undefined) return 'bg-yellow-100 text-yellow-800';
     if (isApproved) return 'bg-green-100 text-green-800';
     return 'bg-red-100 text-red-800';
   };
 
-  const getStatusText = (isApproved: boolean | null) => {
-    if (isApproved === null) return 'Pending';
+  const getStatusText = (isApproved: boolean | null | undefined) => {
+    if (isApproved === null || isApproved === undefined) return 'Pending';
     if (isApproved) return 'Approved';
     return 'Rejected';
   };
@@ -34,7 +32,7 @@ const TechnicianReportsSection: React.FC<TechnicianReportsSectionProps> = ({
   const handleApprove = async (reportId: number) => {
     try {
       setLoading(reportId);
-      await technicianReportsAPI.approveTechnicianReport(reportId, { approved: true });
+      await technicianReportsAPI.approveTechnicianReport(reportId);
       onReportsUpdated();
     } catch (error) {
       console.error('Error approving report:', error);
@@ -49,7 +47,7 @@ const TechnicianReportsSection: React.FC<TechnicianReportsSectionProps> = ({
 
     try {
       setLoading(reportId);
-      await technicianReportsAPI.approveTechnicianReport(reportId, { approved: false, comment });
+      await technicianReportsAPI.rejectTechnicianReport(reportId, comment);
       onReportsUpdated();
     } catch (error) {
       console.error('Error rejecting report:', error);
@@ -128,7 +126,7 @@ const TechnicianReportsSection: React.FC<TechnicianReportsSectionProps> = ({
               </div>
 
               {/* Approval Actions for Managers/Supervisors */}
-              {canManage && report.isApproved === null && (
+              {canManage && (report.isApproved === null || report.isApproved === undefined) && (
                 <div className="flex gap-2 pt-3 border-t border-purple-200">
                   <button
                     onClick={() => handleApprove(report.id)}
