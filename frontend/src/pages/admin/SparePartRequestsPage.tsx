@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useI18n } from '../../contexts/I18nContext';
+// import { useI18n } from '../../contexts/I18nContext'; // Will be used for future translations
 import { useAuth } from '../../contexts/AuthContext';
 import { sparePartRequestsAPI } from '../../services/api';
 import { SparePartRequest, SparePartRequestFilters, SPARE_PART_REQUEST_STATUS_LABELS, SPARE_PART_REQUEST_URGENCY_LABELS, UserRole } from '../../types';
 
 const SparePartRequestsPage: React.FC = () => {
-  const { t } = useI18n();
+  // const { t } = useI18n(); // Will be used for future translations
   const { hasRole } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

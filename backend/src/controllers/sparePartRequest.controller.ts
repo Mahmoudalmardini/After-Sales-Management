@@ -96,7 +96,7 @@ export const createSparePartRequest = async (req: AuthenticatedRequest, res: Res
         userId: admin.id,
         type: NotificationType.SPARE_PART_REQUEST,
         title: 'New Spare Part Request',
-        message: `${req.user.firstName} ${req.user.lastName} requested spare part: ${partName} for request #${request.requestNumber}`,
+        message: `${req.user.firstName} ${req.user.lastName} requested spare part: ${partName} for request #${request.requestNumber}\n\nDescription: ${description}`,
         requestId: Number(requestId)
       });
     }

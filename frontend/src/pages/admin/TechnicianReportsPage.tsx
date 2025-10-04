@@ -6,7 +6,7 @@ import { TechnicianReport, UserRole } from '../../types';
 
 const TechnicianReportsPage: React.FC = () => {
   const { t } = useI18n();
-  const { user, hasRole } = useAuth();
+  const { hasRole } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [reports, setReports] = useState<TechnicianReport[]>([]);
