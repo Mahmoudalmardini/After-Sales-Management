@@ -28,6 +28,7 @@ import NotificationsPage from './pages/NotificationsPage';
 import StoragePage from './pages/storage/StoragePage';
 import StatusManagementPage from './pages/StatusManagementPage';
 import SparePartRequestsPage from './pages/admin/SparePartRequestsPage';
+import TechnicianReportsPage from './pages/admin/TechnicianReportsPage';
 
 // Clear Storage Page component
 const ClearStoragePage: React.FC = () => {
@@ -351,6 +352,17 @@ function App() {
             <ProtectedRoute>
               <DashboardLayout>
                 <SparePartRequestsPage />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/technician-reports"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <TechnicianReportsPage />
               </DashboardLayout>
             </ProtectedRoute>
           }

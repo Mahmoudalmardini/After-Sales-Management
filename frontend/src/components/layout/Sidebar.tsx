@@ -83,6 +83,12 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen }) => {
       icon: ArchiveBoxIcon,
       roles: [UserRole.COMPANY_MANAGER, UserRole.DEPUTY_MANAGER, UserRole.DEPARTMENT_MANAGER, UserRole.SECTION_SUPERVISOR],
     },
+    {
+      name: 'Technician Reports',
+      href: '/technician-reports',
+      icon: ClipboardDocumentListIcon,
+      roles: [UserRole.COMPANY_MANAGER, UserRole.DEPUTY_MANAGER, UserRole.DEPARTMENT_MANAGER, UserRole.SECTION_SUPERVISOR],
+    },
   ];
 
   const filteredNavigation = navigation.filter(item => 

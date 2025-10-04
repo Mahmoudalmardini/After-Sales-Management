@@ -64,7 +64,10 @@ export enum NotificationType {
   COST_ADDED = 'COST_ADDED',
   SPARE_PART_REQUEST = 'SPARE_PART_REQUEST',
   SPARE_PART_APPROVED = 'SPARE_PART_APPROVED',
-  SPARE_PART_REJECTED = 'SPARE_PART_REJECTED'
+  SPARE_PART_REJECTED = 'SPARE_PART_REJECTED',
+  TECHNICIAN_REPORT = 'TECHNICIAN_REPORT',
+  REPORT_APPROVED = 'REPORT_APPROVED',
+  REPORT_REJECTED = 'REPORT_REJECTED'
 }
 
 export enum SparePartRequestStatus {
@@ -78,6 +81,58 @@ export enum SparePartRequestUrgency {
   LOW = 'LOW',
   NORMAL = 'NORMAL',
   URGENT = 'URGENT'
+}
+
+// Technician Report types
+export interface CreateTechnicianReportForm {
+  requestId: number;
+  reportContent: string;
+  currentStatus?: string;
+  partsUsed?: string;
+  sendToSupervisor?: boolean;
+  sendToAdmin?: boolean;
+}
+
+export interface TechnicianReportFilters {
+  status?: string;
+  technicianId?: number;
+  requestId?: number;
+  isApproved?: boolean;
+  limit?: number;
+  offset?: number;
+}
+
+export interface TechnicianReport {
+  id: number;
+  requestId: number;
+  technicianId: number;
+  reportContent: string;
+  currentStatus?: string;
+  partsUsed?: string;
+  sendToSupervisor: boolean;
+  sendToAdmin: boolean;
+  isApproved?: boolean;
+  approvedById?: number;
+  approvalComment?: string;
+  createdAt: Date;
+  updatedAt: Date;
+  request?: {
+    id: number;
+    requestNumber: string;
+    customerName: string;
+  };
+  technician?: {
+    id: number;
+    firstName: string;
+    lastName: string;
+    username: string;
+  };
+  approvedBy?: {
+    id: number;
+    firstName: string;
+    lastName: string;
+    username: string;
+  };
 }
 
 // Extend Express Request type to include user

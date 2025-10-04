@@ -1,93 +1,87 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useI18n } from '../../contexts/I18nContext';
 import { useAuth } from '../../contexts/AuthContext';
-import { sparePartRequestsAPI } from '../../services/api';
-import { SparePartRequest, SparePartRequestFilters, SPARE_PART_REQUEST_STATUS_LABELS, SPARE_PART_REQUEST_URGENCY_LABELS, UserRole } from '../../types';
+import { technicianReportsAPI } from '../../services/api';
+import { TechnicianReport, UserRole } from '../../types';
 
-const SparePartRequestsPage: React.FC = () => {
+const TechnicianReportsPage: React.FC = () => {
   const { t } = useI18n();
-  const { hasRole } = useAuth();
+  const { user, hasRole } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [sparePartRequests, setSparePartRequests] = useState<SparePartRequest[]>([]);
-  const [filters, setFilters] = useState<SparePartRequestFilters>({
+  const [reports, setReports] = useState<TechnicianReport[]>([]);
+  const [filters, setFilters] = useState({
     page: 1,
     limit: 20,
-    status: 'PENDING'
+    status: 'all'
   });
-  const [selectedRequest, setSelectedRequest] = useState<SparePartRequest | null>(null);
+  const [selectedReport, setSelectedReport] = useState<TechnicianReport | null>(null);
   const [showApprovalModal, setShowApprovalModal] = useState(false);
   const [showRejectionModal, setShowRejectionModal] = useState(false);
-  const [rejectionReason, setRejectionReason] = useState('');
+  const [approvalComment, setApprovalComment] = useState('');
 
-  const loadSparePartRequests = useCallback(async () => {
+  const loadReports = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await sparePartRequestsAPI.getSparePartRequests(filters);
-      setSparePartRequests(response.data?.sparePartRequests || []);
+      const response = await technicianReportsAPI.getTechnicianReports(filters);
+      setReports(response.data?.reports || []);
     } catch (e: any) {
-      setError(e.message || 'Failed to load spare part requests');
+      setError(e.message || 'Failed to load technician reports');
     } finally {
       setLoading(false);
     }
   }, [filters]);
 
   useEffect(() => {
-    loadSparePartRequests();
-  }, [loadSparePartRequests]);
+    loadReports();
+  }, [loadReports]);
 
-  const handleApprove = async (request: SparePartRequest) => {
+  const handleApprove = async (report: TechnicianReport) => {
     try {
       setLoading(true);
-      await sparePartRequestsAPI.approveSparePartRequest(request.id);
-      await loadSparePartRequests();
+      await technicianReportsAPI.approveTechnicianReport(report.id, approvalComment);
+      await loadReports();
       setShowApprovalModal(false);
-      setSelectedRequest(null);
+      setSelectedReport(null);
+      setApprovalComment('');
     } catch (e: any) {
-      setError(e.message || 'Failed to approve request');
+      setError(e.message || 'Failed to approve report');
     } finally {
       setLoading(false);
     }
   };
 
   const handleReject = async () => {
-    if (!selectedRequest || !rejectionReason.trim()) return;
+    if (!selectedReport || !approvalComment.trim()) return;
 
     try {
       setLoading(true);
-      await sparePartRequestsAPI.rejectSparePartRequest(selectedRequest.id, rejectionReason);
-      await loadSparePartRequests();
+      await technicianReportsAPI.rejectTechnicianReport(selectedReport.id, approvalComment);
+      await loadReports();
       setShowRejectionModal(false);
-      setSelectedRequest(null);
-      setRejectionReason('');
+      setSelectedReport(null);
+      setApprovalComment('');
     } catch (e: any) {
-      setError(e.message || 'Failed to reject request');
+      setError(e.message || 'Failed to reject report');
     } finally {
       setLoading(false);
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'PENDING': return 'bg-yellow-100 text-yellow-800';
-      case 'APPROVED': return 'bg-green-100 text-green-800';
-      case 'REJECTED': return 'bg-red-100 text-red-800';
-      case 'FULFILLED': return 'bg-blue-100 text-blue-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
+  const getStatusColor = (isApproved: boolean | null) => {
+    if (isApproved === null) return 'bg-yellow-100 text-yellow-800';
+    if (isApproved === true) return 'bg-green-100 text-green-800';
+    return 'bg-red-100 text-red-800';
   };
 
-  const getUrgencyColor = (urgency: string) => {
-    switch (urgency) {
-      case 'LOW': return 'bg-gray-100 text-gray-800';
-      case 'NORMAL': return 'bg-blue-100 text-blue-800';
-      case 'URGENT': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
+  const getStatusText = (isApproved: boolean | null) => {
+    if (isApproved === null) return 'Pending';
+    if (isApproved === true) return 'Approved';
+    return 'Rejected';
   };
 
-  // Check if user can manage spare part requests
+  // Check if user can manage technician reports
   const canManage = hasRole([UserRole.COMPANY_MANAGER, UserRole.DEPUTY_MANAGER, UserRole.DEPARTMENT_MANAGER, UserRole.SECTION_SUPERVISOR]);
 
   if (!canManage) {
@@ -105,8 +99,8 @@ const SparePartRequestsPage: React.FC = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Spare Part Requests</h1>
-          <p className="mt-2 text-sm text-gray-700">Manage spare part requests from technicians</p>
+          <h1 className="text-2xl font-semibold text-gray-900">Technician Reports</h1>
+          <p className="mt-2 text-sm text-gray-700">View and manage reports from technicians</p>
         </div>
       </div>
 
@@ -116,15 +110,14 @@ const SparePartRequestsPage: React.FC = () => {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
             <select
-              value={filters.status || ''}
-              onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value || undefined }))}
+              value={filters.status}
+              onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="">All Statuses</option>
-              <option value="PENDING">Pending</option>
-              <option value="APPROVED">Approved</option>
-              <option value="REJECTED">Rejected</option>
-              <option value="FULFILLED">Fulfilled</option>
+              <option value="all">All Reports</option>
+              <option value="pending">Pending</option>
+              <option value="approved">Approved</option>
+              <option value="rejected">Rejected</option>
             </select>
           </div>
           <div>
@@ -139,7 +132,7 @@ const SparePartRequestsPage: React.FC = () => {
           </div>
           <div className="flex items-end">
             <button
-              onClick={loadSparePartRequests}
+              onClick={loadReports}
               className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               Filter
@@ -155,16 +148,16 @@ const SparePartRequestsPage: React.FC = () => {
         </div>
       )}
 
-      {/* Requests List */}
+      {/* Reports List */}
       <div className="bg-white shadow rounded-lg">
         {loading ? (
           <div className="p-8 text-center">
             <div className="loading-spinner mx-auto"></div>
-            <p className="mt-2 text-gray-600">Loading spare part requests...</p>
+            <p className="mt-2 text-gray-600">Loading technician reports...</p>
           </div>
-        ) : sparePartRequests.length === 0 ? (
+        ) : reports.length === 0 ? (
           <div className="p-8 text-center text-gray-500">
-            No spare part requests found
+            No technician reports found
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -175,16 +168,13 @@ const SparePartRequestsPage: React.FC = () => {
                     Request
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Part Details
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Technician
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
+                    Report Content
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Urgency
+                    Status
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Date
@@ -195,53 +185,45 @@ const SparePartRequestsPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {sparePartRequests.map((request) => (
-                  <tr key={request.id} className="hover:bg-gray-50">
+                {reports.map((report) => (
+                  <tr key={report.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">
-                        #{request.request.requestNumber}
+                        #{report.request.requestNumber}
                       </div>
                       <div className="text-sm text-gray-500">
-                        {request.request.customer?.name}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm font-medium text-gray-900">
-                        {request.partName}
-                      </div>
-                      {request.partNumber && (
-                        <div className="text-sm text-gray-500">
-                          Part #: {request.partNumber}
-                        </div>
-                      )}
-                      <div className="text-sm text-gray-500">
-                        Qty: {request.quantity}
+                        {report.request.customer?.name}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">
-                        {request.technician.firstName} {request.technician.lastName}
+                        {report.technician.firstName} {report.technician.lastName}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(request.status)}`}>
-                        {SPARE_PART_REQUEST_STATUS_LABELS[request.status]}
-                      </span>
+                    <td className="px-6 py-4">
+                      <div className="text-sm text-gray-900 max-w-xs truncate">
+                        {report.reportContent}
+                      </div>
+                      {report.currentStatus && (
+                        <div className="text-sm text-gray-500">
+                          Status: {report.currentStatus}
+                        </div>
+                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getUrgencyColor(request.urgency)}`}>
-                        {SPARE_PART_REQUEST_URGENCY_LABELS[request.urgency]}
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(report.isApproved)}`}>
+                        {getStatusText(report.isApproved)}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(request.createdAt).toLocaleDateString()}
+                      {new Date(report.createdAt).toLocaleDateString()}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      {request.status === 'PENDING' && (
+                      {report.isApproved === null && (
                         <div className="flex space-x-2">
                           <button
                             onClick={() => {
-                              setSelectedRequest(request);
+                              setSelectedReport(report);
                               setShowApprovalModal(true);
                             }}
                             className="text-green-600 hover:text-green-900"
@@ -250,7 +232,7 @@ const SparePartRequestsPage: React.FC = () => {
                           </button>
                           <button
                             onClick={() => {
-                              setSelectedRequest(request);
+                              setSelectedReport(report);
                               setShowRejectionModal(true);
                             }}
                             className="text-red-600 hover:text-red-900"
@@ -259,9 +241,9 @@ const SparePartRequestsPage: React.FC = () => {
                           </button>
                         </div>
                       )}
-                      {request.status === 'REJECTED' && request.rejectionReason && (
+                      {report.isApproved === false && report.approvalComment && (
                         <div className="text-xs text-red-600">
-                          Reason: {request.rejectionReason}
+                          Reason: {report.approvalComment}
                         </div>
                       )}
                     </td>
@@ -274,23 +256,35 @@ const SparePartRequestsPage: React.FC = () => {
       </div>
 
       {/* Approval Modal */}
-      {showApprovalModal && selectedRequest && (
+      {showApprovalModal && selectedReport && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Approve Spare Part Request</h3>
-            <p className="text-sm text-gray-600 mb-6">
-              Are you sure you want to approve the request for <strong>{selectedRequest.partName}</strong> 
-              (Qty: {selectedRequest.quantity}) by {selectedRequest.technician.firstName} {selectedRequest.technician.lastName}?
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Approve Technician Report</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Are you sure you want to approve the report from {selectedReport.technician.firstName} {selectedReport.technician.lastName}?
             </p>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Approval Comment (Optional)</label>
+              <textarea
+                value={approvalComment}
+                onChange={(e) => setApprovalComment(e.target.value)}
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Add a comment about the approval..."
+              />
+            </div>
             <div className="flex justify-end space-x-3">
               <button
-                onClick={() => setShowApprovalModal(false)}
+                onClick={() => {
+                  setShowApprovalModal(false);
+                  setApprovalComment('');
+                }}
                 className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
               >
                 Cancel
               </button>
               <button
-                onClick={() => handleApprove(selectedRequest)}
+                onClick={() => handleApprove(selectedReport)}
                 disabled={loading}
                 className="px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-md hover:bg-green-700 disabled:opacity-50"
               >
@@ -302,25 +296,29 @@ const SparePartRequestsPage: React.FC = () => {
       )}
 
       {/* Rejection Modal */}
-      {showRejectionModal && selectedRequest && (
+      {showRejectionModal && selectedReport && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Reject Spare Part Request</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Reject Technician Report</h3>
             <p className="text-sm text-gray-600 mb-4">
-              Please provide a reason for rejecting the request for <strong>{selectedRequest.partName}</strong>.
+              Please provide a reason for rejecting the report from {selectedReport.technician.firstName} {selectedReport.technician.lastName}.
             </p>
-            <textarea
-              value={rejectionReason}
-              onChange={(e) => setRejectionReason(e.target.value)}
-              rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Enter rejection reason..."
-            />
-            <div className="flex justify-end space-x-3 mt-6">
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Rejection Reason *</label>
+              <textarea
+                value={approvalComment}
+                onChange={(e) => setApprovalComment(e.target.value)}
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Enter rejection reason..."
+                required
+              />
+            </div>
+            <div className="flex justify-end space-x-3">
               <button
                 onClick={() => {
                   setShowRejectionModal(false);
-                  setRejectionReason('');
+                  setApprovalComment('');
                 }}
                 className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
               >
@@ -328,7 +326,7 @@ const SparePartRequestsPage: React.FC = () => {
               </button>
               <button
                 onClick={handleReject}
-                disabled={loading || !rejectionReason.trim()}
+                disabled={loading || !approvalComment.trim()}
                 className="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700 disabled:opacity-50"
               >
                 {loading ? 'Rejecting...' : 'Reject'}
@@ -341,4 +339,4 @@ const SparePartRequestsPage: React.FC = () => {
   );
 };
 
-export default SparePartRequestsPage;
+export default TechnicianReportsPage;

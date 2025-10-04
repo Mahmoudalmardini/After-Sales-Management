@@ -8,6 +8,7 @@ import { formatCurrency, getCurrentCurrency } from '../../utils/currency';
 import { useCurrency } from '../../hooks/useCurrency';
 import AddPartToRequestModal from '../../components/storage/AddPartToRequestModal';
 import RequestSparePartModal from '../../components/requests/RequestSparePartModal';
+import AddReportModal from '../../components/requests/AddReportModal';
 
 interface CostFormState extends AddCostForm {
   sparePartId?: string;
@@ -35,6 +36,7 @@ const RequestDetailsPage: React.FC = () => {
   const [loadingSpareParts, setLoadingSpareParts] = useState(false);
   const [showSparePartsModal, setShowSparePartsModal] = useState(false);
   const [showRequestSparePartModal, setShowRequestSparePartModal] = useState(false);
+  const [showAddReportModal, setShowAddReportModal] = useState(false);
   useEffect(() => {
     const loadSpareParts = async () => {
       try {
@@ -467,16 +469,28 @@ const RequestDetailsPage: React.FC = () => {
                       إضافة قطع غيار
                     </button>
                     {user?.role === UserRole.TECHNICIAN && (
-                      <button 
-                        type="button"
-                        className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors flex items-center justify-center"
-                        onClick={() => setShowRequestSparePartModal(true)}
-                      >
-                        <svg className="w-4 h-4 ml-1" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd"/>
-                        </svg>
-                        طلب قطع غيار جديدة
-                      </button>
+                      <>
+                        <button 
+                          type="button"
+                          className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors flex items-center justify-center"
+                          onClick={() => setShowRequestSparePartModal(true)}
+                        >
+                          <svg className="w-4 h-4 ml-1" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd"/>
+                          </svg>
+                          طلب قطع غيار جديدة
+                        </button>
+                        <button 
+                          type="button"
+                          className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors flex items-center justify-center"
+                          onClick={() => setShowAddReportModal(true)}
+                        >
+                          <svg className="w-4 h-4 ml-1" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd"/>
+                          </svg>
+                          إضافة تقرير
+                        </button>
+                      </>
                     )}
                   </div>
                 </form>
@@ -826,6 +840,17 @@ const RequestDetailsPage: React.FC = () => {
         onRequestCreated={() => {
           setShowRequestSparePartModal(false);
           reload(); // Refresh the request to show new parts
+        }}
+      />
+
+      {/* Add Report Modal */}
+      <AddReportModal
+        isOpen={showAddReportModal}
+        onClose={() => setShowAddReportModal(false)}
+        requestId={requestId}
+        onReportCreated={() => {
+          setShowAddReportModal(false);
+          reload(); // Refresh the request to show new reports
         }}
       />
     </div>

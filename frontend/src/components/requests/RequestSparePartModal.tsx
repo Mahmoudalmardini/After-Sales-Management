@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Dialog } from '@headlessui/react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
-// import { useI18n } from '../../contexts/I18nContext'; // Will be used for future translations
+import { useI18n } from '../../contexts/I18nContext';
 import { CreateSparePartRequestForm } from '../../types';
 
 interface RequestSparePartModalProps {
@@ -17,7 +17,7 @@ const RequestSparePartModal: React.FC<RequestSparePartModalProps> = ({
   requestId,
   onRequestCreated,
 }) => {
-  // const { t } = useI18n(); // Will be used for future translations
+  const { t } = useI18n();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState<CreateSparePartRequestForm>({
@@ -34,12 +34,12 @@ const RequestSparePartModal: React.FC<RequestSparePartModalProps> = ({
     setError(null);
 
     if (!form.partName.trim() || !form.description.trim()) {
-      setError('Part name and description are required');
+      setError(t('sparePartRequests.partName') + ' and ' + t('sparePartRequests.description') + ' are required');
       return;
     }
 
     if (form.quantity < 1) {
-      setError('Quantity must be at least 1');
+      setError(t('sparePartRequests.quantity') + ' must be at least 1');
       return;
     }
 
@@ -58,7 +58,7 @@ const RequestSparePartModal: React.FC<RequestSparePartModalProps> = ({
         urgency: 'NORMAL',
       });
     } catch (e: any) {
-      setError(e.message || 'Failed to create spare part request');
+      setError(e.message || t('sparePartRequests.error'));
     } finally {
       setLoading(false);
     }
@@ -80,9 +80,9 @@ const RequestSparePartModal: React.FC<RequestSparePartModalProps> = ({
         <div className="flex min-h-full items-center justify-center p-4 text-center">
           <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
             <div className="flex items-center justify-between mb-4">
-              <Dialog.Title as="h3" className="text-lg font-medium leading-6 text-gray-900">
-                Request New Spare Part
-              </Dialog.Title>
+             <Dialog.Title as="h3" className="text-lg font-medium leading-6 text-gray-900">
+               {t('sparePartRequests.requestNew')}
+             </Dialog.Title>
               <button
                 type="button"
                 className="text-gray-400 hover:text-gray-600"
@@ -99,99 +99,99 @@ const RequestSparePartModal: React.FC<RequestSparePartModalProps> = ({
             )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Part Name *
-                </label>
-                <input
-                  type="text"
-                  name="partName"
-                  value={form.partName}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Enter part name"
-                  required
-                />
-              </div>
+               <div>
+                 <label className="block text-sm font-medium text-gray-700 mb-1">
+                   {t('sparePartRequests.partName')} *
+                 </label>
+                 <input
+                   type="text"
+                   name="partName"
+                   value={form.partName}
+                   onChange={handleChange}
+                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                   placeholder={t('sparePartRequests.enterPartName')}
+                   required
+                 />
+               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Part Number (Optional)
-                </label>
-                <input
-                  type="text"
-                  name="partNumber"
-                  value={form.partNumber}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Enter part number if known"
-                />
-              </div>
+               <div>
+                 <label className="block text-sm font-medium text-gray-700 mb-1">
+                   {t('sparePartRequests.partNumber')} ({t('common.optional')})
+                 </label>
+                 <input
+                   type="text"
+                   name="partNumber"
+                   value={form.partNumber}
+                   onChange={handleChange}
+                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                   placeholder={t('sparePartRequests.enterPartNumber')}
+                 />
+               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Description *
-                </label>
-                <textarea
-                  name="description"
-                  value={form.description}
-                  onChange={handleChange}
-                  rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Describe why you need this spare part and what you did"
-                  required
-                />
-              </div>
+               <div>
+                 <label className="block text-sm font-medium text-gray-700 mb-1">
+                   {t('sparePartRequests.description')} *
+                 </label>
+                 <textarea
+                   name="description"
+                   value={form.description}
+                   onChange={handleChange}
+                   rows={3}
+                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                   placeholder={t('sparePartRequests.describeWhy')}
+                   required
+                 />
+               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Quantity *
-                  </label>
-                  <input
-                    type="number"
-                    name="quantity"
-                    value={form.quantity}
-                    onChange={handleChange}
-                    min="1"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
-                </div>
+                 <div>
+                   <label className="block text-sm font-medium text-gray-700 mb-1">
+                     {t('sparePartRequests.quantity')} *
+                   </label>
+                   <input
+                     type="number"
+                     name="quantity"
+                     value={form.quantity}
+                     onChange={handleChange}
+                     min="1"
+                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                     required
+                   />
+                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Urgency
-                  </label>
-                  <select
-                    name="urgency"
-                    value={form.urgency}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="LOW">Low</option>
-                    <option value="NORMAL">Normal</option>
-                    <option value="URGENT">Urgent</option>
-                  </select>
-                </div>
+                 <div>
+                   <label className="block text-sm font-medium text-gray-700 mb-1">
+                     {t('sparePartRequests.urgency')}
+                   </label>
+                   <select
+                     name="urgency"
+                     value={form.urgency}
+                     onChange={handleChange}
+                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                   >
+                     <option value="LOW">{t('sparePartRequests.urgency.low')}</option>
+                     <option value="NORMAL">{t('sparePartRequests.urgency.normal')}</option>
+                     <option value="URGENT">{t('sparePartRequests.urgency.urgent')}</option>
+                   </select>
+                 </div>
               </div>
 
-              <div className="flex justify-end space-x-3 pt-4">
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
-                >
-                  {loading ? 'Creating...' : 'Create Request'}
-                </button>
-              </div>
+               <div className="flex justify-end space-x-3 pt-4">
+                 <button
+                   type="button"
+                   onClick={onClose}
+                   className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                 >
+                   {t('common.cancel')}
+                 </button>
+                 <button
+                   type="submit"
+                   disabled={loading}
+                   className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                 >
+                   {loading ? t('common.creating') : t('sparePartRequests.requestNew')}
+                 </button>
+               </div>
             </form>
           </Dialog.Panel>
         </div>

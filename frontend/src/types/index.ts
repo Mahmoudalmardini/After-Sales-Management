@@ -516,3 +516,55 @@ export const SPARE_PART_REQUEST_URGENCY_LABELS: Record<string, string> = {
   'NORMAL': 'Normal',
   'URGENT': 'Urgent',
 };
+
+// Technician Report types
+export interface CreateTechnicianReportForm {
+  requestId: number;
+  reportContent: string;
+  currentStatus?: string;
+  partsUsed?: string;
+  sendToSupervisor?: boolean;
+  sendToAdmin?: boolean;
+}
+
+export interface TechnicianReportFilters {
+  status?: string;
+  technicianId?: number;
+  requestId?: number;
+  isApproved?: boolean;
+  limit?: number;
+  offset?: number;
+}
+
+export interface TechnicianReport {
+  id: number;
+  requestId: number;
+  technicianId: number;
+  reportContent: string;
+  currentStatus?: string;
+  partsUsed?: string;
+  sendToSupervisor: boolean;
+  sendToAdmin: boolean;
+  isApproved?: boolean;
+  approvedById?: number;
+  approvalComment?: string;
+  createdAt: string;
+  updatedAt: string;
+  request?: {
+    id: number;
+    requestNumber: string;
+    customerName: string;
+  };
+  technician?: {
+    id: number;
+    firstName: string;
+    lastName: string;
+    username: string;
+  };
+  approvedBy?: {
+    id: number;
+    firstName: string;
+    lastName: string;
+    username: string;
+  };
+}

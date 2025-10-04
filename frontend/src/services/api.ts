@@ -674,4 +674,43 @@ export const sparePartRequestsAPI = {
   },
 };
 
+// Technician Reports API
+export const technicianReportsAPI = {
+  getTechnicianReports: async (filters?: any) => {
+    try {
+      const response = await api.get('/technician-reports', { params: filters });
+      return handleResponse(response);
+    } catch (error) {
+      throw handleError(error);
+    }
+  },
+
+  createTechnicianReport: async (data: any) => {
+    try {
+      const response = await api.post('/technician-reports', data);
+      return handleResponse(response);
+    } catch (error) {
+      throw handleError(error);
+    }
+  },
+
+  approveTechnicianReport: async (id: number, approvalComment?: string) => {
+    try {
+      const response = await api.put(`/technician-reports/${id}/approve`, { approvalComment });
+      return handleResponse(response);
+    } catch (error) {
+      throw handleError(error);
+    }
+  },
+
+  rejectTechnicianReport: async (id: number, approvalComment: string) => {
+    try {
+      const response = await api.put(`/technician-reports/${id}/reject`, { approvalComment });
+      return handleResponse(response);
+    } catch (error) {
+      throw handleError(error);
+    }
+  },
+};
+
 export default api;
