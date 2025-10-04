@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Dialog } from '@headlessui/react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
-import { useI18n } from '../../contexts/I18nContext';
+// import { useI18n } from '../../contexts/I18nContext'; // Will be used for future translations
 import { CreateSparePartRequestForm } from '../../types';
 
 interface RequestSparePartModalProps {
@@ -17,7 +17,7 @@ const RequestSparePartModal: React.FC<RequestSparePartModalProps> = ({
   requestId,
   onRequestCreated,
 }) => {
-  const { t } = useI18n();
+  // const { t } = useI18n(); // Will be used for future translations
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState<CreateSparePartRequestForm>({
