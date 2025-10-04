@@ -330,8 +330,8 @@ const RequestDetailsPage: React.FC = () => {
                 <p>إضافة وإدارة تكاليف الطلب</p>
               </div>
               <div className="card-content space-y-6">
-                {/* Only show cost form if request is not completed or if user is manager */}
-                {(!['COMPLETED', 'CLOSED'].includes(request?.status || '') || hasRole([UserRole.COMPANY_MANAGER, UserRole.DEPUTY_MANAGER, UserRole.DEPARTMENT_MANAGER])) && (
+                {/* Only show cost form if request is not completed or if user is manager or technician */}
+                {(!['COMPLETED', 'CLOSED'].includes(request?.status || '') || hasRole([UserRole.COMPANY_MANAGER, UserRole.DEPUTY_MANAGER, UserRole.DEPARTMENT_MANAGER, UserRole.TECHNICIAN])) && (
                   <form className="space-y-4" onSubmit={handleAddCost}>
                   <div className="form-group">
                     <label className="form-label required" htmlFor="costDescription">وصف التكلفة</label>

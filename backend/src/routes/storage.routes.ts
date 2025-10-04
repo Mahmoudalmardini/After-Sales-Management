@@ -67,21 +67,22 @@ const logSparePartHistory = async (
   }
 };
 
-// Apply authentication and manager-only access to all storage routes
+// Apply authentication and role-based access to all storage routes
 router.use(authenticateToken);
-// Allow managers and warehouse keepers; managers view-only enforced per route
+// Allow managers, warehouse keepers, and technicians; managers view-only enforced per route
 router.use(requireRoles([
   UserRole.COMPANY_MANAGER,
   UserRole.DEPUTY_MANAGER,
   UserRole.DEPARTMENT_MANAGER,
   UserRole.SECTION_SUPERVISOR,
   UserRole.WAREHOUSE_KEEPER,
+  UserRole.TECHNICIAN,
 ]));
 
 /**
  * @route   GET /api/storage
  * @desc    Get all spare parts with optional search and pagination
- * @access  Private (Manager only)
+ * @access  Private (Manager, Warehouse Keeper, Technician)
  */
 router.get('/', async (req, res) => {
   const { page = 1, limit = 20, search, category, lowStock } = req.query as any;
