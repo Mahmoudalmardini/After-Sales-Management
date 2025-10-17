@@ -287,6 +287,15 @@ export interface CreateProductForm {
   warrantyMonths: number;
 }
 
+export interface CreateDepartmentForm {
+  name: string;
+  description?: string;
+}
+
+export interface UpdateDepartmentForm extends CreateDepartmentForm {
+  id: number;
+}
+
 export interface UpdateProfileForm {
   firstName: string;
   lastName: string;

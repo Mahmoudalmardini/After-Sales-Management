@@ -14,6 +14,7 @@ import {
   ChartBarIcon,
   ArchiveBoxIcon,
   CogIcon,
+  BuildingOfficeIcon,
 } from '@heroicons/react/24/outline';
 import { clsx } from 'clsx';
 
@@ -58,6 +59,12 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen }) => {
       href: '/products',
       icon: CubeIcon,
       roles: [UserRole.COMPANY_MANAGER, UserRole.DEPUTY_MANAGER, UserRole.DEPARTMENT_MANAGER, UserRole.SECTION_SUPERVISOR, UserRole.TECHNICIAN],
+    },
+    {
+      name: t('nav.departments') || 'Departments',
+      href: '/departments',
+      icon: BuildingOfficeIcon,
+      roles: [UserRole.COMPANY_MANAGER, UserRole.DEPUTY_MANAGER, UserRole.DEPARTMENT_MANAGER, UserRole.SECTION_SUPERVISOR],
     },
     {
       name: t('nav.accounts') || 'Accounts',

@@ -17,6 +17,7 @@ import RequestDetailsPage from './pages/requests/RequestDetailsPage';
 import CreateRequestPage from './pages/requests/CreateRequestPage';
 import CustomersPage from './pages/customers/CustomersPage';
 import ProductsPage from './pages/products/ProductsPage';
+import DepartmentsPage from './pages/departments/DepartmentsPage';
 import UsersPage from './pages/users/UsersPage';
 import CreateUserPage from './pages/users/CreateUserPage';
 import AccountsPage from './pages/accounts/AccountsPage';
@@ -230,6 +231,17 @@ function App() {
             <ProtectedRoute>
               <DashboardLayout>
                 <ProductsPage />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/departments"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <DepartmentsPage />
               </DashboardLayout>
             </ProtectedRoute>
           }

@@ -335,6 +335,33 @@ export const departmentsAPI = {
       handleError(error);
     }
   },
+  
+  createDepartment: async (data: { name: string; description?: string }) => {
+    try {
+      const response = await api.post('/departments', data);
+      return response.data;
+    } catch (error) {
+      handleError(error);
+    }
+  },
+  
+  updateDepartment: async (id: number, data: { name: string; description?: string }) => {
+    try {
+      const response = await api.put(`/departments/${id}`, data);
+      return response.data;
+    } catch (error) {
+      handleError(error);
+    }
+  },
+  
+  deleteDepartment: async (id: number) => {
+    try {
+      const response = await api.delete(`/departments/${id}`);
+      return response.data;
+    } catch (error) {
+      handleError(error);
+    }
+  },
 };
 
 // Users API
