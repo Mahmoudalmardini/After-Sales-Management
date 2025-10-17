@@ -688,7 +688,11 @@ const StoragePage: React.FC = () => {
                         )}
                       </div>
                       <div className="text-xs text-gray-500">
-                        <div>{new Date(item.createdAt).toLocaleDateString('ar-SY')}</div>
+                        <div>{new Date(item.createdAt).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric'
+                        })}</div>
                         <div className="text-right">{new Date(item.createdAt).toLocaleTimeString('ar-SY')}</div>
                       </div>
                     </div>

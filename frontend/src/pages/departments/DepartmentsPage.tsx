@@ -237,7 +237,11 @@ const DepartmentsPage: React.FC = () => {
                       <td className="td font-medium">{dept.name}</td>
                       <td className="td text-gray-600">{dept.description || '-'}</td>
                       <td className="td text-gray-600">
-                        {new Date(dept.createdAt).toLocaleDateString()}
+                        {new Date(dept.createdAt).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric'
+                        })}
                       </td>
                       {canManageDepartments && (
                         <td className="td">

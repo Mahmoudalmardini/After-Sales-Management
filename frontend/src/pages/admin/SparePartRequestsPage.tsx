@@ -234,7 +234,11 @@ const SparePartRequestsPage: React.FC = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(request.createdAt).toLocaleDateString()}
+                      {new Date(request.createdAt).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
+                      })}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       {request.status === 'PENDING' && (

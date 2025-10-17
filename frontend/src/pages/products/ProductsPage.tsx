@@ -97,7 +97,7 @@ const ProductsPage: React.FC = () => {
               <option value="">{t('products.department') || 'Department'}</option>
               {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
             </select>
-            <input className="input" type="number" min={1} placeholder={t('products.warranty') || 'Warranty (months)'} value={form.warrantyMonths} onChange={e=>setForm(f=>({...f, warrantyMonths: Number(e.target.value)}))} />
+            <input className="input" type="number" min={0} placeholder={t('products.warranty') || 'Warranty (months)'} value={form.warrantyMonths} onChange={e=>setForm(f=>({...f, warrantyMonths: Number(e.target.value)}))} />
             <div className="md:col-span-3 flex gap-2">
               <button className="btn-primary" type="submit" disabled={loading}>{loading ? t('common.loading') : t('products.save')}</button>
               <button className="btn" type="button" onClick={()=>setShowForm(false)}>{t('products.cancel')}</button>

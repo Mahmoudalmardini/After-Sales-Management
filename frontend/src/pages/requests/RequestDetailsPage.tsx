@@ -555,7 +555,11 @@ const RequestDetailsPage: React.FC = () => {
                                   {c.costType === 'PARTS' ? 'قطع غيار' : c.costType === 'LABOR' ? 'عمالة' : c.costType === 'TRANSPORTATION' ? 'مواصلات' : 'أخرى'}
                                 </span>
                                 <span className="text-xs text-gray-500">
-                                  {new Date(c.createdAt).toLocaleDateString('ar-SY')}
+                                  {new Date(c.createdAt).toLocaleDateString('en-US', {
+                                    year: 'numeric',
+                                    month: 'short',
+                                    day: 'numeric'
+                                  })}
                                 </span>
                               </div>
                             </div>

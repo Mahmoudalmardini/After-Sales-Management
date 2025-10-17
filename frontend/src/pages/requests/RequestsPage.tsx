@@ -353,7 +353,11 @@ const RequestsPage: React.FC = () => {
                           </span>
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-600">
-                          {new Date(req.createdAt).toLocaleDateString('ar-EG')}
+                          {new Date(req.createdAt).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric'
+                          })}
                         </td>
                       </tr>
                     ))}
@@ -392,7 +396,11 @@ const RequestsPage: React.FC = () => {
                     </div>
                     <div className="flex items-center justify-between text-sm text-gray-500">
                       <div>{req.department?.name}</div>
-                      <div>{new Date(req.createdAt).toLocaleDateString('ar-EG')}</div>
+                      <div>{new Date(req.createdAt).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
+                      })}</div>
                     </div>
                     {req.isOverdue && (
                       <div className="mt-2 text-xs text-red-600 font-medium">⚠️ طلب متأخر</div>
