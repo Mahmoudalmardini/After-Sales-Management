@@ -77,14 +77,18 @@ const RequestDetailsPage: React.FC = () => {
   useEffect(() => {
     const loadTechs = async () => {
       try {
-        // For managers, load all technicians. For others, filter by department
+        // For company and deputy managers, load all technicians. For others, filter by department
         const params: any = { role: UserRole.TECHNICIAN };
-        if (!hasRole([UserRole.COMPANY_MANAGER, UserRole.DEPUTY_MANAGER, UserRole.DEPARTMENT_MANAGER])) {
+        if (!hasRole([UserRole.COMPANY_MANAGER, UserRole.DEPUTY_MANAGER])) {
+          // For department managers and supervisors, filter by their department
           params.departmentId = request?.department?.id;
         }
         const resp = await usersAPI.getUsers(params);
         setTechnicians(resp.data?.users || []);
-      } catch {}
+      } catch (error) {
+        console.error('Error loading technicians:', error);
+        setTechnicians([]);
+      }
     };
     loadTechs();
   }, [request?.department?.id, hasRole]);
@@ -274,6 +278,8 @@ const RequestDetailsPage: React.FC = () => {
                   <div><span className="text-gray-500">{t('details.department')}:</span> {request.department?.name}</div>
                   <div><span className="text-gray-500">{t('details.technician')}:</span> {request.assignedTechnician ? `${request.assignedTechnician.firstName} ${request.assignedTechnician.lastName}` : '-'}</div>
                   <div><span className="text-gray-500">{t('details.priority')}:</span> {request.priority}</div>
+                  <div><span className="text-gray-500">{t('details.requestDate') || 'تاريخ الطلب'}:</span> {request.purchaseDate ? new Date(request.purchaseDate).toLocaleDateString('ar-EG') : '-'}</div>
+                  <div><span className="text-gray-500">{t('details.product')}:</span> {request.product ? `${request.product.name} - ${request.product.model}${request.product.serialNumber ? ` (${request.product.serialNumber})` : ''}` : '-'}</div>
                   <div className="col-span-2"><span className="text-gray-500">{t('details.issue')}:</span> {request.issueDescription}</div>
                 </div>
               </div>

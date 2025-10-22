@@ -9,11 +9,11 @@ const router = Router();
 /**
  * @route   GET /api/users
  * @desc    Get users with optional filters (role, departmentId, isActive)
- * @access  Private (managers only)
+ * @access  Private (managers and supervisors only)
  */
 router.get(
   '/',
-  requireRoles([UserRole.COMPANY_MANAGER, UserRole.DEPUTY_MANAGER]),
+  requireRoles([UserRole.COMPANY_MANAGER, UserRole.DEPUTY_MANAGER, UserRole.DEPARTMENT_MANAGER, UserRole.SECTION_SUPERVISOR]),
   async (req: AuthenticatedRequest, res) => {
     const { role, departmentId, isActive = true, page = 1, limit = 50 } = req.query as any;
     const user = req.user!;
@@ -23,7 +23,11 @@ router.get(
     if (departmentId) where.departmentId = Number(departmentId);
     if (isActive !== undefined) where.isActive = String(isActive) !== 'false';
 
-    // Only company and deputy managers can access this endpoint now
+    // Department-based access control for supervisors
+    if (user.role === UserRole.SECTION_SUPERVISOR || user.role === UserRole.DEPARTMENT_MANAGER) {
+      // Supervisors and department managers can only see users from their department
+      where.departmentId = user.departmentId;
+    }
 
     const skip = (Number(page) - 1) * Number(limit);
 

@@ -17,11 +17,11 @@ const CreateRequestPage: React.FC = () => {
 
   const [form, setForm] = useState<CreateRequestForm>({
     customerId: '',
-    productId: undefined,
+    productId: '',
     issueDescription: '',
     executionMethod: 'ON_SITE',
     warrantyStatus: 'UNDER_WARRANTY',
-    purchaseDate: '',
+    requestDate: '',
     priority: 'NORMAL',
   });
 
@@ -55,14 +55,33 @@ const CreateRequestPage: React.FC = () => {
       setLoading(true);
       setError(null);
       
-      // Check for backdated purchase date (only managers can set backdated dates)
-      if (form.purchaseDate && !hasRole([UserRole.COMPANY_MANAGER, UserRole.DEPUTY_MANAGER, UserRole.DEPARTMENT_MANAGER])) {
-        const purchaseDate = new Date(form.purchaseDate);
+      // Validate required fields
+      if (!form.customerId) {
+        setError('يجب اختيار العميل');
+        setLoading(false);
+        return;
+      }
+      
+      if (!form.productId) {
+        setError('يجب اختيار المنتج');
+        setLoading(false);
+        return;
+      }
+      
+      if (!form.requestDate) {
+        setError('يجب إدخال تاريخ الطلب');
+        setLoading(false);
+        return;
+      }
+      
+      // Check for backdated request date (only managers can set backdated dates)
+      if (!hasRole([UserRole.COMPANY_MANAGER, UserRole.DEPUTY_MANAGER, UserRole.DEPARTMENT_MANAGER])) {
+        const requestDate = new Date(form.requestDate);
         const today = new Date();
         today.setHours(0, 0, 0, 0); // Reset time to start of day
         
-        if (purchaseDate < today) {
-          setError('لا يمكن إدخال تاريخ شراء سابق. فقط المديرين يمكنهم إدخال تواريخ سابقة.');
+        if (requestDate < today) {
+          setError('لا يمكن إدخال تاريخ طلب سابق. فقط المديرين يمكنهم إدخال تواريخ سابقة.');
           setLoading(false);
           return;
         }
@@ -71,8 +90,8 @@ const CreateRequestPage: React.FC = () => {
       const payload = {
         ...form,
         customerId: Number(form.customerId),
-        productId: form.productId ? Number(form.productId) : undefined,
-        purchaseDate: form.purchaseDate || undefined,
+        productId: Number(form.productId),
+        purchaseDate: form.requestDate, // Map requestDate to purchaseDate for backend compatibility
       };
       const resp = await requestsAPI.createRequest(payload as any);
       const newId = resp.request?.id;
@@ -117,13 +136,16 @@ const CreateRequestPage: React.FC = () => {
             </div>
 
             <div className="form-group">
-              <label className="form-label" id="productId-label" htmlFor="productId">{t('create.product')}</label>
-              <select id="productId" name="productId" value={form.productId || ''} onChange={handleChange} className="select-field" aria-labelledby="productId-label">
-                <option value="">{t('create.productPlaceholder') || 'Select a product (optional)...'}</option>
+              <label className="form-label required" id="productId-label" htmlFor="productId">{t('create.product') || 'المنتج'}</label>
+              <select id="productId" name="productId" value={form.productId} onChange={handleChange} className="select-field" required aria-labelledby="productId-label">
+                <option value="" disabled>{t('create.productPlaceholder') || 'اختر المنتج...'}</option>
                 {products.map(p => (
-                  <option key={p.id} value={p.id}>{p.name} — {p.model}</option>
+                  <option key={p.id} value={p.id}>
+                    {p.name} — {p.model} {p.serialNumber ? `(${p.serialNumber})` : ''} — {p.department?.name || 'غير محدد'}
+                  </option>
                 ))}
               </select>
+              <p className="form-help">{t('create.productHelp') || 'يجب اختيار المنتج المراد صيانته'}</p>
             </div>
 
             <div className="form-group">
@@ -153,20 +175,21 @@ const CreateRequestPage: React.FC = () => {
             </div>
 
             <div className="form-group">
-              <label className="form-label" htmlFor="purchaseDate">{t('create.purchaseDate') || 'Purchase Date (optional)'}</label>
+              <label className="form-label required" htmlFor="requestDate">{t('create.requestDate') || 'تاريخ الطلب'}</label>
               <input 
-                id="purchaseDate" 
+                id="requestDate" 
                 type="date" 
-                name="purchaseDate" 
-                value={form.purchaseDate} 
+                name="requestDate" 
+                value={form.requestDate} 
                 onChange={handleChange} 
                 className="input-field"
+                required
                 max={hasRole([UserRole.COMPANY_MANAGER, UserRole.DEPUTY_MANAGER, UserRole.DEPARTMENT_MANAGER]) ? undefined : new Date().toISOString().split('T')[0]}
               />
               <p className="form-help">
                 {hasRole([UserRole.COMPANY_MANAGER, UserRole.DEPUTY_MANAGER, UserRole.DEPARTMENT_MANAGER]) 
-                  ? 'تاريخ شراء المنتج (اختياري) - المديرين يمكنهم إدخال تواريخ سابقة'
-                  : 'تاريخ شراء المنتج (اختياري) - لا يمكن إدخال تاريخ سابق'
+                  ? 'تاريخ الطلب - المديرين يمكنهم إدخال تواريخ سابقة'
+                  : 'تاريخ الطلب - لا يمكن إدخال تاريخ سابق'
                 }
               </p>
             </div>

@@ -261,11 +261,11 @@ export interface LoginForm {
 
 export interface CreateRequestForm {
   customerId: number | string;
-  productId?: number | string;
+  productId: number | string;
   issueDescription: string;
   executionMethod: ExecutionMethod;
   warrantyStatus: WarrantyStatus;
-  purchaseDate?: string;
+  requestDate: string;
   priority: RequestPriority;
 }
 
