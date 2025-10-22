@@ -1,0 +1,8 @@
+This is a dummy file to trigger Railway deployment.
+
+Created: 2025-10-22
+Purpose: Force Railway to detect changes and redeploy the application
+
+All TypeScript compilation errors have been resolved.
+Frontend and backend builds are successful.
+Ready for production deployment.
