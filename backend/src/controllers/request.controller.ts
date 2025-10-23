@@ -143,7 +143,7 @@ export const createRequest = asyncHandler(async (req: AuthenticatedRequest, res:
       issueDescription,
       executionMethod: executionMethod as ExecutionMethod,
       warrantyStatus: warrantyStatus as WarrantyStatus,
-      purchaseDate: purchaseDate ? new Date(purchaseDate) : null,
+      purchaseDate: new Date(purchaseDate),
       priority: priority as RequestPriority,
       slaDueDate,
       status: RequestStatus.NEW,
