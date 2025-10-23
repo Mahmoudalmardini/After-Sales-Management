@@ -154,6 +154,7 @@ export const isManagerLevel = (role: UserRole): boolean => {
     UserRole.COMPANY_MANAGER,
     UserRole.DEPUTY_MANAGER,
     UserRole.DEPARTMENT_MANAGER,
+    UserRole.SECTION_SUPERVISOR,
   ] as UserRole[]).includes(role);
 };
 

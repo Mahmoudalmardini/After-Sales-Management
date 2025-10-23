@@ -77,10 +77,10 @@ const RequestDetailsPage: React.FC = () => {
   useEffect(() => {
     const loadTechs = async () => {
       try {
-        // For company and deputy managers, load all technicians. For others, filter by department
+        // For company, deputy managers, and section supervisors, load all technicians. For others, filter by department
         const params: any = { role: UserRole.TECHNICIAN };
-        if (!hasRole([UserRole.COMPANY_MANAGER, UserRole.DEPUTY_MANAGER])) {
-          // For department managers and supervisors, filter by their department
+        if (!hasRole([UserRole.COMPANY_MANAGER, UserRole.DEPUTY_MANAGER, UserRole.SECTION_SUPERVISOR])) {
+          // For department managers, filter by their department
           params.departmentId = request?.department?.id;
         }
         const resp = await usersAPI.getUsers(params);
