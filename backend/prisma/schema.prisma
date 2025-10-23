@@ -111,7 +111,7 @@ model Request {
   issueDescription     String
   executionMethod      String
   warrantyStatus       String
-  purchaseDate         DateTime?
+  purchaseDate         DateTime
 
   // Status management
   status               String            @default("NEW")

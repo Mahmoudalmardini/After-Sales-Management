@@ -115,7 +115,7 @@ export interface Request {
   issueDescription: string;
   executionMethod: ExecutionMethod;
   warrantyStatus: WarrantyStatus;
-  purchaseDate?: string;
+  purchaseDate: string;
   status: RequestStatus;
   priority: RequestPriority;
   createdAt: string;
@@ -265,6 +265,7 @@ export interface CreateRequestForm {
   issueDescription: string;
   executionMethod: ExecutionMethod;
   warrantyStatus: WarrantyStatus;
+  purchaseDate: string;
   requestDate: string;
   priority: RequestPriority;
 }

@@ -67,7 +67,7 @@ export const createRequest = asyncHandler(async (req: AuthenticatedRequest, res:
   }
 
   // Validate required fields
-  if (!customerId || !issueDescription || !executionMethod || !warrantyStatus) {
+  if (!customerId || !issueDescription || !executionMethod || !warrantyStatus || !purchaseDate) {
     throw new ValidationError('Missing required fields');
   }
 

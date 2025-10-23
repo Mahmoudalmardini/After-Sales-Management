@@ -21,6 +21,7 @@ const CreateRequestPage: React.FC = () => {
     issueDescription: '',
     executionMethod: 'ON_SITE',
     warrantyStatus: 'UNDER_WARRANTY',
+    purchaseDate: '',
     requestDate: '',
     priority: 'NORMAL',
   });
@@ -91,7 +92,7 @@ const CreateRequestPage: React.FC = () => {
         ...form,
         customerId: Number(form.customerId),
         productId: Number(form.productId),
-        purchaseDate: form.requestDate, // Map requestDate to purchaseDate for backend compatibility
+        purchaseDate: form.purchaseDate,
       };
       const resp = await requestsAPI.createRequest(payload as any);
       const newId = resp.request?.id;
@@ -172,6 +173,22 @@ const CreateRequestPage: React.FC = () => {
                 <option value="HIGH">{t('create.priorityHigh') || 'High'}</option>
                 <option value="URGENT">{t('create.priorityUrgent') || 'Urgent'}</option>
               </select>
+            </div>
+
+            <div className="form-group">
+              <label className="form-label required" htmlFor="purchaseDate">{t('create.purchaseDate') || 'تاريخ الشراء'}</label>
+              <input 
+                id="purchaseDate" 
+                type="date" 
+                name="purchaseDate" 
+                value={form.purchaseDate} 
+                onChange={handleChange} 
+                className="input-field"
+                required
+              />
+              <p className="form-help">
+                {t('create.purchaseDateHelp') || 'تاريخ شراء المنتج'}
+              </p>
             </div>
 
             <div className="form-group">

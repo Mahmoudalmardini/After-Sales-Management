@@ -1,0 +1,863 @@
+
+const { PrismaClient } = require('@prisma/client');
+
+const localData = {
+  "departments": [
+    {
+      "id": 1,
+      "name": "Solar Energy",
+      "description": "Solar panels and energy systems",
+      "managerId": 10,
+      "createdAt": "2025-09-30T19:56:52.384Z"
+    },
+    {
+      "id": 2,
+      "name": "LG Maintenance",
+      "description": "TVs, refrigerators, washing machines, dishwashers, ACs, others",
+      "managerId": 3,
+      "createdAt": "2025-09-30T19:56:52.384Z"
+    },
+    {
+      "id": 3,
+      "name": "Epson",
+      "description": "Printers and printing solutions",
+      "managerId": null,
+      "createdAt": "2025-09-30T19:56:52.384Z"
+    },
+    {
+      "id": 4,
+      "name": "TP-Link",
+      "description": "Networking equipment and routers",
+      "managerId": null,
+      "createdAt": "2025-09-30T19:56:52.384Z"
+    }
+  ],
+  "users": [
+    {
+      "id": 1,
+      "username": "admin",
+      "email": "admin@company.com",
+      "passwordHash": "$2a$12$Y28e/wIq4WrVqU9mY3PKWehqWxlOzoh/ZfEh50Pr3SveMOguJxaf2",
+      "firstName": "Ahmed",
+      "lastName": "Hassan",
+      "phone": "+963911234567",
+      "role": "COMPANY_MANAGER",
+      "departmentId": null,
+      "isActive": true,
+      "preferredCurrency": "SYP",
+      "createdAt": "2025-09-30T19:56:57.418Z",
+      "updatedAt": "2025-09-30T19:56:57.418Z"
+    },
+    {
+      "id": 2,
+      "username": "deputy",
+      "email": "deputy@company.com",
+      "passwordHash": "$2a$12$h6ba8DhxI84DUonk/EG1iuHY8EJjJSVfrwPxC5Ro2PTPjqMvsYvy2",
+      "firstName": "Fatma",
+      "lastName": "Ali",
+      "phone": "+963911234568",
+      "role": "DEPUTY_MANAGER",
+      "departmentId": null,
+      "isActive": true,
+      "preferredCurrency": "SYP",
+      "createdAt": "2025-09-30T19:56:57.418Z",
+      "updatedAt": "2025-09-30T19:56:57.418Z"
+    },
+    {
+      "id": 3,
+      "username": "lg_manager",
+      "email": "lg.manager@company.com",
+      "passwordHash": "$2a$12$tcY9Wv6YDVvIWpGzp7ArvuuMU673iRFqUftbxoG2rv.vqIjVAtHHO",
+      "firstName": "Mohamed",
+      "lastName": "Mahmoud",
+      "phone": "+963911234569",
+      "role": "DEPARTMENT_MANAGER",
+      "departmentId": 2,
+      "isActive": true,
+      "preferredCurrency": "SYP",
+      "createdAt": "2025-09-30T19:56:57.468Z",
+      "updatedAt": "2025-09-30T19:56:57.468Z"
+    },
+    {
+      "id": 4,
+      "username": "tech4",
+      "email": "tech4@company.com",
+      "passwordHash": "$2a$12$vVhkFiQG8HZf01oy1SzYVuwObj0Lk5yhNV80LM59ZIOA7.HE0NZZu",
+      "firstName": "Heba",
+      "lastName": "Salah",
+      "phone": "+963911234576",
+      "role": "TECHNICIAN",
+      "departmentId": 3,
+      "isActive": true,
+      "preferredCurrency": "SYP",
+      "createdAt": "2025-09-30T19:56:57.445Z",
+      "updatedAt": "2025-09-30T19:56:57.445Z"
+    },
+    {
+      "id": 5,
+      "username": "tech3",
+      "email": "tech3@company.com",
+      "passwordHash": "$2a$12$CVVubOhg/1z8PxQYjy8gnumY3uJUmTf8J3IF6z.PNnu6F2T3TEcYq",
+      "firstName": "Kareem",
+      "lastName": "Mostafa",
+      "phone": "+963911234575",
+      "role": "TECHNICIAN",
+      "departmentId": 4,
+      "isActive": true,
+      "preferredCurrency": "SYP",
+      "createdAt": "2025-09-30T19:56:57.418Z",
+      "updatedAt": "2025-09-30T19:56:57.418Z"
+    },
+    {
+      "id": 6,
+      "username": "lg_supervisor",
+      "email": "lg.supervisor@company.com",
+      "passwordHash": "$2a$12$RnuN.lE80nqzoc/YHiXdguvH2etbroZM1MUGPSZdOpLyCSWUogI5y",
+      "firstName": "Omar",
+      "lastName": "Khalil",
+      "phone": "+963911234571",
+      "role": "SECTION_SUPERVISOR",
+      "departmentId": 2,
+      "isActive": true,
+      "preferredCurrency": "SYP",
+      "createdAt": "2025-09-30T19:56:57.418Z",
+      "updatedAt": "2025-09-30T19:56:57.418Z"
+    },
+    {
+      "id": 7,
+      "username": "tplink_supervisor",
+      "email": "tplink.supervisor@company.com",
+      "passwordHash": "$2a$12$z20bxTAafxMWpwt2GUSqxur2BmsIb.Xumt0R797aODTtyzeCdRANu",
+      "firstName": "Nour",
+      "lastName": "Ibrahim",
+      "phone": "+963911234572",
+      "role": "SECTION_SUPERVISOR",
+      "departmentId": 4,
+      "isActive": true,
+      "preferredCurrency": "SYP",
+      "createdAt": "2025-09-30T19:56:57.418Z",
+      "updatedAt": "2025-09-30T19:56:57.418Z"
+    },
+    {
+      "id": 8,
+      "username": "tech2",
+      "email": "tech2@company.com",
+      "passwordHash": "$2a$12$zCpkvfVIV2wFwH91cNMDjeF8P/LqSsbandHbgYhPj90ll17NJOnjW",
+      "firstName": "Menna",
+      "lastName": "Farouk",
+      "phone": "+963911234574",
+      "role": "TECHNICIAN",
+      "departmentId": 1,
+      "isActive": true,
+      "preferredCurrency": "SYP",
+      "createdAt": "2025-09-30T19:56:57.418Z",
+      "updatedAt": "2025-09-30T19:56:57.418Z"
+    },
+    {
+      "id": 9,
+      "username": "tech1",
+      "email": "tech1@company.com",
+      "passwordHash": "$2a$12$Ejv5LIj.fh5t1Hpn6c8Pn.V73CYOvbeuOVpzDi5tiQLoD4hLlpcjq",
+      "firstName": "Youssef",
+      "lastName": "Mansour",
+      "phone": "+963911234573",
+      "role": "TECHNICIAN",
+      "departmentId": 2,
+      "isActive": true,
+      "preferredCurrency": "SYP",
+      "createdAt": "2025-09-30T19:56:57.418Z",
+      "updatedAt": "2025-09-30T19:56:57.418Z"
+    },
+    {
+      "id": 10,
+      "username": "solar_manager",
+      "email": "solar.manager@company.com",
+      "passwordHash": "$2a$12$ThXsWDiQDcWFRRG/baK0seTXhIMQz9U.GL7qLKPENQ477EyWEgH1q",
+      "firstName": "Sara",
+      "lastName": "Ahmed",
+      "phone": "+963911234570",
+      "role": "DEPARTMENT_MANAGER",
+      "departmentId": 1,
+      "isActive": true,
+      "preferredCurrency": "SYP",
+      "createdAt": "2025-09-30T19:56:57.418Z",
+      "updatedAt": "2025-09-30T19:56:57.418Z"
+    },
+    {
+      "id": 11,
+      "username": "warehouse1",
+      "email": "warehouse@example.com",
+      "passwordHash": "$2b$10$PLACEHOLDER",
+      "firstName": "Warehouse",
+      "lastName": "Keeper",
+      "phone": null,
+      "role": "WAREHOUSE_KEEPER",
+      "departmentId": 1,
+      "isActive": true,
+      "preferredCurrency": "SYP",
+      "createdAt": "2025-09-30T19:58:03.949Z",
+      "updatedAt": "2025-09-30T19:58:03.949Z"
+    }
+  ],
+  "customers": [
+    {
+      "id": 1,
+      "name": "فاطمة حسن محمود",
+      "phone": "+963911234567",
+      "email": "fatma.hassan@email.com",
+      "address": "456 شارع الجمهورية، الأسكندرية",
+      "city": "الأسكندرية",
+      "createdAt": "2025-09-30T19:56:57.756Z",
+      "updatedAt": "2025-09-30T19:56:57.756Z"
+    },
+    {
+      "id": 2,
+      "name": "سارة أحمد خالد",
+      "phone": "+201456789012",
+      "email": "sara.ahmed@email.com",
+      "address": "321 شارع الهرم، الجيزة",
+      "city": "الجيزة",
+      "createdAt": "2025-09-30T19:56:57.756Z",
+      "updatedAt": "2025-09-30T19:56:57.756Z"
+    },
+    {
+      "id": 3,
+      "name": "عمر محمد فاروق",
+      "phone": "+201567890123",
+      "email": null,
+      "address": "654 شارع الجلاء، الأقصر",
+      "city": "الأقصر",
+      "createdAt": "2025-09-30T19:56:57.756Z",
+      "updatedAt": "2025-09-30T19:56:57.756Z"
+    },
+    {
+      "id": 4,
+      "name": "محمد عبدالله إبراهيم",
+      "phone": "+201345678901",
+      "email": null,
+      "address": "789 شارع التحرير، الجيزة",
+      "city": "الجيزة",
+      "createdAt": "2025-09-30T19:56:57.756Z",
+      "updatedAt": "2025-09-30T19:56:57.756Z"
+    },
+    {
+      "id": 5,
+      "name": "أحمد محمد علي",
+      "phone": "+201123456789",
+      "email": "ahmed.mohamed@email.com",
+      "address": "123 شارع النيل، المعادي، القاهرة",
+      "city": "القاهرة",
+      "createdAt": "2025-09-30T19:56:57.756Z",
+      "updatedAt": "2025-09-30T19:56:57.756Z"
+    }
+  ],
+  "products": [
+    {
+      "id": 1,
+      "name": "LG Smart TV",
+      "model": "LG-55UN7300",
+      "serialNumber": "LG55UN7300001",
+      "category": "Television",
+      "departmentId": 2,
+      "warrantyMonths": 24,
+      "createdAt": "2025-09-30T19:56:57.904Z"
+    },
+    {
+      "id": 2,
+      "name": "LG Refrigerator",
+      "model": "LG-GR-X257CSAV",
+      "serialNumber": "LGGR257001",
+      "category": "Refrigerator",
+      "departmentId": 2,
+      "warrantyMonths": 36,
+      "createdAt": "2025-09-30T19:56:57.904Z"
+    },
+    {
+      "id": 3,
+      "name": "Solar Panel System",
+      "model": "SP-5000W",
+      "serialNumber": "SP5000W001",
+      "category": "Solar Panel",
+      "departmentId": 1,
+      "warrantyMonths": 120,
+      "createdAt": "2025-09-30T19:56:57.905Z"
+    },
+    {
+      "id": 4,
+      "name": "LG Washing Machine",
+      "model": "LG-F4J5TN7S",
+      "serialNumber": "LGF4J5TN001",
+      "category": "Washing Machine",
+      "departmentId": 2,
+      "warrantyMonths": 24,
+      "createdAt": "2025-09-30T19:56:57.904Z"
+    },
+    {
+      "id": 5,
+      "name": "TP-Link Archer Router",
+      "model": "Archer-AX73",
+      "serialNumber": "TPAX73001",
+      "category": "Router",
+      "departmentId": 4,
+      "warrantyMonths": 36,
+      "createdAt": "2025-09-30T19:56:57.905Z"
+    },
+    {
+      "id": 6,
+      "name": "Epson EcoTank Printer",
+      "model": "ET-2850",
+      "serialNumber": "EPET2850001",
+      "category": "Printer",
+      "departmentId": 3,
+      "warrantyMonths": 24,
+      "createdAt": "2025-09-30T19:56:57.905Z"
+    }
+  ],
+  "spareParts": [
+    {
+      "id": 1,
+      "name": "Test Spare Part",
+      "partNumber": "TEST001",
+      "presentPieces": 80,
+      "category": "GENERAL",
+      "quantity": 100,
+      "minQuantity": 10,
+      "unitPrice": 50,
+      "currency": "SYP",
+      "supplier": null,
+      "location": null,
+      "description": "Test spare part for history",
+      "createdAt": "2025-09-30T19:58:03.974Z",
+      "updatedAt": "2025-09-30T19:58:04.017Z",
+      "departmentId": null
+    }
+  ],
+  "requests": [
+    {
+      "id": 1,
+      "requestNumber": "REQ240930-001",
+      "customerId": 1,
+      "productId": 2,
+      "departmentId": 2,
+      "assignedTechnicianId": 8,
+      "receivedById": 1,
+      "issueDescription": "Device not turning on, no power indicator visible",
+      "executionMethod": "WORKSHOP",
+      "warrantyStatus": "UNDER_WARRANTY",
+      "purchaseDate": "2024-09-29T19:56:58.118Z",
+      "status": "COMPLETED",
+      "priority": "NORMAL",
+      "createdAt": "2025-09-29T19:56:58.118Z",
+      "assignedAt": "2025-09-29T21:56:58.118Z",
+      "startedAt": null,
+      "completedAt": "2025-10-01T19:56:58.118Z",
+      "closedAt": null,
+      "slaDueDate": "2025-10-06T19:56:58.118Z",
+      "isOverdue": false,
+      "finalNotes": null,
+      "customerSatisfaction": null,
+      "updatedAt": "2025-09-30T19:56:58.123Z"
+    },
+    {
+      "id": 2,
+      "requestNumber": "REQ240930-002",
+      "customerId": 4,
+      "productId": 4,
+      "departmentId": 2,
+      "assignedTechnicianId": 5,
+      "receivedById": 1,
+      "issueDescription": "Making strange noises during operation",
+      "executionMethod": "WORKSHOP",
+      "warrantyStatus": "UNDER_WARRANTY",
+      "purchaseDate": "2024-09-28T19:56:58.118Z",
+      "status": "COMPLETED",
+      "priority": "NORMAL",
+      "createdAt": "2025-09-28T19:56:58.118Z",
+      "assignedAt": "2025-09-28T21:56:58.118Z",
+      "startedAt": null,
+      "completedAt": "2025-09-30T19:56:58.118Z",
+      "closedAt": null,
+      "slaDueDate": "2025-10-05T19:56:58.118Z",
+      "isOverdue": false,
+      "finalNotes": null,
+      "customerSatisfaction": null,
+      "updatedAt": "2025-09-30T19:56:58.152Z"
+    },
+    {
+      "id": 3,
+      "requestNumber": "REQ240930-003",
+      "customerId": 2,
+      "productId": 3,
+      "departmentId": 1,
+      "assignedTechnicianId": 4,
+      "receivedById": 1,
+      "issueDescription": "Display shows error codes intermittently",
+      "executionMethod": "WORKSHOP",
+      "warrantyStatus": "OUT_OF_WARRANTY",
+      "purchaseDate": "2024-09-27T19:56:58.118Z",
+      "status": "COMPLETED",
+      "priority": "NORMAL",
+      "createdAt": "2025-09-27T19:56:58.118Z",
+      "assignedAt": "2025-09-27T21:56:58.118Z",
+      "startedAt": null,
+      "completedAt": "2025-09-29T19:56:58.118Z",
+      "closedAt": null,
+      "slaDueDate": "2025-10-07T19:56:58.118Z",
+      "isOverdue": false,
+      "finalNotes": null,
+      "customerSatisfaction": null,
+      "updatedAt": "2025-09-30T19:56:58.186Z"
+    },
+    {
+      "id": 4,
+      "requestNumber": "REQ240930-004",
+      "customerId": 3,
+      "productId": 5,
+      "departmentId": 4,
+      "assignedTechnicianId": 9,
+      "receivedById": 1,
+      "issueDescription": "Performance degraded, operating very slowly",
+      "executionMethod": "ON_SITE",
+      "warrantyStatus": "UNDER_WARRANTY",
+      "purchaseDate": "2024-09-26T19:56:58.118Z",
+      "status": "COMPLETED",
+      "priority": "NORMAL",
+      "createdAt": "2025-09-26T19:56:58.118Z",
+      "assignedAt": "2025-09-26T21:56:58.118Z",
+      "startedAt": null,
+      "completedAt": "2025-09-28T19:56:58.118Z",
+      "closedAt": null,
+      "slaDueDate": "2025-10-05T19:56:58.118Z",
+      "isOverdue": false,
+      "finalNotes": null,
+      "customerSatisfaction": null,
+      "updatedAt": "2025-09-30T19:56:58.220Z"
+    },
+    {
+      "id": 5,
+      "requestNumber": "REQ240930-005",
+      "customerId": 5,
+      "productId": 6,
+      "departmentId": 3,
+      "assignedTechnicianId": 8,
+      "receivedById": 1,
+      "issueDescription": "Overheating issues, auto-shutdown occurring",
+      "executionMethod": "WORKSHOP",
+      "warrantyStatus": "UNDER_WARRANTY",
+      "purchaseDate": "2024-09-25T19:56:58.118Z",
+      "status": "COMPLETED",
+      "priority": "NORMAL",
+      "createdAt": "2025-09-25T19:56:58.118Z",
+      "assignedAt": "2025-09-25T21:56:58.118Z",
+      "startedAt": null,
+      "completedAt": "2025-09-27T19:56:58.118Z",
+      "closedAt": null,
+      "slaDueDate": "2025-10-02T19:56:58.118Z",
+      "isOverdue": false,
+      "finalNotes": null,
+      "customerSatisfaction": null,
+      "updatedAt": "2025-09-30T19:56:58.253Z"
+    },
+    {
+      "id": 6,
+      "requestNumber": "REQ240930-006",
+      "customerId": 1,
+      "productId": 1,
+      "departmentId": 2,
+      "assignedTechnicianId": 5,
+      "receivedById": 1,
+      "issueDescription": "Network connectivity problems",
+      "executionMethod": "WORKSHOP",
+      "warrantyStatus": "OUT_OF_WARRANTY",
+      "purchaseDate": "2024-09-24T19:56:58.118Z",
+      "status": "ASSIGNED",
+      "priority": "NORMAL",
+      "createdAt": "2025-09-24T19:56:58.118Z",
+      "assignedAt": "2025-09-24T21:56:58.118Z",
+      "startedAt": null,
+      "completedAt": null,
+      "closedAt": null,
+      "slaDueDate": "2025-10-04T19:56:58.118Z",
+      "isOverdue": false,
+      "finalNotes": null,
+      "customerSatisfaction": null,
+      "updatedAt": "2025-09-30T19:56:58.287Z"
+    },
+    {
+      "id": 7,
+      "requestNumber": "REQ240930-007",
+      "customerId": 4,
+      "productId": 2,
+      "departmentId": 2,
+      "assignedTechnicianId": 4,
+      "receivedById": 1,
+      "issueDescription": "Software malfunction, freezing frequently",
+      "executionMethod": "WORKSHOP",
+      "warrantyStatus": "UNDER_WARRANTY",
+      "purchaseDate": "2024-09-23T19:56:58.118Z",
+      "status": "UNDER_INSPECTION",
+      "priority": "NORMAL",
+      "createdAt": "2025-09-23T19:56:58.118Z",
+      "assignedAt": "2025-09-23T21:56:58.118Z",
+      "startedAt": null,
+      "completedAt": null,
+      "closedAt": null,
+      "slaDueDate": "2025-09-30T19:56:58.118Z",
+      "isOverdue": false,
+      "finalNotes": null,
+      "customerSatisfaction": null,
+      "updatedAt": "2025-09-30T19:56:58.307Z"
+    },
+    {
+      "id": 8,
+      "requestNumber": "REQ240930-008",
+      "customerId": 2,
+      "productId": 4,
+      "departmentId": 2,
+      "assignedTechnicianId": 9,
+      "receivedById": 1,
+      "issueDescription": "Physical damage to external components",
+      "executionMethod": "ON_SITE",
+      "warrantyStatus": "UNDER_WARRANTY",
+      "purchaseDate": "2024-09-22T19:56:58.118Z",
+      "status": "IN_REPAIR",
+      "priority": "NORMAL",
+      "createdAt": "2025-09-22T19:56:58.118Z",
+      "assignedAt": "2025-09-22T21:56:58.118Z",
+      "startedAt": null,
+      "completedAt": null,
+      "closedAt": null,
+      "slaDueDate": "2025-10-01T19:56:58.118Z",
+      "isOverdue": false,
+      "finalNotes": null,
+      "customerSatisfaction": null,
+      "updatedAt": "2025-09-30T19:56:58.338Z"
+    },
+    {
+      "id": 9,
+      "requestNumber": "REQ240930-009",
+      "customerId": 3,
+      "productId": 3,
+      "departmentId": 1,
+      "assignedTechnicianId": 8,
+      "receivedById": 1,
+      "issueDescription": "Battery not holding charge properly",
+      "executionMethod": "WORKSHOP",
+      "warrantyStatus": "OUT_OF_WARRANTY",
+      "purchaseDate": "2024-09-21T19:56:58.118Z",
+      "status": "ASSIGNED",
+      "priority": "NORMAL",
+      "createdAt": "2025-09-21T19:56:58.118Z",
+      "assignedAt": "2025-09-21T21:56:58.118Z",
+      "startedAt": null,
+      "completedAt": null,
+      "closedAt": null,
+      "slaDueDate": "2025-10-01T19:56:58.118Z",
+      "isOverdue": false,
+      "finalNotes": null,
+      "customerSatisfaction": null,
+      "updatedAt": "2025-09-30T19:56:58.370Z"
+    },
+    {
+      "id": 10,
+      "requestNumber": "REQ240930-010",
+      "customerId": 5,
+      "productId": 5,
+      "departmentId": 4,
+      "assignedTechnicianId": 5,
+      "receivedById": 1,
+      "issueDescription": "Installation support and configuration needed",
+      "executionMethod": "WORKSHOP",
+      "warrantyStatus": "UNDER_WARRANTY",
+      "purchaseDate": "2024-09-20T19:56:58.118Z",
+      "status": "UNDER_INSPECTION",
+      "priority": "NORMAL",
+      "createdAt": "2025-09-20T19:56:58.118Z",
+      "assignedAt": "2025-09-20T21:56:58.118Z",
+      "startedAt": null,
+      "completedAt": null,
+      "closedAt": null,
+      "slaDueDate": "2025-09-27T19:56:58.118Z",
+      "isOverdue": true,
+      "finalNotes": null,
+      "customerSatisfaction": null,
+      "updatedAt": "2025-09-30T19:56:58.389Z"
+    },
+    {
+      "id": 11,
+      "requestNumber": "REQ240930-011",
+      "customerId": 1,
+      "productId": 6,
+      "departmentId": 3,
+      "assignedTechnicianId": null,
+      "receivedById": 1,
+      "issueDescription": "Regular maintenance and cleaning service",
+      "executionMethod": "WORKSHOP",
+      "warrantyStatus": "UNDER_WARRANTY",
+      "purchaseDate": "2024-09-19T19:56:58.118Z",
+      "status": "NEW",
+      "priority": "NORMAL",
+      "createdAt": "2025-09-19T19:56:58.118Z",
+      "assignedAt": null,
+      "startedAt": null,
+      "completedAt": null,
+      "closedAt": null,
+      "slaDueDate": "2025-09-26T19:56:58.118Z",
+      "isOverdue": true,
+      "finalNotes": null,
+      "customerSatisfaction": null,
+      "updatedAt": "2025-09-30T19:56:58.422Z"
+    },
+    {
+      "id": 12,
+      "requestNumber": "REQ240930-012",
+      "customerId": 4,
+      "productId": 1,
+      "departmentId": 2,
+      "assignedTechnicianId": null,
+      "receivedById": 1,
+      "issueDescription": "Upgrade and optimization requirements",
+      "executionMethod": "ON_SITE",
+      "warrantyStatus": "OUT_OF_WARRANTY",
+      "purchaseDate": "2024-09-18T19:56:58.118Z",
+      "status": "NEW",
+      "priority": "NORMAL",
+      "createdAt": "2025-09-18T19:56:58.118Z",
+      "assignedAt": null,
+      "startedAt": null,
+      "completedAt": null,
+      "closedAt": null,
+      "slaDueDate": "2025-09-30T19:56:58.118Z",
+      "isOverdue": false,
+      "finalNotes": null,
+      "customerSatisfaction": null,
+      "updatedAt": "2025-09-30T19:56:58.455Z"
+    },
+    {
+      "id": 13,
+      "requestNumber": "REQ240930-013",
+      "customerId": 2,
+      "productId": 2,
+      "departmentId": 2,
+      "assignedTechnicianId": null,
+      "receivedById": 1,
+      "issueDescription": "Training needed for proper operation",
+      "executionMethod": "WORKSHOP",
+      "warrantyStatus": "UNDER_WARRANTY",
+      "purchaseDate": "2024-09-17T19:56:58.118Z",
+      "status": "NEW",
+      "priority": "NORMAL",
+      "createdAt": "2025-09-17T19:56:58.118Z",
+      "assignedAt": null,
+      "startedAt": null,
+      "completedAt": null,
+      "closedAt": null,
+      "slaDueDate": "2025-09-24T19:56:58.118Z",
+      "isOverdue": true,
+      "finalNotes": null,
+      "customerSatisfaction": null,
+      "updatedAt": "2025-09-30T19:56:58.489Z"
+    },
+    {
+      "id": 14,
+      "requestNumber": "REQ240930-014",
+      "customerId": 3,
+      "productId": 4,
+      "departmentId": 2,
+      "assignedTechnicianId": null,
+      "receivedById": 1,
+      "issueDescription": "Replacement parts installation required",
+      "executionMethod": "WORKSHOP",
+      "warrantyStatus": "UNDER_WARRANTY",
+      "purchaseDate": "2024-09-16T19:56:58.118Z",
+      "status": "NEW",
+      "priority": "NORMAL",
+      "createdAt": "2025-09-16T19:56:58.118Z",
+      "assignedAt": null,
+      "startedAt": null,
+      "completedAt": null,
+      "closedAt": null,
+      "slaDueDate": "2025-09-23T19:56:58.118Z",
+      "isOverdue": true,
+      "finalNotes": null,
+      "customerSatisfaction": null,
+      "updatedAt": "2025-09-30T19:56:58.520Z"
+    },
+    {
+      "id": 15,
+      "requestNumber": "REQ240930-015",
+      "customerId": 5,
+      "productId": 3,
+      "departmentId": 1,
+      "assignedTechnicianId": null,
+      "receivedById": 1,
+      "issueDescription": "Quality inspection and performance testing",
+      "executionMethod": "WORKSHOP",
+      "warrantyStatus": "OUT_OF_WARRANTY",
+      "purchaseDate": "2024-09-15T19:56:58.118Z",
+      "status": "NEW",
+      "priority": "NORMAL",
+      "createdAt": "2025-09-15T19:56:58.118Z",
+      "assignedAt": null,
+      "startedAt": null,
+      "completedAt": null,
+      "closedAt": null,
+      "slaDueDate": "2025-09-25T19:56:58.118Z",
+      "isOverdue": true,
+      "finalNotes": null,
+      "customerSatisfaction": null,
+      "updatedAt": "2025-09-30T19:56:58.553Z"
+    }
+  ],
+  "activities": [],
+  "costs": [],
+  "requestParts": [],
+  "notifications": []
+};
+
+async function restoreToDeployment() {
+  console.log('🚀 Restoring data to deployment database...');
+  
+  try {
+    const prisma = new PrismaClient();
+    await prisma.$connect();
+    
+    console.log('✅ Connected to deployment database');
+    
+    // Restore departments first (they have no dependencies)
+    console.log('📁 Restoring departments...');
+    for (const dept of localData.departments) {
+      await prisma.department.upsert({
+        where: { id: dept.id },
+        update: dept,
+        create: dept
+      });
+    }
+    console.log(`✅ Restored ${localData.departments.length} departments`);
+    
+    // Restore users
+    console.log('👥 Restoring users...');
+    for (const user of localData.users) {
+      await prisma.user.upsert({
+        where: { id: user.id },
+        update: user,
+        create: user
+      });
+    }
+    console.log(`✅ Restored ${localData.users.length} users`);
+    
+    // Restore customers
+    console.log('🏢 Restoring customers...');
+    for (const customer of localData.customers) {
+      await prisma.customer.upsert({
+        where: { id: customer.id },
+        update: customer,
+        create: customer
+      });
+    }
+    console.log(`✅ Restored ${localData.customers.length} customers`);
+    
+    // Restore products
+    console.log('📦 Restoring products...');
+    for (const product of localData.products) {
+      await prisma.product.upsert({
+        where: { id: product.id },
+        update: product,
+        create: product
+      });
+    }
+    console.log(`✅ Restored ${localData.products.length} products`);
+    
+    // Restore spare parts
+    console.log('🔧 Restoring spare parts...');
+    for (const part of localData.spareParts) {
+      await prisma.sparePart.upsert({
+        where: { id: part.id },
+        update: part,
+        create: part
+      });
+    }
+    console.log(`✅ Restored ${localData.spareParts.length} spare parts`);
+    
+    // Restore requests
+    console.log('📋 Restoring requests...');
+    for (const request of localData.requests) {
+      await prisma.request.upsert({
+        where: { id: request.id },
+        update: request,
+        create: request
+      });
+    }
+    console.log(`✅ Restored ${localData.requests.length} requests`);
+    
+    // Restore activities
+    console.log('📝 Restoring activities...');
+    for (const activity of localData.activities) {
+      await prisma.requestActivity.upsert({
+        where: { id: activity.id },
+        update: activity,
+        create: activity
+      });
+    }
+    console.log(`✅ Restored ${localData.activities.length} activities`);
+    
+    // Restore costs
+    console.log('💰 Restoring costs...');
+    for (const cost of localData.costs) {
+      await prisma.requestCost.upsert({
+        where: { id: cost.id },
+        update: cost,
+        create: cost
+      });
+    }
+    console.log(`✅ Restored ${localData.costs.length} costs`);
+    
+    // Restore request parts
+    console.log('🔩 Restoring request parts...');
+    for (const part of localData.requestParts) {
+      await prisma.requestPart.upsert({
+        where: { id: part.id },
+        update: part,
+        create: part
+      });
+    }
+    console.log(`✅ Restored ${localData.requestParts.length} request parts`);
+    
+    // Restore notifications
+    console.log('🔔 Restoring notifications...');
+    for (const notification of localData.notifications) {
+      await prisma.notification.upsert({
+        where: { id: notification.id },
+        update: notification,
+        create: notification
+      });
+    }
+    console.log(`✅ Restored ${localData.notifications.length} notifications`);
+    
+    console.log('🎉 Data restoration completed successfully!');
+    
+    // Verify restoration
+    const counts = {
+      departments: await prisma.department.count(),
+      users: await prisma.user.count(),
+      customers: await prisma.customer.count(),
+      products: await prisma.product.count(),
+      spareParts: await prisma.sparePart.count(),
+      requests: await prisma.request.count(),
+      activities: await prisma.requestActivity.count(),
+      costs: await prisma.requestCost.count(),
+      requestParts: await prisma.requestPart.count(),
+      notifications: await prisma.notification.count()
+    };
+    
+    console.log('\n📊 Final counts:');
+    console.table(counts);
+    
+  } catch (error) {
+    console.error('❌ Restoration failed:', error);
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
+restoreToDeployment();
