@@ -1,0 +1,4 @@
+# Trigger Production Deployment
+# This file will trigger a new deployment on Railway
+
+echo "Production deployment triggered at $(date)" > deployment-trigger.txt
