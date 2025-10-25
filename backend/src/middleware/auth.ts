@@ -120,18 +120,13 @@ export const requireRequestAccess = async (req: AuthenticatedRequest, res: Respo
 
     const { role, departmentId, id: userId } = req.user;
 
-    // Company and deputy managers can access all requests
-    if (role === UserRole.COMPANY_MANAGER || role === UserRole.DEPUTY_MANAGER) {
+    // Company, deputy managers, and section supervisors can access all requests
+    if (role === UserRole.COMPANY_MANAGER || role === UserRole.DEPUTY_MANAGER || role === UserRole.SECTION_SUPERVISOR) {
       return next();
     }
 
     // Department managers can access requests in their department
     if (role === UserRole.DEPARTMENT_MANAGER && departmentId === request.departmentId) {
-      return next();
-    }
-
-    // Section supervisors can access requests in their department
-    if (role === UserRole.SECTION_SUPERVISOR && departmentId === request.departmentId) {
       return next();
     }
 

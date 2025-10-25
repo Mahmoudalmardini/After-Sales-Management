@@ -75,8 +75,8 @@ const CreateRequestPage: React.FC = () => {
         return;
       }
       
-      // Check for backdated request date (only managers can set backdated dates)
-      if (!hasRole([UserRole.COMPANY_MANAGER, UserRole.DEPUTY_MANAGER, UserRole.DEPARTMENT_MANAGER])) {
+      // Check for backdated request date (only managers and supervisors can set backdated dates)
+      if (!hasRole([UserRole.COMPANY_MANAGER, UserRole.DEPUTY_MANAGER, UserRole.DEPARTMENT_MANAGER, UserRole.SECTION_SUPERVISOR])) {
         const requestDate = new Date(form.requestDate);
         const today = new Date();
         today.setHours(0, 0, 0, 0); // Reset time to start of day

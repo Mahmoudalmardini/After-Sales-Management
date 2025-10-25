@@ -486,8 +486,8 @@ export const updateRequestStatus = asyncHandler(async (req: AuthenticatedRequest
   const canUpdate = 
     req.user.role === UserRole.COMPANY_MANAGER ||
     req.user.role === UserRole.DEPUTY_MANAGER ||
+    req.user.role === UserRole.SECTION_SUPERVISOR ||
     (req.user.role === UserRole.DEPARTMENT_MANAGER && req.user.departmentId === request.departmentId) ||
-    (req.user.role === UserRole.SECTION_SUPERVISOR && req.user.departmentId === request.departmentId) ||
     (req.user.role === UserRole.TECHNICIAN && (request.assignedTechnicianId === req.user.id || request.receivedById === req.user.id));
 
   if (!canUpdate) {
@@ -1117,9 +1117,7 @@ export const closeRequest = asyncHandler(async (req: AuthenticatedRequest, res: 
   }
 
   // Check permissions
-  const canClose = 
-    isManagerLevel(req.user.role) ||
-    (req.user.role === UserRole.SECTION_SUPERVISOR && req.user.departmentId === request.departmentId);
+  const canClose = isManagerLevel(req.user.role);
 
   if (!canClose) {
     throw new ForbiddenError('Insufficient permissions to close request');

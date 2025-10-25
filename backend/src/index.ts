@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 import path from 'path';
+import bcrypt from 'bcryptjs';
 import { PrismaClient } from '@prisma/client';
 import { config } from './config/config';
 import { logger } from './utils/logger';
@@ -32,6 +33,48 @@ import technicianReportRoutes from './routes/technicianReport.routes';
 
 // Initialize Prisma Client
 export const prisma = new PrismaClient();
+
+// Function to ensure admin user exists
+async function ensureAdminUser() {
+  try {
+    const adminUsername = 'admin';
+    const adminPassword = 'admin123';
+    
+    // Check if admin user exists
+    const existingAdmin = await prisma.user.findUnique({
+      where: { username: adminUsername }
+    });
+
+    if (existingAdmin) {
+      logger.info(`Admin user '${adminUsername}' already exists`);
+      return;
+    }
+
+    // Create admin user
+    const hashedPassword = await bcrypt.hash(adminPassword, 12);
+    
+    const adminUser = await prisma.user.create({
+      data: {
+        username: adminUsername,
+        email: 'admin@company.com',
+        passwordHash: hashedPassword,
+        firstName: 'System',
+        lastName: 'Administrator',
+        phone: '+963911234567',
+        role: 'COMPANY_MANAGER',
+        isActive: true,
+        preferredCurrency: 'SYP'
+      }
+    });
+
+    logger.info(`✅ Admin user '${adminUsername}' created successfully with password '${adminPassword}'`);
+    logger.info(`Admin user ID: ${adminUser.id}, Role: ${adminUser.role}`);
+    
+  } catch (error) {
+    logger.error('Failed to ensure admin user exists:', error);
+    // Don't throw error to prevent server startup failure
+  }
+}
 
 const app = express();
 
@@ -159,6 +202,9 @@ async function startServer() {
     // Test database connection
     await prisma.$connect();
     logger.info('Connected to database successfully');
+
+    // Ensure admin user exists
+    await ensureAdminUser();
 
     app.listen(PORT, () => {
       logger.info(`🚀 Server running on port ${PORT}`);
