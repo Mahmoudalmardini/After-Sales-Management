@@ -25,8 +25,8 @@ const AddReportModal: React.FC<AddReportModalProps> = ({
     reportContent: '',
     currentStatus: '',
     partsUsed: '',
-    sendToSupervisor: false,
-    sendToAdmin: false,
+    sendToSupervisor: true,
+    sendToAdmin: true,
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -41,7 +41,11 @@ const AddReportModal: React.FC<AddReportModalProps> = ({
     try {
       setLoading(true);
       const { technicianReportsAPI } = await import('../../services/api');
-      await technicianReportsAPI.createTechnicianReport(form);
+      await technicianReportsAPI.createTechnicianReport({
+        ...form,
+        sendToSupervisor: true,
+        sendToAdmin: true,
+      });
       onReportCreated();
       onClose();
       setForm({
@@ -49,8 +53,8 @@ const AddReportModal: React.FC<AddReportModalProps> = ({
         reportContent: '',
         currentStatus: '',
         partsUsed: '',
-        sendToSupervisor: false,
-        sendToAdmin: false,
+        sendToSupervisor: true,
+        sendToAdmin: true,
       });
     } catch (e: any) {
       setError(e.message || t('reports.error'));
@@ -151,33 +155,7 @@ const AddReportModal: React.FC<AddReportModalProps> = ({
                 </div>
               </div>
 
-              <div className="space-y-3">
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    name="sendToSupervisor"
-                    checked={form.sendToSupervisor}
-                    onChange={handleChange}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                  />
-                  <label className="ml-2 block text-sm text-gray-700">
-                    Send to Supervisor
-                  </label>
-                </div>
-
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    name="sendToAdmin"
-                    checked={form.sendToAdmin}
-                    onChange={handleChange}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                  />
-                  <label className="ml-2 block text-sm text-gray-700">
-                    Send to Admin
-                  </label>
-                </div>
-              </div>
+              {/* Sending is automatic to Admin and Supervisor */}
 
               <div className="flex justify-end space-x-3 pt-4">
                 <button

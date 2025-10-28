@@ -8,7 +8,7 @@ const prisma = new PrismaClient();
 
 export const createTechnicianReport = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const { requestId, reportContent, currentStatus, partsUsed, sendToSupervisor, sendToAdmin }: CreateTechnicianReportForm = req.body;
+    const { requestId, reportContent, currentStatus, partsUsed }: CreateTechnicianReportForm = req.body;
     const technicianId = req.user?.id;
 
     if (!technicianId) {
@@ -45,8 +45,8 @@ export const createTechnicianReport = async (req: AuthenticatedRequest, res: Res
         reportContent: reportContent.trim(),
         currentStatus,
         partsUsed,
-        sendToSupervisor: sendToSupervisor || false,
-        sendToAdmin: sendToAdmin || false,
+        sendToSupervisor: true,
+        sendToAdmin: true,
       },
       include: {
         request: {
@@ -79,18 +79,16 @@ export const createTechnicianReport = async (req: AuthenticatedRequest, res: Res
       `Created report for request ${request.requestNumber}`
     );
 
-    // Send notifications if requested
-    if (sendToSupervisor || sendToAdmin) {
+    // Always notify admin and supervisor
+    {
       // Get supervisors and admins
       const recipients = await prisma.user.findMany({
         where: {
           OR: [
-            ...(sendToSupervisor ? [{ role: 'SECTION_SUPERVISOR' }] : []),
-            ...(sendToAdmin ? [
-              { role: 'COMPANY_MANAGER' },
-              { role: 'DEPUTY_MANAGER' },
-              { role: 'DEPARTMENT_MANAGER' }
-            ] : [])
+            { role: 'SECTION_SUPERVISOR' },
+            { role: 'COMPANY_MANAGER' },
+            { role: 'DEPUTY_MANAGER' },
+            { role: 'DEPARTMENT_MANAGER' }
           ]
         }
       });
