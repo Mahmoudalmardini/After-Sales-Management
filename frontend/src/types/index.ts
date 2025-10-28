@@ -61,7 +61,6 @@ export interface Product {
   category: string;
   departmentId: number;
   department?: Department;
-  warrantyMonths: number;
   createdAt: string;
 }
 
@@ -285,7 +284,6 @@ export interface CreateProductForm {
   serialNumber?: string;
   category: string;
   departmentId: number;
-  warrantyMonths: number;
 }
 
 export interface CreateDepartmentForm {

@@ -13,7 +13,7 @@ const ProductsPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ name: '', model: '', serialNumber: '', category: '', departmentId: '', warrantyMonths: 12 });
+  const [form, setForm] = useState({ name: '', model: '', serialNumber: '', category: '', departmentId: '' });
 
   // Check if user can create products (admin and supervisor roles)
   const canCreateProduct = hasRole([UserRole.COMPANY_MANAGER, UserRole.DEPUTY_MANAGER, UserRole.DEPARTMENT_MANAGER, UserRole.SECTION_SUPERVISOR]);
@@ -52,11 +52,10 @@ const ProductsPage: React.FC = () => {
       await productsAPI.createProduct({
         ...form,
         departmentId: Number(form.departmentId),
-        warrantyMonths: Number(form.warrantyMonths) || 12,
         serialNumber: form.serialNumber || undefined,
       });
       setShowForm(false);
-      setForm({ name: '', model: '', serialNumber: '', category: '', departmentId: '', warrantyMonths: 12 });
+      setForm({ name: '', model: '', serialNumber: '', category: '', departmentId: '' });
       await load();
     } catch (e: any) {
       setError(e.message || 'Failed to create product');
@@ -97,7 +96,7 @@ const ProductsPage: React.FC = () => {
               <option value="">{t('products.department') || 'Department'}</option>
               {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
             </select>
-            <input className="input" type="number" min={0} placeholder={t('products.warranty') || 'Warranty (months)'} value={form.warrantyMonths} onChange={e=>setForm(f=>({...f, warrantyMonths: Number(e.target.value)}))} />
+            {/* warranty removed */}
             <div className="md:col-span-3 flex gap-2">
               <button className="btn-primary" type="submit" disabled={loading}>{loading ? t('common.loading') : t('products.save')}</button>
               <button className="btn" type="button" onClick={()=>setShowForm(false)}>{t('products.cancel')}</button>
@@ -118,14 +117,14 @@ const ProductsPage: React.FC = () => {
                   <th className="th">{t('products.serial') || 'Serial Number'}</th>
                   <th className="th">{t('products.category') || 'Category'}</th>
                   <th className="th">{t('products.department') || 'Department'}</th>
-                  <th className="th">{t('products.warranty') || 'Warranty (months)'}</th>
+                  {/* warranty column removed */}
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {loading ? (
-                  <tr><td colSpan={6} className="py-8 text-center text-gray-500">{t('products.loading')}</td></tr>
+                  <tr><td colSpan={5} className="py-8 text-center text-gray-500">{t('products.loading')}</td></tr>
                 ) : products.length === 0 ? (
-                  <tr><td colSpan={6} className="py-8 text-center text-gray-500">{t('products.empty')}</td></tr>
+                  <tr><td colSpan={5} className="py-8 text-center text-gray-500">{t('products.empty')}</td></tr>
                 ) : (
                   products.map(p => (
                     <tr key={p.id} className="hover:bg-gray-50">
@@ -134,7 +133,6 @@ const ProductsPage: React.FC = () => {
                       <td className="td text-gray-600">{p.serialNumber || '-'}</td>
                       <td className="td">{p.category}</td>
                       <td className="td">{p.department?.name}</td>
-                      <td className="td">{p.warrantyMonths} {t('products.months') || 'months'}</td>
                     </tr>
                   ))
                 )}

@@ -70,7 +70,7 @@ router.post('/', authenticateToken, asyncHandler(async (req: AuthenticatedReques
     throw new ValidationError('Insufficient permissions to create products');
   }
 
-  const { name, model, serialNumber, category, departmentId, warrantyMonths = 12 } = req.body;
+  const { name, model, serialNumber, category, departmentId } = req.body;
 
   if (!name || !model || !category || !departmentId) {
     throw new ValidationError('name, model, category, departmentId are required');
@@ -89,7 +89,6 @@ router.post('/', authenticateToken, asyncHandler(async (req: AuthenticatedReques
       serialNumber: serialNumber || null,
       category,
       departmentId: Number(departmentId),
-      warrantyMonths: Number(warrantyMonths) || 12,
     },
     include: { department: true },
   });
