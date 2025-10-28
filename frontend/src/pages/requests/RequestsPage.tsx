@@ -23,6 +23,7 @@ const RequestsPage: React.FC = () => {
   const [departmentId, setDepartmentId] = useState<string>(searchParams.get('departmentId') || '');
   const [assignedTechnicianId, setAssignedTechnicianId] = useState<string>(searchParams.get('assignedTechnicianId') || '');
   const [isOverdue, setIsOverdue] = useState<boolean>(searchParams.get('isOverdue') === 'true');
+  const [completion, setCompletion] = useState<string>(searchParams.get('completion') || '');
   const [search, setSearch] = useState<string>(searchParams.get('search') || '');
   
   const [departments, setDepartments] = useState<Department[]>([]);
@@ -51,9 +52,10 @@ const RequestsPage: React.FC = () => {
     if (departmentId) sp.departmentId = departmentId;
     if (assignedTechnicianId) sp.assignedTechnicianId = assignedTechnicianId;
     if (isOverdue) sp.isOverdue = 'true';
+    if (completion) sp.completion = completion;
     if (search) sp.search = search;
     setSearchParams(sp, { replace: true });
-  }, [page, limit, status, priority, warrantyStatus, departmentId, assignedTechnicianId, isOverdue, search, setSearchParams]);
+  }, [page, limit, status, priority, warrantyStatus, departmentId, assignedTechnicianId, isOverdue, completion, search, setSearchParams]);
 
   // Load departments and technicians
   useEffect(() => {
@@ -119,12 +121,19 @@ const RequestsPage: React.FC = () => {
 
   const filteredRequests = useMemo(() => {
     const searchValue = search.trim().toLowerCase();
+    const matchesCompletion = (s: RequestStatus) => {
+      if (completion === 'COMPLETED') return s === 'COMPLETED' || s === 'CLOSED';
+      if (completion === 'INCOMPLETE') return s !== 'COMPLETED' && s !== 'CLOSED';
+      return true;
+    };
+
+    const base = requests.filter(r => matchesCompletion(r.status));
 
     if (!searchValue) {
-      return requests;
+      return base;
     }
 
-    return requests.filter((requestItem) => {
+    return base.filter((requestItem) => {
       const requestNumber = requestItem.requestNumber?.toLowerCase() || '';
       const issueDescription = requestItem.issueDescription?.toLowerCase() || '';
       const customerName = requestItem.customer?.name?.toLowerCase() || '';
@@ -139,7 +148,7 @@ const RequestsPage: React.FC = () => {
         productName.includes(searchValue)
       );
     });
-  }, [requests, search]);
+  }, [requests, search, completion]);
 
   const filteredTotal = filteredRequests.length;
   const totalPages = Math.max(1, Math.ceil(filteredTotal / limit));
@@ -213,6 +222,15 @@ const RequestsPage: React.FC = () => {
                 <option value="">{t('requests.filters.warranty.all')}</option>
                 <option value="UNDER_WARRANTY">{lang === 'ar' ? 'ضمن الكفالة' : 'Under warranty'}</option>
                 <option value="OUT_OF_WARRANTY">{lang === 'ar' ? 'خارج الكفالة' : 'Out of warranty'}</option>
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label className="form-label" htmlFor="completion-filter">{lang === 'ar' ? 'حالة الإكمال' : 'Completion'}</label>
+              <select id="completion-filter" value={completion} onChange={(e) => { setPage(1); setCompletion(e.target.value); }} className="select-field">
+                <option value="">{lang === 'ar' ? 'الكل' : 'All'}</option>
+                <option value="INCOMPLETE">{lang === 'ar' ? 'غير مُكتمل' : 'Incomplete'}</option>
+                <option value="COMPLETED">{lang === 'ar' ? 'مُكتمل' : 'Completed'}</option>
               </select>
             </div>
 
