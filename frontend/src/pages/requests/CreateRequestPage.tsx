@@ -75,14 +75,14 @@ const CreateRequestPage: React.FC = () => {
         return;
       }
       
-      // Check for backdated request date (only managers and supervisors can set backdated dates)
-      if (!hasRole([UserRole.COMPANY_MANAGER, UserRole.DEPUTY_MANAGER, UserRole.DEPARTMENT_MANAGER, UserRole.SECTION_SUPERVISOR])) {
+      // Check for backdated request date (only admin roles can set backdated dates)
+      if (!hasRole([UserRole.COMPANY_MANAGER, UserRole.DEPUTY_MANAGER])) {
         const requestDate = new Date(form.requestDate);
         const today = new Date();
         today.setHours(0, 0, 0, 0); // Reset time to start of day
         
         if (requestDate < today) {
-          setError('لا يمكن إدخال تاريخ طلب سابق. فقط المديرين يمكنهم إدخال تواريخ سابقة.');
+          setError('لا يمكن إدخال تاريخ طلب سابق. فقط المسؤول يمكنه إدخال تواريخ سابقة.');
           setLoading(false);
           return;
         }
@@ -201,11 +201,11 @@ const CreateRequestPage: React.FC = () => {
                 onChange={handleChange} 
                 className="input-field"
                 required
-                max={hasRole([UserRole.COMPANY_MANAGER, UserRole.DEPUTY_MANAGER, UserRole.DEPARTMENT_MANAGER]) ? undefined : new Date().toISOString().split('T')[0]}
+                max={hasRole([UserRole.COMPANY_MANAGER, UserRole.DEPUTY_MANAGER]) ? undefined : new Date().toISOString().split('T')[0]}
               />
               <p className="form-help">
-                {hasRole([UserRole.COMPANY_MANAGER, UserRole.DEPUTY_MANAGER, UserRole.DEPARTMENT_MANAGER]) 
-                  ? 'تاريخ الطلب - المديرين يمكنهم إدخال تواريخ سابقة'
+                {hasRole([UserRole.COMPANY_MANAGER, UserRole.DEPUTY_MANAGER]) 
+                  ? 'تاريخ الطلب - يمكن للمسؤول إدخال تواريخ سابقة'
                   : 'تاريخ الطلب - لا يمكن إدخال تاريخ سابق'
                 }
               </p>
