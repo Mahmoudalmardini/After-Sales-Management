@@ -738,6 +738,14 @@ export const assignTechnician = asyncHandler(async (req: AuthenticatedRequest, r
     throw new NotFoundError('Request not found');
   }
 
+  // If the request is CLOSED, only company or deputy managers can assign
+  if (
+    request.status === RequestStatus.CLOSED &&
+    !(req.user.role === UserRole.COMPANY_MANAGER || req.user.role === UserRole.DEPUTY_MANAGER)
+  ) {
+    throw new ForbiddenError('Only administrators can assign technicians to closed requests');
+  }
+
   // Store old technician info for notification
   const oldTechnician = request.assignedTechnician;
   const oldTechnicianId = request.assignedTechnicianId;
