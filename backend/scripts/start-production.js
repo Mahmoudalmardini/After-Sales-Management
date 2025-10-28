@@ -37,7 +37,8 @@ try {
   } catch (migrateError) {
     console.log('⚠️  Migration failed, trying db push...');
     try {
-      execSync('npx prisma db push', { stdio: 'inherit' });
+      // Accept potential data loss (e.g., dropping columns) intentionally in production fallback
+      execSync('npx prisma db push --accept-data-loss', { stdio: 'inherit' });
       console.log('✅ Database schema synchronized');
     } catch (pushError) {
       console.error('❌ Both migration and db push failed:', pushError.message);
