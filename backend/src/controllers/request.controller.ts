@@ -66,8 +66,8 @@ export const createRequest = asyncHandler(async (req: AuthenticatedRequest, res:
     throw new ValidationError('Authentication required');
   }
 
-  // Validate required fields
-  if (!customerId || !issueDescription || !executionMethod || !warrantyStatus || !purchaseDate) {
+  // Validate required fields (purchaseDate is optional)
+  if (!customerId || !issueDescription || !executionMethod || !warrantyStatus) {
     throw new ValidationError('Missing required fields');
   }
 
@@ -143,7 +143,7 @@ export const createRequest = asyncHandler(async (req: AuthenticatedRequest, res:
       issueDescription,
       executionMethod: executionMethod as ExecutionMethod,
       warrantyStatus: warrantyStatus as WarrantyStatus,
-      purchaseDate: new Date(purchaseDate),
+      purchaseDate: purchaseDate ? new Date(purchaseDate) : null,
       priority: priority as RequestPriority,
       slaDueDate,
       status: RequestStatus.NEW,

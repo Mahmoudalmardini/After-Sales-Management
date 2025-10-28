@@ -278,7 +278,7 @@ const RequestDetailsPage: React.FC = () => {
                   <div><span className="text-gray-500">{t('details.department')}:</span> {request.department?.name}</div>
                   <div><span className="text-gray-500">{t('details.technician')}:</span> {request.assignedTechnician ? `${request.assignedTechnician.firstName} ${request.assignedTechnician.lastName}` : '-'}</div>
                   <div><span className="text-gray-500">{t('details.priority')}:</span> {request.priority}</div>
-                  <div><span className="text-gray-500">{t('details.requestDate') || 'تاريخ الطلب'}:</span> {request.purchaseDate ? new Date(request.purchaseDate).toLocaleDateString('ar-EG') : '-'}</div>
+                  <div><span className="text-gray-500">{t('details.purchaseDate') || t('create.purchaseDate') || 'تاريخ الشراء'}:</span> {request.purchaseDate ? new Date(request.purchaseDate).toLocaleDateString('ar-EG') : '-'}</div>
                   <div><span className="text-gray-500">{t('details.product')}:</span> {request.product ? `${request.product.name} - ${request.product.model}${request.product.serialNumber ? ` (${request.product.serialNumber})` : ''}` : '-'}</div>
                   <div className="col-span-2"><span className="text-gray-500">{t('details.issue')}:</span> {request.issueDescription}</div>
                 </div>

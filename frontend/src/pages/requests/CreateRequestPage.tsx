@@ -92,7 +92,8 @@ const CreateRequestPage: React.FC = () => {
         ...form,
         customerId: Number(form.customerId),
         productId: Number(form.productId),
-        purchaseDate: form.purchaseDate,
+        // Send undefined when empty to avoid backend validation
+        purchaseDate: form.purchaseDate || undefined,
       };
       const resp = await requestsAPI.createRequest(payload as any);
       const newId = resp.request?.id;
@@ -176,7 +177,7 @@ const CreateRequestPage: React.FC = () => {
             </div>
 
             <div className="form-group">
-              <label className="form-label required" htmlFor="purchaseDate">{t('create.purchaseDate') || 'تاريخ الشراء'}</label>
+              <label className="form-label" htmlFor="purchaseDate">{t('create.purchaseDate') || 'تاريخ الشراء'}</label>
               <input 
                 id="purchaseDate" 
                 type="date" 
@@ -184,10 +185,9 @@ const CreateRequestPage: React.FC = () => {
                 value={form.purchaseDate} 
                 onChange={handleChange} 
                 className="input-field"
-                required
               />
               <p className="form-help">
-                {t('create.purchaseDateHelp') || 'تاريخ شراء المنتج'}
+                {t('create.purchaseDateHelp') || 'تاريخ شراء المنتج (اختياري)'}
               </p>
             </div>
 
