@@ -133,13 +133,27 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Health check endpoint
 app.get('/health', async (req, res) => {
   try {
-    await prisma.$queryRaw`SELECT 1`;
-    const userCount = await prisma.user.count();
-    res.status(200).json({
-      status: 'OK',
+    // Try to check database connection, but don't fail if it's not available
+    let dbConnected = false;
+    let userCount = 0;
+    try {
+      await Promise.race([
+        prisma.$queryRaw`SELECT 1`,
+        new Promise((_, reject) => setTimeout(() => reject(new Error('DB timeout')), 3000))
+      ]);
+      userCount = await prisma.user.count().catch(() => 0);
+      dbConnected = true;
+    } catch (dbError) {
+      // Database not available - return health check anyway
+      dbConnected = false;
+    }
+    
+    const statusCode = dbConnected ? 200 : 503; // Service Unavailable if DB not connected
+    res.status(statusCode).json({
+      status: dbConnected ? 'OK' : 'DEGRADED',
       message: 'After-Sales Service API is running',
       timestamp: new Date().toISOString(),
-      db: { connected: true, userCount },
+      db: { connected: dbConnected, userCount },
     });
   } catch (e) {
     res.status(500).json({
@@ -199,17 +213,52 @@ const PORT = config.port || 3001;
 
 async function startServer() {
   try {
-    // Test database connection
-    await prisma.$connect();
-    logger.info('Connected to database successfully');
+    // Test database connection with retry logic
+    let dbConnected = false;
+    const maxDbRetries = 5;
+    const dbRetryDelay = 3000; // 3 seconds
+    
+    for (let attempt = 1; attempt <= maxDbRetries; attempt++) {
+      try {
+        await Promise.race([
+          prisma.$connect(),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Connection timeout')), 5000)
+          )
+        ]);
+        logger.info('Connected to database successfully');
+        dbConnected = true;
+        break;
+      } catch (dbError) {
+        if (attempt === maxDbRetries) {
+          logger.warn(`Failed to connect to database after ${maxDbRetries} attempts:`, dbError);
+          logger.warn('Server will start anyway - database operations will fail until connection is established');
+          logger.warn('Make sure DATABASE_URL is correct and PostgreSQL service is running');
+        } else {
+          logger.warn(`Database connection attempt ${attempt}/${maxDbRetries} failed, retrying in ${dbRetryDelay}ms...`);
+          await new Promise(resolve => setTimeout(resolve, dbRetryDelay));
+        }
+      }
+    }
 
-    // Ensure admin user exists
-    await ensureAdminUser();
+    // Ensure admin user exists (only if database is connected)
+    if (dbConnected) {
+      try {
+        await ensureAdminUser();
+      } catch (adminError) {
+        logger.warn('Failed to ensure admin user:', adminError);
+        // Continue anyway - admin user setup can be retried later
+      }
+    }
 
+    // Start server even if database isn't connected
     app.listen(PORT, () => {
       logger.info(`🚀 Server running on port ${PORT}`);
       logger.info(`📱 Environment: ${config.nodeEnv}`);
       logger.info(`🔗 Health check: http://localhost:${PORT}/health`);
+      if (!dbConnected) {
+        logger.warn('⚠️  Database not connected - some features may not work');
+      }
     });
   } catch (error) {
     logger.error('Failed to start server:', error);
