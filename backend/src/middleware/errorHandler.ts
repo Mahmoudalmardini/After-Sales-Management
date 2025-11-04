@@ -65,6 +65,21 @@ export const errorHandler = (
   } else if (error instanceof Prisma.PrismaClientValidationError) {
     statusCode = 400;
     message = 'Invalid data provided';
+  } else if (error instanceof Prisma.PrismaClientInitializationError) {
+    // Handle database connection errors
+    statusCode = 503; // Service Unavailable
+    message = 'Database connection failed. Please try again later.';
+    logger.error('Database connection error:', {
+      code: (error as any).errorCode,
+      message: error.message,
+    });
+  } else if (error.name === 'PrismaClientInitializationError' || error.message.includes("Can't reach database server")) {
+    // Catch Prisma initialization errors that might not be instanceof
+    statusCode = 503; // Service Unavailable
+    message = 'Database connection failed. Please try again later.';
+    logger.error('Database connection error:', {
+      message: error.message,
+    });
   } else if (error.name === 'ValidationError') {
     statusCode = 400;
     message = 'Validation failed';
