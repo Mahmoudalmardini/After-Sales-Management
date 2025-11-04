@@ -1,3 +1,9 @@
+[phases.setup]
+nixPkgs = ['nodejs_18', 'npm-9_x']
+
+[phases.install]
+cmds = ['npm install']
+
 [phases.build]
 cmds = [
   "cd frontend && npm install && npm run build",
@@ -5,7 +11,7 @@ cmds = [
   "cd backend && npx prisma generate",
   "cd backend && npm run build",
   "mkdir -p backend/dist/public",
-  "cp -r frontend/build/* backend/dist/public/ || xcopy frontend\\build\\* backend\\dist\\public\\ /E /I /H /Y"
+  "cp -r frontend/build/* backend/dist/public/ 2>/dev/null || cp -r frontend/build/. backend/dist/public/"
 ]
 
 [start]
