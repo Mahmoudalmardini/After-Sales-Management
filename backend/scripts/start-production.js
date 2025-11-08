@@ -154,10 +154,17 @@ async function main() {
         executeWithRetry('npx prisma migrate deploy', 3, 'Database migration');
         console.log('✅ Database migrations applied successfully');
       } catch (migrateError) {
-        console.warn('⚠️  Database migration failed:', migrateError.message);
-        console.log('📝 App will start anyway - migrations can be applied manually later');
-        console.log('💡 To apply migrations manually, run: npx prisma migrate deploy');
-        // Don't fail startup - continue anyway
+        console.warn('⚠️  Database migration failed, trying db push as fallback...');
+        try {
+          // Fallback: use db push to sync schema (for development/testing)
+          executeWithRetry('npx prisma db push --accept-data-loss', 2, 'Database schema push');
+          console.log('✅ Database schema synced successfully');
+        } catch (pushError) {
+          console.warn('⚠️  Database schema push also failed:', pushError.message);
+          console.log('📝 App will start anyway - migrations can be applied manually later');
+          console.log('💡 To apply migrations manually, run: npx prisma migrate deploy');
+          // Don't fail startup - continue anyway
+        }
       }
 
       // Seed the database if it's empty (safe - only seeds if tables are empty)

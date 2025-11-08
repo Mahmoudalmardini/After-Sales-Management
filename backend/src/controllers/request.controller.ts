@@ -68,8 +68,13 @@ export const createRequest = asyncHandler(async (req: AuthenticatedRequest, res:
   }
 
   // Validate required fields (purchaseDate is optional)
-  if (!customerId || !issueDescription || !executionMethod || !warrantyStatus || !serialNumber || !serialNumber.trim()) {
+  if (!customerId || !issueDescription || !executionMethod || !warrantyStatus) {
     throw new ValidationError('Missing required fields');
+  }
+  
+  // Validate serial number if provided
+  if (!serialNumber || (typeof serialNumber === 'string' && !serialNumber.trim())) {
+    throw new ValidationError('Serial number is required');
   }
 
   // Validate customer exists
@@ -133,23 +138,31 @@ export const createRequest = asyncHandler(async (req: AuthenticatedRequest, res:
     executionMethod as ExecutionMethod
   );
 
+  // Prepare request data
+  const requestData: any = {
+    requestNumber,
+    customerId: parseInt(customerId),
+    productId: productId ? parseInt(productId) : null,
+    departmentId,
+    receivedById: req.user.id,
+    issueDescription,
+    executionMethod: executionMethod as ExecutionMethod,
+    warrantyStatus: warrantyStatus as WarrantyStatus,
+    purchaseDate: purchaseDate ? new Date(purchaseDate) : null,
+    priority: priority as RequestPriority,
+    slaDueDate,
+    status: RequestStatus.NEW,
+  };
+
+  // Add serialNumber only if it's provided (column may not exist if migration hasn't run)
+  // This allows the app to work even if migration hasn't been applied yet
+  if (serialNumber && typeof serialNumber === 'string' && serialNumber.trim()) {
+    requestData.serialNumber = serialNumber.trim();
+  }
+
   // Create the request
   const newRequest = await prisma.request.create({
-    data: {
-      requestNumber,
-      customerId: parseInt(customerId),
-      productId: productId ? parseInt(productId) : null,
-      departmentId,
-      receivedById: req.user.id,
-      issueDescription,
-      executionMethod: executionMethod as ExecutionMethod,
-      warrantyStatus: warrantyStatus as WarrantyStatus,
-      purchaseDate: purchaseDate ? new Date(purchaseDate) : null,
-      priority: priority as RequestPriority,
-      slaDueDate,
-      status: RequestStatus.NEW,
-      serialNumber: serialNumber && serialNumber.trim() ? serialNumber.trim() : null,
-    },
+    data: requestData,
     include: {
       customer: true,
       product: true,
