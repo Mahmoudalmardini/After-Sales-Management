@@ -74,6 +74,12 @@ const CreateRequestPage: React.FC = () => {
         return;
       }
       
+      if (!form.serialNumber || !form.serialNumber.trim()) {
+        setError('يجب إدخال الرقم التسلسلي');
+        setLoading(false);
+        return;
+      }
+      
       // Check for future request date (not allowed for anyone)
       const requestDate = new Date(form.requestDate);
       requestDate.setHours(0, 0, 0, 0); // Reset time to start of day
@@ -207,7 +213,7 @@ const CreateRequestPage: React.FC = () => {
             </div>
 
             <div className="form-group">
-              <label className="form-label" htmlFor="serialNumber">{t('create.serialNumber') || 'الرقم التسلسلي'}</label>
+              <label className="form-label required" htmlFor="serialNumber">{t('create.serialNumber') || 'الرقم التسلسلي'}</label>
               <input 
                 id="serialNumber" 
                 type="text" 
@@ -218,9 +224,10 @@ const CreateRequestPage: React.FC = () => {
                 placeholder={t('create.serialNumberPlaceholder') || 'أدخل الرقم التسلسلي (أرقام وحروف)'}
                 pattern="[A-Za-z0-9]*"
                 title={t('create.serialNumberHelp') || 'يمكن إدخال أرقام وحروف فقط'}
+                required
               />
               <p className="form-help">
-                {t('create.serialNumberHelp') || 'الرقم التسلسلي للمنتج (اختياري - أرقام وحروف فقط)'}
+                {t('create.serialNumberHelp') || 'الرقم التسلسلي للمنتج (أرقام وحروف فقط)'}
               </p>
             </div>
           </div>
