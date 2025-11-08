@@ -24,6 +24,7 @@ const CreateRequestPage: React.FC = () => {
     purchaseDate: '',
     requestDate: '',
     priority: 'NORMAL',
+    serialNumber: '',
   });
 
   useEffect(() => {
@@ -75,17 +76,16 @@ const CreateRequestPage: React.FC = () => {
         return;
       }
       
-      // Check for backdated request date (only admin roles can set backdated dates)
-      if (!hasRole([UserRole.COMPANY_MANAGER, UserRole.DEPUTY_MANAGER])) {
-        const requestDate = new Date(form.requestDate);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0); // Reset time to start of day
-        
-        if (requestDate < today) {
-          setError('لا يمكن إدخال تاريخ طلب سابق. فقط المسؤول يمكنه إدخال تواريخ سابقة.');
-          setLoading(false);
-          return;
-        }
+      // Check for future request date (not allowed for anyone)
+      const requestDate = new Date(form.requestDate);
+      requestDate.setHours(0, 0, 0, 0); // Reset time to start of day
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // Reset time to start of day
+      
+      if (requestDate > today) {
+        setError('لا يمكن إدخال تاريخ طلب في المستقبل. يجب أن يكون تاريخ الطلب اليوم أو تاريخ سابق.');
+        setLoading(false);
+        return;
       }
       
       const payload = {
@@ -201,13 +201,28 @@ const CreateRequestPage: React.FC = () => {
                 onChange={handleChange} 
                 className="input-field"
                 required
-                max={hasRole([UserRole.COMPANY_MANAGER, UserRole.DEPUTY_MANAGER]) ? undefined : new Date().toISOString().split('T')[0]}
+                max={new Date().toISOString().split('T')[0]}
               />
               <p className="form-help">
-                {hasRole([UserRole.COMPANY_MANAGER, UserRole.DEPUTY_MANAGER]) 
-                  ? 'تاريخ الطلب - يمكن للمسؤول إدخال تواريخ سابقة'
-                  : 'تاريخ الطلب - لا يمكن إدخال تاريخ سابق'
-                }
+                {t('create.requestDateHelp') || 'تاريخ الطلب - لا يمكن إدخال تاريخ في المستقبل'}
+              </p>
+            </div>
+
+            <div className="form-group">
+              <label className="form-label" htmlFor="serialNumber">{t('create.serialNumber') || 'الرقم التسلسلي'}</label>
+              <input 
+                id="serialNumber" 
+                type="text" 
+                name="serialNumber" 
+                value={form.serialNumber || ''} 
+                onChange={handleChange} 
+                className="input-field"
+                placeholder={t('create.serialNumberPlaceholder') || 'أدخل الرقم التسلسلي (أرقام وحروف)'}
+                pattern="[A-Za-z0-9]*"
+                title={t('create.serialNumberHelp') || 'يمكن إدخال أرقام وحروف فقط'}
+              />
+              <p className="form-help">
+                {t('create.serialNumberHelp') || 'الرقم التسلسلي للمنتج (اختياري - أرقام وحروف فقط)'}
               </p>
             </div>
           </div>

@@ -267,6 +267,7 @@ export interface CreateRequestForm {
   purchaseDate?: string;
   requestDate: string;
   priority: RequestPriority;
+  serialNumber?: string;
 }
 
 export interface CreateCustomerForm {

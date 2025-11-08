@@ -111,6 +111,7 @@ model Request {
   executionMethod      String
   warrantyStatus       String
   purchaseDate         DateTime?
+  serialNumber         String?
 
   // Status management
   status               String            @default("NEW")

@@ -60,6 +60,7 @@ export const createRequest = asyncHandler(async (req: AuthenticatedRequest, res:
     warrantyStatus,
     purchaseDate,
     priority = RequestPriority.NORMAL,
+    serialNumber,
   } = req.body;
 
   if (!req.user) {
@@ -147,6 +148,7 @@ export const createRequest = asyncHandler(async (req: AuthenticatedRequest, res:
       priority: priority as RequestPriority,
       slaDueDate,
       status: RequestStatus.NEW,
+      serialNumber: serialNumber && serialNumber.trim() ? serialNumber.trim() : null,
     },
     include: {
       customer: true,
