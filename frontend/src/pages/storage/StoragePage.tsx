@@ -76,11 +76,12 @@ const StoragePage: React.FC = () => {
       const payload: CreateSparePartForm = {
         ...form,
         quantity: typeof form.quantity === 'number' ? form.quantity : 0,
+        presentPieces: typeof form.quantity === 'number' ? form.quantity : 0, // Use quantity as presentPieces
       };
       
       // Validate required fields
-      if (!payload.name || payload.presentPieces === undefined) {
-        setError('Name and number of present pieces are required');
+      if (!payload.name) {
+        setError('Name is required');
         setLoading(false);
         return;
       }
@@ -263,19 +264,6 @@ const StoragePage: React.FC = () => {
               <input
                 className="input"
                 type="text"
-                inputMode="numeric"
-                pattern="[0-9]+"
-                placeholder={t('storage.presentPieces')}
-                value={form.presentPieces}
-                onChange={(e) => {
-                  const value = Number(e.target.value.replace(/[^0-9]/g, '')) || 0;
-                  setForm({ ...form, presentPieces: value });
-                }}
-                required
-              />
-              <input
-                className="input"
-                type="text"
                 inputMode="decimal"
                 pattern="[0-9]+(\.[0-9]{1,2})?"
                 placeholder={t('storage.unitPrice')}
@@ -285,7 +273,6 @@ const StoragePage: React.FC = () => {
                   const numValue = parseFloat(value) || 0;
                   setForm({ ...form, unitPrice: numValue });
                 }}
-                required
               />
               <div>
                 <label htmlFor="currency" className="block text-sm text-gray-700 mb-1">

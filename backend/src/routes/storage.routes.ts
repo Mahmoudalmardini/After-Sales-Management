@@ -306,17 +306,19 @@ router.post('/', async (req: any, res) => {
     return;
   }
 
-  const { presentPieces = 0 } = req.body;
+  const { presentPieces, quantity: reqQuantity = 0 } = req.body;
+  // Use quantity as presentPieces if presentPieces is not provided
+  const finalPresentPieces = presentPieces !== undefined ? Number(presentPieces) : Number(reqQuantity) || 0;
 
   const sparePart = await prisma.sparePart.create({
     data: {
       name: String(name),
       partNumber: String(partNumber), // Manual part number input
-      presentPieces: Number(presentPieces) || 0, // Number of present pieces
+      presentPieces: finalPresentPieces, // Number of present pieces (from quantity)
       category: 'GENERAL', // Default category
-      quantity: typeof quantity === 'number' ? quantity : 0,
+      quantity: typeof reqQuantity === 'number' ? reqQuantity : 0,
       minQuantity: 5, // Default min quantity
-      unitPrice: Number(unitPrice) || 0,
+      unitPrice: unitPrice !== undefined && unitPrice !== null ? Number(unitPrice) : null,
       currency: 'SYP', // Default currency
       supplier: null,
       location: null,
