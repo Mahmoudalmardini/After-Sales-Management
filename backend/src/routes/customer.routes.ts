@@ -86,17 +86,6 @@ router.post('/', authenticateToken, requireRoles([UserRole.COMPANY_MANAGER, User
     return;
   }
 
-  // Validate mobile phone format if phoneType is mobile (format: +9639XXXXXXXX - 8 digits after +9639)
-  if (phoneType === 'mobile') {
-    const mobileRegex = /^\+9639\d{8}$/;
-    const cleanPhone = phone.trim();
-    if (!mobileRegex.test(cleanPhone)) {
-      const error = new ValidationError(`Mobile phone must start with +9639 and have 8 more digits (total 13 digits). Example: +963912345678. Received: "${cleanPhone}"`);
-      res.status(error.statusCode).json({ success: false, message: error.message });
-      return;
-    }
-  }
-
   const customer = await prisma.customer.create({
     data: { name, phone, email, address, city },
   });
