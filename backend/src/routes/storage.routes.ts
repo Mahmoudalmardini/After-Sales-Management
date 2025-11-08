@@ -318,7 +318,7 @@ router.post('/', async (req: any, res) => {
       category: 'GENERAL', // Default category
       quantity: typeof reqQuantity === 'number' ? reqQuantity : 0,
       minQuantity: 5, // Default min quantity
-      unitPrice: unitPrice !== undefined && unitPrice !== null ? Number(unitPrice) : null,
+      unitPrice: unitPrice !== undefined && unitPrice !== null ? Number(unitPrice) : 0,
       currency: 'SYP', // Default currency
       supplier: null,
       location: null,
