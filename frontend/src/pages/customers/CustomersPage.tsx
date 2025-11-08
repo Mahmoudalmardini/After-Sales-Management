@@ -40,17 +40,6 @@ const CustomersPage: React.FC = () => {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate phone number based on type
-    if (form.phoneType === 'mobile') {
-      // Mobile phone must start with +9639 and have 8 more digits (total format: +9639XXXXXXXX)
-      const mobileRegex = /^\+9639\d{8}$/;
-      const cleanPhone = form.phone.trim();
-      if (!mobileRegex.test(cleanPhone)) {
-        setError(`رقم الهاتف المحمول يجب أن يبدأ بـ +9639 ويتكون من 8 أرقام بعد ذلك (إجمالي 13 رقماً). مثال: +963912345678. الرقم المدخل: "${cleanPhone}"`);
-        return;
-      }
-    }
-    
     // Validate email format if provided
     if (form.email && !form.email.includes('@')) {
       setError('البريد الإلكتروني يجب أن يحتوي على @');
@@ -106,7 +95,7 @@ const CustomersPage: React.FC = () => {
               </select>
               <input 
                 className="input" 
-                placeholder={form.phoneType === 'mobile' ? '+963912345678' : 'رقم الهاتف'} 
+                placeholder="رقم الهاتف" 
                 value={form.phone} 
                 onChange={e=>{setForm(f=>({...f, phone: e.target.value})); setError(null);}} 
                 required 
