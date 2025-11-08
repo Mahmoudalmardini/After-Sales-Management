@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { requestsAPI, usersAPI, statusAPI, storageAPI } from '../../services/api';
+import { requestsAPI, usersAPI, statusAPI } from '../../services/api';
 import { AddCostForm, CloseRequestForm, CostType, Request, RequestStatus, REQUEST_STATUS_LABELS, CustomRequestStatus, UserRole } from '../../types';
 import { useI18n } from '../../contexts/I18nContext';
 import { useAuth } from '../../contexts/AuthContext';
@@ -12,8 +12,6 @@ import AddReportModal from '../../components/requests/AddReportModal';
 import TechnicianReportsSection from '../../components/requests/TechnicianReportsSection';
 
 interface CostFormState extends AddCostForm {
-  sparePartId?: string;
-  sparePartQuantity?: number;
 }
 
 const RequestDetailsPage: React.FC = () => {
@@ -32,27 +30,10 @@ const RequestDetailsPage: React.FC = () => {
   const [assignId, setAssignId] = useState<string>('');
   const [statusTo, setStatusTo] = useState<RequestStatus>('UNDER_INSPECTION');
   const [statusComment, setStatusComment] = useState('');
-  const [costForm, setCostForm] = useState<CostFormState>({ description: '', amount: 0, costType: 'PARTS', currency: getCurrentCurrency(), sparePartId: '', sparePartQuantity: undefined });
-  const [spareParts, setSpareParts] = useState<any[]>([]);
-  const [loadingSpareParts, setLoadingSpareParts] = useState(false);
+  const [costForm, setCostForm] = useState<CostFormState>({ description: '', amount: 0, costType: 'PARTS', currency: getCurrentCurrency() });
   const [showSparePartsModal, setShowSparePartsModal] = useState(false);
   const [showRequestSparePartModal, setShowRequestSparePartModal] = useState(false);
   const [showAddReportModal, setShowAddReportModal] = useState(false);
-  useEffect(() => {
-    const loadSpareParts = async () => {
-      try {
-        setLoadingSpareParts(true);
-        const response = await storageAPI.getSpareParts({ limit: 100 });
-        setSpareParts(response.data?.spareParts || []);
-      } catch (e) {
-        console.error('Error loading spare parts:', e);
-      } finally {
-        setLoadingSpareParts(false);
-      }
-    };
-
-    loadSpareParts();
-  }, []);
   const [closeForm, setCloseForm] = useState<CloseRequestForm>({ finalNotes: '', customerSatisfaction: undefined });
 
 
@@ -195,13 +176,8 @@ const RequestDetailsPage: React.FC = () => {
         currency: costForm.currency,
       };
 
-      if (costForm.sparePartId) {
-        payload.sparePartId = Number(costForm.sparePartId);
-        payload.quantity = Number(costForm.sparePartQuantity);
-      }
-
       await requestsAPI.addCost(requestId, payload);
-      setCostForm({ description: '', amount: 0, costType: 'PARTS', currency: getCurrentCurrency(), sparePartId: '', sparePartQuantity: undefined });
+      setCostForm({ description: '', amount: 0, costType: 'PARTS', currency: getCurrentCurrency() });
       await reload();
     } catch (e: any) {
       setError(e.message || t('error.failedToSave'));
@@ -386,70 +362,6 @@ const RequestDetailsPage: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="form-group">
-                    <label className="form-label" htmlFor="sparePart">اختيار قطعة الغيار (اختياري)</label>
-                    <select
-                      id="sparePart"
-                      className="select-field"
-                      value={costForm.sparePartId || ''}
-                      onChange={(e) => setCostForm(f => ({ ...f, sparePartId: e.target.value, sparePartQuantity: undefined }))}
-                      disabled={loadingSpareParts}
-                    >
-                      <option value="">بدون قطع غيار</option>
-                      {spareParts.map(part => (
-                        <option key={part.id} value={part.id}>
-                          {part.name} (المتوفر: {part.presentPieces} - {formatCurrency(part.unitPrice, part.currency as any)}/وحدة)
-                        </option>
-                      ))}
-                    </select>
-                    {loadingSpareParts && (
-                      <p className="text-xs text-gray-500 mt-1">جاري تحميل قطع الغيار...</p>
-                    )}
-                  </div>
-
-                  {costForm.sparePartId && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="form-group">
-                        <label className="form-label required" htmlFor="spareQuantity">الكمية المطلوبة</label>
-                        <input
-                          id="spareQuantity"
-                          className="input-field no-spinner"
-                          type="number"
-                          min={1}
-                          max={(() => {
-                            const part = spareParts.find(p => String(p.id) === String(costForm.sparePartId));
-                            return part ? part.presentPieces : undefined;
-                          })()}
-                          value={costForm.sparePartQuantity || ''}
-                          onChange={(e) => setCostForm(f => ({ ...f, sparePartQuantity: Number(e.target.value) || 0 }))}
-                          required
-                        />
-                        {(() => {
-                          const part = spareParts.find(p => String(p.id) === String(costForm.sparePartId));
-                          return part && (
-                            <p className="text-xs text-gray-500 mt-1">
-                              الحد الأقصى المتاح: {part.presentPieces} قطعة
-                            </p>
-                          );
-                        })()}
-                      </div>
-                      <div className="form-group">
-                        <label className="form-label" htmlFor="amountSuggestion">القيمة المقترحة</label>
-                        <input
-                          id="amountSuggestion"
-                          className="input-field bg-gray-50 no-spinner"
-                          type="number"
-                          value={(() => {
-                            const part = spareParts.find(p => String(p.id) === String(costForm.sparePartId));
-                            if (!part || !costForm.sparePartQuantity) return '';
-                            return part.unitPrice ? Number(part.unitPrice * costForm.sparePartQuantity).toFixed(2) : '';
-                          })()}
-                          readOnly
-                        />
-                        <p className="text-xs text-gray-500 mt-1">يمكنك تعديل المبلغ النهائي يدوياً إذا لزم الأمر.</p>
-                      </div>
-                    </div>
-                  )}
                   <div className="flex flex-col sm:flex-row gap-3">
                     <button 
                       className="btn-primary flex-1 flex items-center justify-center" 
