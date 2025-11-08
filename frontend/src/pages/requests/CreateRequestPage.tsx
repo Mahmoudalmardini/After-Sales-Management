@@ -1,14 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { customersAPI, productsAPI, requestsAPI } from '../../services/api';
-import { CreateRequestForm, Customer, Product, UserRole } from '../../types';
+import { CreateRequestForm, Customer, Product } from '../../types';
 import { useI18n } from '../../contexts/I18nContext';
-import { useAuth } from '../../contexts/AuthContext';
 // import { SYRIAN_CITIES } from '../../utils/currency';
 
 const CreateRequestPage: React.FC = () => {
   const { t } = useI18n();
-  const { hasRole } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
