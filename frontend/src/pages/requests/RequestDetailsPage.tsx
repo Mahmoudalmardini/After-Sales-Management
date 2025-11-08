@@ -431,7 +431,7 @@ const RequestDetailsPage: React.FC = () => {
                             <div className="flex justify-between items-start">
                               <div className="flex-1">
                                 <p className="text-sm font-medium text-amber-900">{part.sparePart.name}</p>
-                                <p className="text-xs text-amber-700">عدد القطع الموجودة: {part.sparePart.partNumber}</p>
+                                <p className="text-xs text-amber-700">رقم القطعة: {part.sparePart.partNumber}</p>
                                 <div className="flex items-center mt-2 text-xs">
                                   <span className="bg-amber-100 text-amber-800 px-2 py-1 rounded">
                                     الكمية: {part.quantityUsed}

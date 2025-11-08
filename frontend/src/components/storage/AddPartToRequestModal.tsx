@@ -70,7 +70,7 @@ const AddPartToRequestModal: React.FC<AddPartToRequestModalProps> = ({
   };
 
   const getStockStatus = (part: SparePart): 'IN_STOCK' | 'OUT_OF_STOCK' => {
-    if (part.presentPieces === 0) return 'OUT_OF_STOCK';
+    if (part.quantity === 0) return 'OUT_OF_STOCK';
     return 'IN_STOCK';
   };
 
@@ -81,7 +81,8 @@ const AddPartToRequestModal: React.FC<AddPartToRequestModalProps> = ({
     }
   };
 
-  const availableParts = spareParts.filter(part => part.presentPieces > 0);
+  // Show ALL spare parts, not filtered
+  const availableParts = spareParts;
 
   return (
     <Dialog open={isOpen} onClose={onClose} className="relative z-50">
@@ -127,7 +128,7 @@ const AddPartToRequestModal: React.FC<AddPartToRequestModalProps> = ({
                   <option value="">{t('common.selectOption')}</option>
                   {availableParts.map(part => (
                     <option key={part.id} value={part.id}>
-                      {part.name} - {part.partNumber} ({part.presentPieces} {t('storage.inStock')})
+                      {part.name} - {part.partNumber} ({part.quantity} {t('storage.inStock')})
                     </option>
                   ))}
                 </select>
@@ -166,7 +167,7 @@ const AddPartToRequestModal: React.FC<AddPartToRequestModalProps> = ({
                     <input
                       type="number"
                       min="1"
-                      max={selectedPart.presentPieces}
+                      max={selectedPart.quantity}
                       className="w-full input"
                       value={quantity}
                       onChange={(e) => setQuantity(Number(e.target.value))}
@@ -174,7 +175,7 @@ const AddPartToRequestModal: React.FC<AddPartToRequestModalProps> = ({
                       title={t('storage.quantity')}
                     />
                     <p className="text-xs text-gray-500 mt-1">
-                      الحد الأقصى المتاح: {selectedPart.presentPieces} قطعة
+                      الحد الأقصى المتاح: {selectedPart.quantity} قطعة
                     </p>
                   </div>
                   <div>

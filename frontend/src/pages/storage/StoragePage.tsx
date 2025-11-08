@@ -423,9 +423,6 @@ const StoragePage: React.FC = () => {
                   <th className="px-3 py-2.5 text-right text-xs font-semibold text-gray-700">
                     رقم القطعة
                   </th>
-                  <th className="px-2 py-2.5 text-center text-xs font-semibold text-gray-700">
-                    عدد القطع
-                  </th>
                   <th className="px-3 py-2.5 text-right text-xs font-semibold text-gray-700">
                     السعر
                   </th>
@@ -449,13 +446,13 @@ const StoragePage: React.FC = () => {
               <tbody className="bg-white divide-y divide-gray-100">
                 {loading ? (
                   <tr>
-                    <td colSpan={9} className="py-6 text-center text-sm text-gray-500">
+                    <td colSpan={8} className="py-6 text-center text-sm text-gray-500">
                       {t('storage.loading')}
                     </td>
                   </tr>
                 ) : spareParts.length === 0 ? (
                   <tr>
-                    <td colSpan={9} className="py-6 text-center text-sm text-gray-500">
+                    <td colSpan={8} className="py-6 text-center text-sm text-gray-500">
                       {filters.search ? 
                         `No spare parts found matching "${filters.search}"` : 
                         t('storage.empty')
@@ -484,9 +481,6 @@ const StoragePage: React.FC = () => {
                         </td>
                         <td className="px-3 py-2.5 whitespace-nowrap">
                           <div className="text-xs font-mono text-gray-600">{part.partNumber}</div>
-                        </td>
-                        <td className="px-2 py-2.5 whitespace-nowrap text-center">
-                          <div className="text-xs font-semibold text-gray-900">{part.presentPieces}</div>
                         </td>
                         <td className="px-3 py-2.5 whitespace-nowrap text-right">
                           <div className="text-xs font-medium text-gray-900">{part.unitPrice.toLocaleString()}</div>
@@ -581,10 +575,6 @@ const StoragePage: React.FC = () => {
                 <div>
                   <span className="text-sm font-medium text-gray-500">رقم القطعة:</span>
                   <p className="text-sm font-mono text-gray-900">{selectedPartForDescription.partNumber}</p>
-                </div>
-                <div>
-                  <span className="text-sm font-medium text-gray-500">عدد القطع الموجودة:</span>
-                  <p className="text-sm text-gray-900">{selectedPartForDescription.presentPieces}</p>
                 </div>
                 <div>
                   <span className="text-sm font-medium text-gray-500">الكمية:</span>

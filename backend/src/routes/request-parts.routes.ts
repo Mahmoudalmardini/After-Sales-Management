@@ -105,8 +105,8 @@ router.post('/', async (req, res) => {
     return;
   }
 
-  // Check if enough quantity is available
-  if (sparePart.presentPieces < Number(quantityUsed)) {
+  // Check if enough quantity is available (use quantity field)
+  if (sparePart.quantity < Number(quantityUsed)) {
     const error = new ValidationError('Insufficient quantity in stock');
     res.status(error.statusCode).json({ success: false, message: error.message });
     return;
@@ -139,10 +139,11 @@ router.post('/', async (req, res) => {
       },
     });
 
-    // Update spare part quantity
+    // Update spare part quantity (decrease both quantity and presentPieces for compatibility)
     const updatedSparePart = await tx.sparePart.update({
       where: { id: Number(sparePartId) },
       data: {
+        quantity: sparePart.quantity - Number(quantityUsed),
         presentPieces: sparePart.presentPieces - Number(quantityUsed),
       },
     });
@@ -304,7 +305,7 @@ router.put('/:id', async (req, res) => {
   }
 
   const quantityDifference = Number(quantityUsed) - requestPart.quantityUsed;
-  const newSparePartQuantity = requestPart.sparePart.presentPieces - quantityDifference;
+  const newSparePartQuantity = requestPart.sparePart.quantity - quantityDifference;
 
   if (newSparePartQuantity < 0) {
     const error = new ValidationError('Insufficient quantity in stock');
@@ -330,11 +331,12 @@ router.put('/:id', async (req, res) => {
       },
     });
 
-    // Update spare part presentPieces
+    // Update spare part quantity (update both quantity and presentPieces for compatibility)
     const updatedSparePart = await tx.sparePart.update({
       where: { id: requestPart.sparePartId },
       data: {
-        presentPieces: newSparePartQuantity,
+        quantity: newSparePartQuantity,
+        presentPieces: requestPart.sparePart.presentPieces - quantityDifference,
       },
     });
 
