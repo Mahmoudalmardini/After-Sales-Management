@@ -105,7 +105,7 @@ const Dashboard: React.FC = () => {
       'WAITING_PARTS': 'status-badge status-waiting-parts',
       'IN_REPAIR': 'status-badge status-in-repair',
       'COMPLETED': 'status-badge status-completed',
-      'CLOSED': 'status-badge status-closed',
+      'CLOSED': 'status-badge status-completed',
     };
     return statusClasses[status as keyof typeof statusClasses] || 'status-badge status-new';
   };
