@@ -86,40 +86,6 @@ const RequestDetailsPage: React.FC = () => {
     loadCustomStatuses();
   }, []);
 
-  const statusOptions: RequestStatus[] = useMemo(() => {
-    if (!request?.status) return [];
-    
-    // If request is CLOSED, only admins can reopen it
-    if (request.status === 'CLOSED') {
-      // Only COMPANY_MANAGER and DEPUTY_MANAGER can reopen
-      const canReopen = hasRole([UserRole.COMPANY_MANAGER, UserRole.DEPUTY_MANAGER]);
-      if (canReopen) {
-        // Allow reopening to any valid status
-        return ['ASSIGNED', 'UNDER_INSPECTION', 'WAITING_PARTS', 'IN_REPAIR', 'COMPLETED'];
-      }
-      return [];
-    }
-    
-    // If request is COMPLETED, can only go to CLOSED
-    if (request.status === 'COMPLETED') {
-      return ['CLOSED'];
-    }
-    
-    // For all other statuses (not COMPLETED and not CLOSED), allow going back to previous statuses
-    // This includes: NEW, ASSIGNED, UNDER_INSPECTION, WAITING_PARTS, IN_REPAIR
-    const allAvailableStatuses: RequestStatus[] = [
-      'ASSIGNED', 
-      'UNDER_INSPECTION', 
-      'WAITING_PARTS', 
-      'IN_REPAIR', 
-      'COMPLETED'
-    ];
-    
-    // Return all available statuses except the current one (to avoid selecting same status)
-    return allAvailableStatuses.filter(status => status !== request.status);
-  }, [request?.status, hasRole]);
-
-  // Combine standard and custom statuses for display
   const allStatusOptions = useMemo(() => {
     const baseOptions = [
       { value: 'UNDER_INSPECTION' as RequestStatus, label: 'Pending', type: 'standard' as const },
@@ -133,6 +99,16 @@ const RequestDetailsPage: React.FC = () => {
 
     return baseOptions;
   }, [request?.status]);
+
+  const reopenStatusOptions = useMemo(() => {
+    return [
+      { value: 'ASSIGNED' as RequestStatus, label: 'Assigned' },
+      { value: 'UNDER_INSPECTION' as RequestStatus, label: 'Pending' },
+      { value: 'WAITING_PARTS' as RequestStatus, label: 'Waiting Parts' },
+      { value: 'IN_REPAIR' as RequestStatus, label: 'In Repair' },
+      { value: 'COMPLETED' as RequestStatus, label: 'Complete' },
+    ];
+  }, []);
 
   const handleAssign = async () => {
     if (!assignId) return;
@@ -681,7 +657,7 @@ const RequestDetailsPage: React.FC = () => {
                       aria-label="اختر الحالة الجديدة للطلب"
                     >
                       <option value="">اختر الحالة...</option>
-                      {allStatusOptions.map(option => (
+                      {reopenStatusOptions.map(option => (
                         <option key={option.value} value={option.value}>
                           {option.label}
                         </option>
