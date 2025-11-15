@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useI18n } from '../contexts/I18nContext';
 import { dashboardAPI, requestsAPI } from '../services/api';
-import { DashboardStats, Request } from '../types';
+import { DashboardStats, Request, REQUEST_STATUS_LABELS, RequestStatus } from '../types';
 import {
   ClipboardDocumentListIcon,
   ClockIcon,
@@ -258,7 +258,7 @@ const Dashboard: React.FC = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={getStatusBadge(request.status)}>
-                          {request.status.replace('_', ' ')}
+                          {REQUEST_STATUS_LABELS[request.status as RequestStatus]}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">

@@ -121,22 +121,18 @@ const RequestDetailsPage: React.FC = () => {
 
   // Combine standard and custom statuses for display
   const allStatusOptions = useMemo(() => {
-    const standardStatuses = statusOptions.map(status => ({
-      value: status,
-      label: REQUEST_STATUS_LABELS[status],
-      type: 'standard' as const
-    }));
+    const baseOptions = [
+      { value: 'UNDER_INSPECTION' as RequestStatus, label: 'Pending', type: 'standard' as const },
+      { value: 'COMPLETED' as RequestStatus, label: 'Complete', type: 'standard' as const },
+      { value: 'CLOSED' as RequestStatus, label: 'Close', type: 'standard' as const },
+    ];
 
-      const customStatusesList = customStatuses
-        .filter(status => status.isActive)
-        .map(status => ({
-          value: status.name,
-          label: status.displayName,
-          type: 'custom' as const
-        }));
+    if (request?.status === 'CLOSED') {
+      return baseOptions.filter(o => o.value !== 'CLOSED');
+    }
 
-    return [...standardStatuses, ...customStatusesList];
-  }, [statusOptions, customStatuses]);
+    return baseOptions;
+  }, [request?.status]);
 
   const handleAssign = async () => {
     if (!assignId) return;
