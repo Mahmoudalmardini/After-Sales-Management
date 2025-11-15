@@ -904,6 +904,7 @@ export const addCost = asyncHandler(async (req: AuthenticatedRequest, res: Respo
       departmentId: true,
       receivedById: true,
       assignedTechnicianId: true,
+      status: true,
     },
   });
 
@@ -911,7 +912,10 @@ export const addCost = asyncHandler(async (req: AuthenticatedRequest, res: Respo
     throw new NotFoundError('Request not found');
   }
 
-  // Only allow adding costs to out-of-warranty requests or by managers
+  if (req.user.role === UserRole.TECHNICIAN && ['COMPLETED', 'CLOSED'].includes(request.status as any)) {
+    throw new ForbiddenError('Cannot modify a completed request');
+  }
+
   if (request.warrantyStatus === WarrantyStatus.UNDER_WARRANTY && !isManagerLevel(req.user.role)) {
     throw new ForbiddenError('Cannot add costs to under-warranty requests');
   }

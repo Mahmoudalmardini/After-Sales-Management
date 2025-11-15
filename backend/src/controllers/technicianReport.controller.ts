@@ -37,7 +37,10 @@ export const createTechnicianReport = async (req: AuthenticatedRequest, res: Res
       throw new NotFoundError('Request not found or you do not have access to it');
     }
 
-    // Create the report
+    if (req.user?.role === 'TECHNICIAN' && (request as any).status && ['COMPLETED', 'CLOSED'].includes((request as any).status)) {
+      throw new ForbiddenError('Cannot add report to a completed request');
+    }
+
     const report = await prisma.technicianReport.create({
       data: {
         requestId,

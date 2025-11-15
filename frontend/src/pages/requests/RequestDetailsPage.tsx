@@ -318,7 +318,7 @@ const RequestDetailsPage: React.FC = () => {
               </div>
               <div className="card-content space-y-6">
                 {/* Only show cost form if request is not completed or if user is manager or technician */}
-                {(!['COMPLETED', 'CLOSED'].includes(request?.status || '') || hasRole([UserRole.COMPANY_MANAGER, UserRole.DEPUTY_MANAGER, UserRole.DEPARTMENT_MANAGER, UserRole.TECHNICIAN])) && (
+                {(!['COMPLETED', 'CLOSED'].includes(request?.status || '') || hasRole([UserRole.COMPANY_MANAGER, UserRole.DEPUTY_MANAGER, UserRole.DEPARTMENT_MANAGER, UserRole.SECTION_SUPERVISOR])) && (
                   <form className="space-y-4" onSubmit={handleAddCost}>
                   <div className="form-group">
                     <label className="form-label required" htmlFor="costDescription">وصف التكلفة</label>
@@ -377,17 +377,19 @@ const RequestDetailsPage: React.FC = () => {
                       )}
                       {t('details.costs.add') || 'إضافة تكلفة'}
                     </button>
-                    <button 
-                      type="button"
-                      className="px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 transition-colors flex items-center justify-center"
-                      onClick={() => setShowSparePartsModal(true)}
-                    >
-                      <svg className="w-4 h-4 ml-1" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd"/>
-                      </svg>
-                      إضافة قطع غيار
-                    </button>
-                    {user?.role === UserRole.TECHNICIAN && (
+                    {!(user?.role === UserRole.TECHNICIAN && ['COMPLETED', 'CLOSED'].includes(request.status)) && (
+                      <button 
+                        type="button"
+                        className="px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 transition-colors flex items-center justify-center"
+                        onClick={() => setShowSparePartsModal(true)}
+                      >
+                        <svg className="w-4 h-4 ml-1" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd"/>
+                        </svg>
+                        إضافة قطع غيار
+                      </button>
+                    )}
+                    {user?.role === UserRole.TECHNICIAN && !['COMPLETED', 'CLOSED'].includes(request.status) && (
                       <>
                         <button 
                           type="button"

@@ -86,11 +86,19 @@ router.post('/', async (req, res) => {
   // Check if request exists
   const request = await prisma.request.findUnique({
     where: { id: Number(requestId) },
+    select: { id: true, status: true }
   });
 
   if (!request) {
     const error = new ValidationError('Request not found');
     res.status(error.statusCode).json({ success: false, message: error.message });
+    return;
+  }
+
+  const role = (req as any).user?.role;
+  if (role === UserRole.TECHNICIAN && ['COMPLETED', 'CLOSED'].includes((request as any).status)) {
+    const error = new ValidationError('Cannot modify a completed request');
+    res.status(403).json({ success: false, message: error.message });
     return;
   }
 
@@ -234,7 +242,7 @@ router.delete('/:id', async (req, res) => {
     include: { 
       sparePart: true,
       addedBy: { select: { firstName: true, lastName: true } },
-      request: { select: { requestNumber: true } }
+      request: { select: { id: true, requestNumber: true, status: true } }
     },
   });
 
@@ -244,7 +252,13 @@ router.delete('/:id', async (req, res) => {
     return;
   }
 
-  // Remove request part and restore quantity in a transaction
+  const role = (req as any).user?.role;
+  if (role === UserRole.TECHNICIAN && ['COMPLETED', 'CLOSED'].includes((requestPart.request as any).status)) {
+    const error = new ValidationError('Cannot modify a completed request');
+    res.status(403).json({ success: false, message: error.message });
+    return;
+  }
+
   const result = await prisma.$transaction(async (tx) => {
     // Delete request part
     await tx.requestPart.delete({
@@ -294,13 +308,20 @@ router.put('/:id', async (req, res) => {
     include: { 
       sparePart: true,
       addedBy: { select: { firstName: true, lastName: true } },
-      request: { select: { requestNumber: true } }
+      request: { select: { id: true, requestNumber: true, status: true } }
     },
   });
 
   if (!requestPart) {
     const error = new ValidationError('Request part not found');
     res.status(error.statusCode).json({ success: false, message: error.message });
+    return;
+  }
+
+  const role = (req as any).user?.role;
+  if (role === UserRole.TECHNICIAN && ['COMPLETED', 'CLOSED'].includes((requestPart.request as any).status)) {
+    const error = new ValidationError('Cannot modify a completed request');
+    res.status(403).json({ success: false, message: error.message });
     return;
   }
 

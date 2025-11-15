@@ -50,6 +50,14 @@ export interface Customer {
   city?: string;
   createdAt: string;
   updatedAt: string;
+  requests?: Array<{
+    id: number;
+    requestNumber: string;
+    status: string;
+    createdAt: string;
+    serialNumber?: string;
+    product?: { serialNumber?: string };
+  }>;
 }
 
 // Product types
@@ -341,13 +349,13 @@ export type RequiredField<T, K extends keyof T> = T & Required<Pick<T, K>>;
 
 // Status mapping for display
 export const REQUEST_STATUS_LABELS: Record<RequestStatus, string> = {
-  'NEW': 'New',
-  'ASSIGNED': 'Assigned',
-  'UNDER_INSPECTION': 'Under Inspection',
-  'WAITING_PARTS': 'Waiting for Parts',
-  'IN_REPAIR': 'In Repair',
+  'NEW': 'Pending',
+  'ASSIGNED': 'Pending',
+  'UNDER_INSPECTION': 'Pending',
+  'WAITING_PARTS': 'Pending',
+  'IN_REPAIR': 'Pending',
   'COMPLETED': 'Completed',
-  'CLOSED': 'Closed',
+  'CLOSED': 'Completed',
 };
 
 export const PRIORITY_LABELS: Record<RequestPriority, string> = {

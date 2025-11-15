@@ -130,6 +130,7 @@ const CustomersPage: React.FC = () => {
                   <th className="th">{t('customers.email') || 'Email'}</th>
                   <th className="th">{t('customers.city') || 'City'}</th>
                   <th className="th">{t('customers.address') || 'Address'}</th>
+                  <th className="th">Serial Numbers</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -138,15 +139,19 @@ const CustomersPage: React.FC = () => {
                 ) : customers.length === 0 ? (
                   <tr><td colSpan={5} className="py-8 text-center text-gray-500">{t('customers.empty')}</td></tr>
                 ) : (
-                  customers.map(c => (
-                    <tr key={c.id} className="hover:bg-gray-50">
-                      <td className="td font-medium">{c.name}</td>
-                      <td className="td ltr-text whitespace-nowrap">{c.phone}</td>
-                      <td className="td ltr-text whitespace-nowrap">{c.email || '-'}</td>
-                      <td className="td">{c.city || '-'}</td>
-                      <td className="td">{c.address}</td>
-                    </tr>
-                  ))
+                  customers.map(c => {
+                    const serials = Array.from(new Set((c.requests || []).map(r => r.serialNumber || r.product?.serialNumber).filter(Boolean))) as string[];
+                    return (
+                      <tr key={c.id} className="hover:bg-gray-50">
+                        <td className="td font-medium">{c.name}</td>
+                        <td className="td ltr-text whitespace-nowrap">{c.phone}</td>
+                        <td className="td ltr-text whitespace-nowrap">{c.email || '-'}</td>
+                        <td className="td">{c.city || '-'}</td>
+                        <td className="td">{c.address}</td>
+                        <td className="td">{serials.length ? serials.join(', ') : '-'}</td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>

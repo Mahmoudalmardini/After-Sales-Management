@@ -48,7 +48,9 @@ router.get('/', authenticateToken, async (req: AuthenticatedRequest, res) => {
             id: true,
             requestNumber: true,
             status: true,
-            createdAt: true
+            createdAt: true,
+            serialNumber: true,
+            product: { select: { serialNumber: true } }
           }
         }
       }
