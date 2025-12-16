@@ -789,17 +789,17 @@ export const assignTechnician = asyncHandler(async (req: AuthenticatedRequest, r
     assignedAt: new Date(),
   };
   
-  // If request is CLOSED, reopen it to NEW status
+  // If request is CLOSED, reopen it to UNDER_INSPECTION status (auto-accept)
   if (request.status === RequestStatus.CLOSED) {
-    updateData.status = RequestStatus.NEW;
+    updateData.status = RequestStatus.UNDER_INSPECTION;
   } 
   // If request is COMPLETED, keep it COMPLETED
   else if (request.status === RequestStatus.COMPLETED) {
     // Keep status as COMPLETED
   }
-  // Otherwise change to ASSIGNED
+  // Otherwise change to UNDER_INSPECTION directly (auto-accept - skip ASSIGNED confirmation step)
   else {
-    updateData.status = RequestStatus.ASSIGNED;
+    updateData.status = RequestStatus.UNDER_INSPECTION;
   }
 
   const updatedRequest = await prisma.request.update({

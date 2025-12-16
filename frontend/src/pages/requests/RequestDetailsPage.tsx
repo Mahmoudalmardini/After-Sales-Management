@@ -178,22 +178,6 @@ const RequestDetailsPage: React.FC = () => {
   };
 
 
-  const handleMarkAsReceived = async () => {
-    if (!window.confirm('هل أنت متأكد من تأكيد استلام هذا الطلب؟')) return;
-    try {
-      setLoading(true);
-      await requestsAPI.updateRequestStatus(requestId, { 
-        status: 'UNDER_INSPECTION', 
-        comment: 'تم استلام الطلب من قبل الفني' 
-      });
-      await reload();
-    } catch (e: any) {
-      setError(e.message || t('error.failedToUpdate'));
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -362,28 +346,28 @@ const RequestDetailsPage: React.FC = () => {
                       </button>
                     )}
                     {user?.role === UserRole.TECHNICIAN && !['COMPLETED', 'CLOSED'].includes(request.status) && (
-                      <>
-                        <button 
-                          type="button"
-                          className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors flex items-center justify-center"
-                          onClick={() => setShowRequestSparePartModal(true)}
-                        >
-                          <svg className="w-4 h-4 ml-1" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd"/>
-                          </svg>
-                          طلب قطع غيار جديدة
-                        </button>
-                        <button 
-                          type="button"
-                          className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors flex items-center justify-center"
-                          onClick={() => setShowAddReportModal(true)}
-                        >
-                          <svg className="w-4 h-4 ml-1" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd"/>
-                          </svg>
-                          إضافة تقرير
-                        </button>
-                      </>
+                      <button 
+                        type="button"
+                        className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors flex items-center justify-center"
+                        onClick={() => setShowRequestSparePartModal(true)}
+                      >
+                        <svg className="w-4 h-4 ml-1" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd"/>
+                        </svg>
+                        طلب قطع غيار جديدة
+                      </button>
+                    )}
+                    {(user?.role === UserRole.TECHNICIAN || user?.role === UserRole.SECTION_SUPERVISOR) && !['COMPLETED', 'CLOSED'].includes(request.status) && (
+                      <button 
+                        type="button"
+                        className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors flex items-center justify-center"
+                        onClick={() => setShowAddReportModal(true)}
+                      >
+                        <svg className="w-4 h-4 ml-1" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd"/>
+                        </svg>
+                        إضافة تقرير
+                      </button>
                     )}
                   </div>
                 </form>
@@ -518,25 +502,7 @@ const RequestDetailsPage: React.FC = () => {
               </div>
             )}
 
-            {/* Technician-specific: Mark as Received */}
-            {user?.role === UserRole.TECHNICIAN && request?.status === 'ASSIGNED' && (
-              <div className="card border-blue-200">
-                <div className="card-header bg-gradient-to-r from-blue-50 to-indigo-50">
-                  <h3 className="text-blue-800">تأكيد استلام الطلب</h3>
-                  <p className="text-blue-600">قم بتأكيد استلامك لهذا الطلب لبدء العمل عليه</p>
-                </div>
-                <div className="card-content">
-                  <button 
-                    className="btn-primary w-full bg-blue-600 hover:bg-blue-700" 
-                    onClick={handleMarkAsReceived}
-                    disabled={loading}
-                  >
-                    {loading ? <div className="loading-spinner ml-2"></div> : null}
-                    تأكيد استلام الطلب
-                  </button>
-                </div>
-              </div>
-            )}
+            {/* Note: Accept confirmation step has been removed - requests are now auto-accepted */}
 
             {/* Only show status update if request is not closed, not completed, has available status options, and user has permission */}
             {/* Only admin and supervisor roles can change status */}

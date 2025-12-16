@@ -20,13 +20,15 @@ export const createTechnicianReport = async (req: AuthenticatedRequest, res: Res
       throw new ValidationError('Report content is required');
     }
 
-    // Check if request exists and technician has access
+    // Check if request exists and user has access
+    // Supervisors can write reports for any request, technicians can only write for their assigned requests
+    const userRole = req.user?.role;
+    const isSupervisor = userRole === 'SECTION_SUPERVISOR';
+    
     const request = await prisma.request.findFirst({
       where: {
         id: requestId,
-        OR: [
-          { assignedTechnicianId: technicianId }
-        ]
+        ...(isSupervisor ? {} : { assignedTechnicianId: technicianId })
       },
       include: {
         customer: true

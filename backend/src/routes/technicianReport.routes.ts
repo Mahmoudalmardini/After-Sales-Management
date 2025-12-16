@@ -12,10 +12,10 @@ router.use(authenticateToken);
 /**
  * @route   POST /api/technician-reports
  * @desc    Create a new technician report
- * @access  Private (Technician)
+ * @access  Private (Technician, Supervisor)
  */
 router.post('/', 
-  requireRoles([UserRole.TECHNICIAN]),
+  requireRoles([UserRole.TECHNICIAN, UserRole.SECTION_SUPERVISOR]),
   createTechnicianReport
 );
 

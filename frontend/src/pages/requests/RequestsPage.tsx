@@ -15,7 +15,7 @@ const RequestsPage: React.FC = () => {
   const [requests, setRequests] = useState<Request[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState<number>(Number(searchParams.get('page')) || 1);
-  const [limit, setLimit] = useState<number>(Number(searchParams.get('limit')) || 10);
+  const [limit, setLimit] = useState<number>(Number(searchParams.get('limit')) || 1000);
 
   const [status, setStatus] = useState<RequestStatus | ''>((searchParams.get('status') as RequestStatus) || '');
   const [priority, setPriority] = useState<RequestPriority | ''>((searchParams.get('priority') as RequestPriority) || '');
@@ -257,7 +257,7 @@ const RequestsPage: React.FC = () => {
             <div className="form-group">
               <label className="form-label" htmlFor="limit-filter">{t('requests.filters.limit')}</label>
               <select id="limit-filter" value={limit} onChange={(e) => { setPage(1); setLimit(Number(e.target.value)); }} className="select-field">
-                {[10, 20, 50].map((count) => (
+                {[50, 100, 500, 1000].map((count) => (
                   <option key={count} value={count}>{t('requests.filters.limit.option', { count })}</option>
                 ))}
               </select>
