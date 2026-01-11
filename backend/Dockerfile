@@ -15,13 +15,17 @@ COPY tsconfig.json ./
 COPY prisma ./prisma/
 
 # Install dependencies
-RUN npm ci --only=production && npm cache clean --force
+# Install ALL dependencies (including devDependencies for tsc)
+RUN npm ci
 
 # Copy source code
 COPY src ./src/
 
 # Build the application
 RUN npm run build
+
+# Remove devDependencies to keep image small
+RUN npm prune --production
 
 # Generate Prisma client
 RUN npm run db:generate
