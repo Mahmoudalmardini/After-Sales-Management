@@ -1,0 +1,15 @@
+-- Database Schema Reference
+-- 
+-- This project uses Prisma ORM for database management.
+-- The actual database schema is defined in: backend/prisma/schema.prisma
+--
+-- For Docker initialization, see: database/init.sql
+-- This file creates all tables, indexes, and constraints for PostgreSQL.
+--
+-- To initialize the database:
+-- 1. Using Docker: The init.sql file is automatically executed when the postgres container starts
+-- 2. Manually: Run the init.sql file against your PostgreSQL database
+-- 3. Using Prisma: Run `npx prisma migrate deploy` or `npx prisma db push`
+--
+-- For seeding initial data, run: npx prisma db seed
+
