@@ -4,7 +4,8 @@ FROM node:18-alpine AS base
 # Install system dependencies
 RUN apk add --no-cache \
     dumb-init \
-    curl
+    curl \
+    openssl
 
 # Create app directory
 WORKDIR /app
