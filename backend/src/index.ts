@@ -39,7 +39,7 @@ async function ensureAdminUser() {
   try {
     const adminUsername = 'admin';
     const adminPassword = 'admin123';
-    
+
     // Check if admin user exists
     const existingAdmin = await prisma.user.findUnique({
       where: { username: adminUsername }
@@ -52,7 +52,7 @@ async function ensureAdminUser() {
 
     // Create admin user
     const hashedPassword = await bcrypt.hash(adminPassword, 12);
-    
+
     const adminUser = await prisma.user.create({
       data: {
         username: adminUsername,
@@ -69,7 +69,7 @@ async function ensureAdminUser() {
 
     logger.info(`✅ Admin user '${adminUsername}' created successfully with password '${adminPassword}'`);
     logger.info(`Admin user ID: ${adminUser.id}, Role: ${adminUser.role}`);
-    
+
   } catch (error) {
     logger.error('Failed to ensure admin user exists:', error);
     // Don't throw error to prevent server startup failure
@@ -84,7 +84,7 @@ app.use(helmet());
 // Trust proxy to avoid express-rate-limit X-Forwarded-For errors behind dev proxy
 app.set('trust proxy', 1);
 const corsWhitelist = [
-  config.corsOrigin,
+  ...(config.corsOrigin?.split(',').map(o => o.trim()) || []),
   'http://127.0.0.1:3000',
   'http://localhost:3000',
 ].filter(Boolean);
@@ -147,7 +147,7 @@ app.get('/health', async (req, res) => {
       // Database not available - return health check anyway
       dbConnected = false;
     }
-    
+
     const statusCode = dbConnected ? 200 : 503; // Service Unavailable if DB not connected
     res.status(statusCode).json({
       status: dbConnected ? 'OK' : 'DEGRADED',
@@ -186,7 +186,7 @@ app.use('/api/technician-reports', technicianReportRoutes);
 if (config.nodeEnv === 'production') {
   const buildPath = path.join(__dirname, 'public');
   app.use(express.static(buildPath));
-  
+
   // Catch all handler: send back React's index.html file for any non-API routes
   app.get('*', (req, res) => {
     // Skip API routes
@@ -217,12 +217,12 @@ async function startServer() {
     let dbConnected = false;
     const maxDbRetries = 5;
     const dbRetryDelay = 3000; // 3 seconds
-    
+
     for (let attempt = 1; attempt <= maxDbRetries; attempt++) {
       try {
         await Promise.race([
           prisma.$connect(),
-          new Promise((_, reject) => 
+          new Promise((_, reject) =>
             setTimeout(() => reject(new Error('Connection timeout')), 5000)
           )
         ]);
