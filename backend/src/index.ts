@@ -128,7 +128,7 @@ const authLimiter = rateLimit({
   legacyHeaders: false,
   skip: (req) => {
     // Skip rate limiting for authenticated users in development
-    return config.isDevelopment && req.headers.authorization;
+    return config.isDevelopment && !!req.headers.authorization;
   }
 });
 
