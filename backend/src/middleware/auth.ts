@@ -20,23 +20,58 @@ export const authenticateToken = async (
 
     const decoded = jwt.verify(token, config.jwtSecret) as JWTPayload;
     
-    // Verify user still exists and is active
-    const user = await prisma.user.findUnique({
-      where: { id: decoded.id },
-      select: {
-        id: true,
-        username: true,
-        email: true,
-        firstName: true,
-        lastName: true,
-        role: true,
-        departmentId: true,
-        isActive: true,
-      },
-    });
+    // Try to check session (gracefully handle if table doesn't exist yet)
+    let sessionValid = false;
+    let user = null;
+    
+    try {
+      const session = await prisma.userSession.findUnique({
+        where: { token },
+        include: {
+          user: {
+            select: {
+              id: true,
+              username: true,
+              email: true,
+              firstName: true,
+              lastName: true,
+              role: true,
+              departmentId: true,
+              isActive: true,
+            }
+          }
+        }
+      });
 
-    if (!user || !user.isActive) {
-      throw new UnauthorizedError('Invalid or expired token');
+      // Verify session exists, is active, and hasn't expired
+      if (session && session.isActive && session.expiresAt >= new Date() && session.user && session.user.isActive) {
+        sessionValid = true;
+        user = session.user;
+      }
+    } catch (sessionError: any) {
+      // If UserSession table doesn't exist yet, fall back to old method
+      if (sessionError.code === 'P2021' || sessionError.message?.includes('does not exist')) {
+        user = await prisma.user.findUnique({
+          where: { id: decoded.id },
+          select: {
+            id: true,
+            username: true,
+            email: true,
+            firstName: true,
+            lastName: true,
+            role: true,
+            departmentId: true,
+            isActive: true,
+          },
+        });
+        sessionValid = user !== null && user.isActive;
+      } else {
+        throw sessionError;
+      }
+    }
+
+    if (!sessionValid || !user || !user.isActive) {
+      throw new UnauthorizedError('Session expired or invalid. Please log in again.');
     }
 
     req.user = {

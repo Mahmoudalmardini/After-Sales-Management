@@ -111,13 +111,26 @@ app.use(cors({
   credentials: true,
 }));
 
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: config.rateLimitWindowMs,
-  max: config.rateLimitMaxRequests,
+// Rate limiting - stricter for public routes, more lenient for authenticated routes
+const publicLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // 100 requests per 15 minutes for public routes
   message: 'Too many requests from this IP, please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
 });
-app.use(limiter);
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5000, // 5000 requests per 15 minutes for authenticated routes
+  message: 'Too many requests from this IP, please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => {
+    // Skip rate limiting for authenticated users in development
+    return config.isDevelopment && req.headers.authorization;
+  }
+});
 
 // Logging
 app.use(morgan('combined', {
@@ -164,23 +177,23 @@ app.get('/health', async (req, res) => {
   }
 });
 
-// Public routes (no authentication required)
-app.use('/api/auth', authRoutes);
+// Public routes (no authentication required) - with stricter rate limiting
+app.use('/api/auth', publicLimiter, authRoutes);
 
-// Protected routes (authentication required)
-app.use('/api/users', authenticateToken, userRoutes);
-app.use('/api/departments', authenticateToken, departmentRoutes);
-app.use('/api/customers', authenticateToken, customerRoutes);
-app.use('/api/products', authenticateToken, productRoutes);
-app.use('/api/requests', authenticateToken, requestRoutes);
-app.use('/api/dashboard', authenticateToken, dashboardRoutes);
-app.use('/api/export', authenticateToken, exportRoutes);
-app.use('/api/reports', authenticateToken, reportRoutes);
-app.use('/api/storage', authenticateToken, storageRoutes);
-app.use('/api/request-parts', authenticateToken, requestPartsRoutes);
-app.use('/api/statuses', authenticateToken, statusRoutes);
-app.use('/api/spare-part-requests', sparePartRequestRoutes);
-app.use('/api/technician-reports', technicianReportRoutes);
+// Protected routes (authentication required) - with more lenient rate limiting
+app.use('/api/users', authLimiter, authenticateToken, userRoutes);
+app.use('/api/departments', authLimiter, authenticateToken, departmentRoutes);
+app.use('/api/customers', authLimiter, authenticateToken, customerRoutes);
+app.use('/api/products', authLimiter, authenticateToken, productRoutes);
+app.use('/api/requests', authLimiter, authenticateToken, requestRoutes);
+app.use('/api/dashboard', authLimiter, authenticateToken, dashboardRoutes);
+app.use('/api/export', authLimiter, authenticateToken, exportRoutes);
+app.use('/api/reports', authLimiter, authenticateToken, reportRoutes);
+app.use('/api/storage', authLimiter, authenticateToken, storageRoutes);
+app.use('/api/request-parts', authLimiter, authenticateToken, requestPartsRoutes);
+app.use('/api/statuses', authLimiter, authenticateToken, statusRoutes);
+app.use('/api/spare-part-requests', authLimiter, sparePartRequestRoutes);
+app.use('/api/technician-reports', authLimiter, technicianReportRoutes);
 
 // Serve static files from React build (for production)
 if (config.nodeEnv === 'production') {

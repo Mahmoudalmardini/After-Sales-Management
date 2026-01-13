@@ -68,11 +68,45 @@ export const login = asyncHandler(async (req: AuthenticatedRequest, res: Respons
 
   const token = generateToken(tokenPayload);
 
-  // Log successful login
-  logger.info(`User ${user.username} logged in successfully`);
+  // Try to manage sessions (gracefully handle if table doesn't exist yet)
+  const ipAddress = req.ip || req.connection.remoteAddress || '';
+  const userAgent = req.headers['user-agent'] || '';
+  
+  try {
+    // Invalidate all previous sessions for this user
+    await prisma.userSession.updateMany({
+      where: { 
+        userId: user.id,
+        isActive: true
+      },
+      data: { isActive: false }
+    });
 
-  // Note: updatedAt is managed by Prisma (@updatedAt). Avoid setting it manually.
-  // If you want to track last login, add a dedicated lastLogin field in the schema.
+    // Create new session
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 7); // 7 days
+
+    await prisma.userSession.create({
+      data: {
+        userId: user.id,
+        token,
+        ipAddress,
+        userAgent,
+        isActive: true,
+        expiresAt
+      }
+    });
+  } catch (sessionError: any) {
+    // If UserSession table doesn't exist yet, just log and continue
+    if (sessionError.code === 'P2021' || sessionError.message?.includes('does not exist')) {
+      logger.warn('UserSession table not found - session management disabled until migration runs');
+    } else {
+      throw sessionError;
+    }
+  }
+
+  // Log successful login
+  logger.info(`User ${user.username} logged in successfully from ${ipAddress}`);
 
   const response: ApiResponse = {
     success: true,
@@ -269,12 +303,33 @@ export const verifyToken = asyncHandler(async (req: AuthenticatedRequest, res: R
   res.status(200).json(response);
 });
 
-// Logout (if implementing token blacklisting)
+// Logout
 export const logout = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  // For now, we'll just send a success response
-  // In a production environment, you might want to implement token blacklisting
-  
   if (req.user) {
+    // Get token from header
+    const token = req.headers.authorization?.split(' ')[1];
+    
+    if (token) {
+      try {
+        // Invalidate the current session
+        await prisma.userSession.updateMany({
+          where: {
+            userId: req.user.id,
+            token,
+            isActive: true
+          },
+          data: { isActive: false }
+        });
+      } catch (sessionError: any) {
+        // If UserSession table doesn't exist yet, just log and continue
+        if (sessionError.code === 'P2021' || sessionError.message?.includes('does not exist')) {
+          logger.warn('UserSession table not found - logout still successful');
+        } else {
+          throw sessionError;
+        }
+      }
+    }
+    
     logger.info(`User ${req.user.username} logged out`);
   }
 
